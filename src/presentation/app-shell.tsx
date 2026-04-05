@@ -7,6 +7,7 @@ import {
   getRouteByKey,
   type AppRouteKey,
 } from "./routes";
+import { AlbumCandidateScreen } from "./screens/album-candidate-screen";
 import { EventScreen } from "./screens/event-screen";
 import { GroupScreen } from "./screens/group-screen";
 import { PageSection } from "./ui/page-section";
@@ -51,7 +52,13 @@ export function AppShell({
         <EventScreen workspace={workspace} />
       ) : null}
 
-      {currentRoute.key !== "groups" && currentRoute.key !== "events" ? (
+      {currentRoute.key === "albums" ? (
+        <AlbumCandidateScreen workspace={workspace} />
+      ) : null}
+
+      {currentRoute.key !== "groups" &&
+      currentRoute.key !== "events" &&
+      currentRoute.key !== "albums" ? (
         <PageSection
           eyebrow={currentRoute.requiresAuth ? "Authenticated route" : "Public route"}
           title={currentRoute.title}
