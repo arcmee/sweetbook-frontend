@@ -42,6 +42,27 @@ export type PrototypePhotoWorkflowViewModel = {
   photos: PhotoCardViewModel[];
 };
 
+export type CandidateCardViewModel = {
+  photoId: string;
+  caption: string;
+  rank: number;
+  likeCount: number;
+  whySelected: string;
+};
+
+export type PagePreviewViewModel = {
+  pageNumber: number;
+  title: string;
+  photoCaptions: string[];
+};
+
+export type PrototypeCandidateReviewViewModel = {
+  activeEventId: string;
+  activeEventName: string;
+  candidates: CandidateCardViewModel[];
+  pagePreview: PagePreviewViewModel[];
+};
+
 const prototypeWorkspaceViewModel: PrototypeWorkspaceViewModel = {
   groupSummary: {
     totalGroups: 2,
@@ -148,4 +169,61 @@ export function getPrototypePhotoWorkflowViewModel(
   }
 
   return workflow;
+}
+
+const prototypeCandidateReviews: Record<string, PrototypeCandidateReviewViewModel> = {
+  "event-birthday": {
+    activeEventId: "event-birthday",
+    activeEventName: "First birthday album",
+    candidates: [
+      {
+        photoId: "photo-cake",
+        caption: "Cake table setup",
+        rank: 1,
+        likeCount: 12,
+        whySelected:
+          "Selected because this photo combines strong likes with a clear milestone moment.",
+      },
+      {
+        photoId: "photo-family",
+        caption: "Family portrait",
+        rank: 2,
+        likeCount: 9,
+        whySelected:
+          "Selected because this photo balances group coverage with strong likes.",
+      },
+      {
+        photoId: "photo-gift",
+        caption: "Gift opening moment",
+        rank: 3,
+        likeCount: 7,
+        whySelected:
+          "Selected because this photo adds emotional variety to the album story.",
+      },
+    ],
+    pagePreview: [
+      {
+        pageNumber: 1,
+        title: "Cover preview",
+        photoCaptions: ["Cake table setup"],
+      },
+      {
+        pageNumber: 2,
+        title: "Family spread",
+        photoCaptions: ["Family portrait", "Gift opening moment"],
+      },
+    ],
+  },
+};
+
+export function getPrototypeCandidateReviewViewModel(
+  eventId: string,
+): PrototypeCandidateReviewViewModel {
+  const review = prototypeCandidateReviews[eventId];
+
+  if (!review) {
+    throw new Error(`Unknown candidate review event: ${eventId}`);
+  }
+
+  return review;
 }
