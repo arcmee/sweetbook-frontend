@@ -10,6 +10,7 @@ import {
 import { AlbumCandidateScreen } from "./screens/album-candidate-screen";
 import { EventScreen } from "./screens/event-screen";
 import { GroupScreen } from "./screens/group-screen";
+import { OrderHandoffScreen } from "./screens/order-handoff-screen";
 import { PageSection } from "./ui/page-section";
 import { PrimaryAction } from "./ui/primary-action";
 import { StatePanel } from "./ui/state-panel";
@@ -56,9 +57,14 @@ export function AppShell({
         <AlbumCandidateScreen workspace={workspace} />
       ) : null}
 
+      {currentRoute.key === "orders" ? (
+        <OrderHandoffScreen workspace={workspace} />
+      ) : null}
+
       {currentRoute.key !== "groups" &&
       currentRoute.key !== "events" &&
-      currentRoute.key !== "albums" ? (
+      currentRoute.key !== "albums" &&
+      currentRoute.key !== "orders" ? (
         <PageSection
           eyebrow={currentRoute.requiresAuth ? "Authenticated route" : "Public route"}
           title={currentRoute.title}

@@ -63,6 +63,17 @@ export type PrototypeCandidateReviewViewModel = {
   pagePreview: PagePreviewViewModel[];
 };
 
+export type PrototypeOrderEntryViewModel = {
+  activeEventId: string;
+  activeEventName: string;
+  selectedCandidateCount: number;
+  handoffSummary: {
+    bookFormat: string;
+    payloadSections: string[];
+    note: string;
+  };
+};
+
 const prototypeWorkspaceViewModel: PrototypeWorkspaceViewModel = {
   groupSummary: {
     totalGroups: 2,
@@ -226,4 +237,33 @@ export function getPrototypeCandidateReviewViewModel(
   }
 
   return review;
+}
+
+const prototypeOrderEntries: Record<string, PrototypeOrderEntryViewModel> = {
+  "event-birthday": {
+    activeEventId: "event-birthday",
+    activeEventName: "First birthday album",
+    selectedCandidateCount: 3,
+    handoffSummary: {
+      bookFormat: "Hardcover square",
+      payloadSections: [
+        "selected photos",
+        "page preview",
+        "event title",
+      ],
+      note: "Review this summary before backend submission is wired.",
+    },
+  },
+};
+
+export function getPrototypeOrderEntryViewModel(
+  eventId: string,
+): PrototypeOrderEntryViewModel {
+  const orderEntry = prototypeOrderEntries[eventId];
+
+  if (!orderEntry) {
+    throw new Error(`Unknown order entry event: ${eventId}`);
+  }
+
+  return orderEntry;
 }
