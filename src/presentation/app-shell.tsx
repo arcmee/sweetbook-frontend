@@ -39,7 +39,12 @@ export function AppShell({
             .filter((route) => route.showInNavigation)
             .map((route) => (
               <li key={route.key}>
-                <a href={route.path}>{route.label}</a>
+                <a
+                  href={route.path}
+                  aria-current={route.key === currentRoute.key ? "page" : undefined}
+                >
+                  {route.label}
+                </a>
               </li>
             ))}
         </ul>

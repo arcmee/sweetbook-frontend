@@ -14,10 +14,22 @@ export function StatePanel({
   description,
 }: StatePanelProps): ReactElement {
   return (
-    <section aria-live={tone === "loading" ? "polite" : undefined}>
-      <p>{tone}</p>
+    <section role="status" aria-live={tone === "loading" ? "polite" : "polite"}>
+      <p>{formatTone(tone)}</p>
       <h3>{title}</h3>
       <p>{description}</p>
     </section>
   );
+}
+
+function formatTone(tone: StateTone): string {
+  if (tone === "loading") {
+    return "Loading state";
+  }
+
+  if (tone === "error") {
+    return "Error state";
+  }
+
+  return "Empty state";
 }
