@@ -1,8 +1,9 @@
-export function AppShell() {
+import type { ReactElement } from "react";
+
+export function AppShell(): ReactElement {
   return (
-    <main className="app-shell">
+    <main>
       <h1>SweetBook</h1>
-      <p>Frontend bootstrap baseline.</p>
     </main>
   );
 }
