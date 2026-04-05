@@ -39,7 +39,7 @@ describe("frontend app shell foundation", () => {
     expect(markup).toContain("Login");
     expect(markup).toContain("Groups");
     expect(markup).toContain("Group workspace");
-    expect(markup).toContain("Authenticated routes stay behind the login boundary.");
+    expect(markup).toContain("Create a family group");
   });
 
   it("exports shared UI primitives for later feature screens", () => {
