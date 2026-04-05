@@ -12,12 +12,18 @@ export function PageSection({
   description,
   children,
 }: PageSectionProps): ReactElement {
+  const headingId = toHeadingId(title);
+
   return (
-    <section>
+    <section aria-labelledby={headingId}>
       {eyebrow ? <p>{eyebrow}</p> : null}
-      <h2>{title}</h2>
+      <h2 id={headingId}>{title}</h2>
       <p>{description}</p>
       <div>{children}</div>
     </section>
   );
+}
+
+function toHeadingId(title: string): string {
+  return `section-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
 }
