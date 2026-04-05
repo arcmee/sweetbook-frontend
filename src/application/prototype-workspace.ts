@@ -23,6 +23,25 @@ export type PrototypeWorkspaceViewModel = {
   events: EventCardViewModel[];
 };
 
+export type PhotoCardViewModel = {
+  id: string;
+  caption: string;
+  uploadedBy: string;
+  likeCount: number;
+  likedByViewer: boolean;
+};
+
+export type PrototypePhotoWorkflowViewModel = {
+  activeEventId: string;
+  activeEventName: string;
+  uploadState: {
+    pendingCount: number;
+    uploadedCount: number;
+    helperText: string;
+  };
+  photos: PhotoCardViewModel[];
+};
+
 const prototypeWorkspaceViewModel: PrototypeWorkspaceViewModel = {
   groupSummary: {
     totalGroups: 2,
@@ -64,4 +83,69 @@ const prototypeWorkspaceViewModel: PrototypeWorkspaceViewModel = {
 
 export function getPrototypeWorkspaceViewModel(): PrototypeWorkspaceViewModel {
   return prototypeWorkspaceViewModel;
+}
+
+const prototypePhotoWorkflows: Record<string, PrototypePhotoWorkflowViewModel> = {
+  "event-birthday": {
+    activeEventId: "event-birthday",
+    activeEventName: "First birthday album",
+    uploadState: {
+      pendingCount: 3,
+      uploadedCount: 124,
+      helperText: "Upload queue is local-only until backend adapters land.",
+    },
+    photos: [
+      {
+        id: "photo-cake",
+        caption: "Cake table setup",
+        uploadedBy: "Mina",
+        likeCount: 12,
+        likedByViewer: true,
+      },
+      {
+        id: "photo-family",
+        caption: "Family portrait",
+        uploadedBy: "Joon",
+        likeCount: 9,
+        likedByViewer: false,
+      },
+      {
+        id: "photo-gift",
+        caption: "Gift opening moment",
+        uploadedBy: "Ara",
+        likeCount: 7,
+        likedByViewer: true,
+      },
+    ],
+  },
+  "event-holiday": {
+    activeEventId: "event-holiday",
+    activeEventName: "Winter holiday trip",
+    uploadState: {
+      pendingCount: 1,
+      uploadedCount: 36,
+      helperText: "Upload queue is local-only until backend adapters land.",
+    },
+    photos: [
+      {
+        id: "photo-cabin",
+        caption: "Cabin arrival",
+        uploadedBy: "Soo",
+        likeCount: 4,
+        likedByViewer: false,
+      },
+    ],
+  },
+};
+
+export function getPrototypePhotoWorkflowViewModel(
+  eventId: string,
+): PrototypePhotoWorkflowViewModel {
+  const workflow = prototypePhotoWorkflows[eventId];
+
+  if (!workflow) {
+    throw new Error(`Unknown photo workflow event: ${eventId}`);
+  }
+
+  return workflow;
 }
