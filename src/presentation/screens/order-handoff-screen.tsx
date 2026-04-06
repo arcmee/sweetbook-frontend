@@ -23,6 +23,7 @@ type OrderHandoffScreenProps = {
   activeEventName?: string;
   estimatedPageCount?: number;
   pageLayouts?: Record<string, string>;
+  pageNotes?: Record<string, string>;
   selectedPhotoCount?: number;
   selectedPhotoCaptions?: string[];
   workspace: PrototypeWorkspaceViewModel;
@@ -37,6 +38,7 @@ export function OrderHandoffScreen({
   activeEventName,
   estimatedPageCount,
   pageLayouts = {},
+  pageNotes = {},
   selectedPhotoCount,
   selectedPhotoCaptions = [],
   workspace,
@@ -74,7 +76,12 @@ export function OrderHandoffScreen({
       ? selectedPhotoCount
       : fallbackSelectedPhotoCount;
   const draftPageCount = estimatedPageCount ?? activeOrderEntry.selectedCandidateCount * 2;
-  const pagePlan = buildOrderPagePlan(coverPhotoCaption, selectedPhotoCaptions, pageLayouts);
+  const pagePlan = buildOrderPagePlan(
+    coverPhotoCaption,
+    selectedPhotoCaptions,
+    pageLayouts,
+    pageNotes,
+  );
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -273,6 +280,7 @@ export function OrderHandoffScreen({
           {pagePlan.map((page) => (
             <li key={page.pageId}>
               {page.title}: {page.layout}
+              {page.note ? ` - ${page.note}` : ""}
             </li>
           ))}
           {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
@@ -301,14 +309,17 @@ function buildOrderPagePlan(
   coverPhotoCaption: string | undefined,
   selectedPhotoCaptions: string[],
   pageLayouts: Record<string, string>,
-): Array<{ pageId: string; title: string; layout: string }> {
-  const pages: Array<{ pageId: string; title: string; layout: string }> = [];
+  pageNotes: Record<string, string>,
+): Array<{ pageId: string; title: string; layout: string; note: string }> {
+  const pages: Array<{ pageId: string; title: string; layout: string; note: string }> = [];
 
   if (coverPhotoCaption) {
     pages.push({
       pageId: "cover",
       title: "Cover handoff",
       layout: pageLayouts.cover ?? "Full-bleed cover",
+      note:
+        pageNotes.cover ?? "Lead with the strongest event-defining moment on the cover.",
     });
   }
 
@@ -322,6 +333,11 @@ function buildOrderPagePlan(
       layout:
         pageLayouts[pageId] ??
         (spreadCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight"),
+      note:
+        pageNotes[pageId] ??
+        (spreadCount > 1
+          ? "Use this spread to balance detail shots with group moments."
+          : "Single-photo spread can spotlight a key memory beat."),
     });
   }
 

@@ -16,8 +16,10 @@ type AlbumCandidateScreenProps = {
   onMovePhotoLater?: (photoId: string) => void;
   onOpenOrder?: () => void;
   onSetPageLayout?: (pageId: string, layout: string) => void;
+  onSetPageNote?: (pageId: string, note: string) => void;
   onSetCoverPhoto?: (photoId: string) => void;
   pageLayouts?: Record<string, string>;
+  pageNotes?: Record<string, string>;
   selectedPhotoIds?: string[];
   workflow?: PrototypePhotoWorkflowViewModel;
   onTogglePhotoSelection?: (photoId: string) => void;
@@ -33,8 +35,10 @@ export function AlbumCandidateScreen({
   onMovePhotoLater,
   onOpenOrder,
   onSetPageLayout,
+  onSetPageNote,
   onSetCoverPhoto,
   pageLayouts = {},
+  pageNotes = {},
   selectedPhotoIds = [],
   workflow,
   onTogglePhotoSelection,
@@ -61,7 +65,7 @@ export function AlbumCandidateScreen({
   const layoutPhotos = selectedPhotos.filter((photo) => photo.id !== coverPhoto?.id);
   const previewPages =
     selectedPhotos.length > 0
-      ? buildPreviewPages(coverPhoto, layoutPhotos, pageLayouts)
+      ? buildPreviewPages(coverPhoto, layoutPhotos, pageLayouts, pageNotes)
       : activeReview.pagePreview;
 
   return (
@@ -125,19 +129,28 @@ export function AlbumCandidateScreen({
                 {"layout" in page ? <p>Layout: {page.layout}</p> : null}
                 {"editNote" in page ? <p>{page.editNote}</p> : null}
                 {"pageId" in page ? (
-                  <label>
-                    Page layout
-                    <select
-                      value={page.layout}
-                      onChange={(event) => onSetPageLayout?.(page.pageId, event.target.value)}
-                    >
-                      {getLayoutOptions(page.pageId === "cover").map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div>
+                    <label>
+                      Page layout
+                      <select
+                        value={page.layout}
+                        onChange={(event) => onSetPageLayout?.(page.pageId, event.target.value)}
+                      >
+                        {getLayoutOptions(page.pageId === "cover").map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Edit note
+                      <input
+                        value={page.editNote}
+                        onChange={(event) => onSetPageNote?.(page.pageId, event.target.value)}
+                      />
+                    </label>
+                  </div>
                 ) : null}
                 <p>{page.photoCaptions.join(", ")}</p>
               </li>
@@ -213,6 +226,7 @@ function buildPreviewPages(
     | undefined,
   layoutPhotos: PrototypePhotoWorkflowViewModel["photos"],
   pageLayouts: Record<string, string>,
+  pageNotes: Record<string, string>,
 ): Array<{
   editNote: string;
   layout: string;
@@ -233,7 +247,8 @@ function buildPreviewPages(
   if (coverPhoto) {
     const pageId = "cover";
     pages.push({
-      editNote: "Lead with the strongest event-defining moment on the cover.",
+      editNote:
+        pageNotes[pageId] ?? "Lead with the strongest event-defining moment on the cover.",
       layout: pageLayouts[pageId] ?? "Full-bleed cover",
       pageId,
       pageNumber: 1,
@@ -248,9 +263,10 @@ function buildPreviewPages(
     const pageId = `spread-${spreadNumber}`;
     pages.push({
       editNote:
-        spreadPhotos.length > 1
+        pageNotes[pageId] ??
+        (spreadPhotos.length > 1
           ? "Use this spread to balance detail shots with group moments."
-          : "Single-photo spread can spotlight a key memory beat.",
+          : "Single-photo spread can spotlight a key memory beat."),
       layout: pageLayouts[pageId] ?? getDefaultSpreadLayout(spreadPhotos.length),
       pageId,
       pageNumber: pages.length + 1,

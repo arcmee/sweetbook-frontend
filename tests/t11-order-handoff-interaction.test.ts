@@ -159,6 +159,11 @@ describe("order handoff interaction", () => {
             "spread-1": "Collage spread",
             "spread-2": "Caption-led story spread",
           },
+          pageNotes: {
+            cover: "Open with the portrait and title lockup.",
+            "spread-1": "Pair the balloon detail with the family wide shot.",
+            "spread-2": "Use the final spread for the celebration closer.",
+          },
           selectedPhotoCount: 3,
           selectedPhotoCaptions: [
             "Cake table setup",
@@ -185,8 +190,17 @@ describe("order handoff interaction", () => {
       "Story spreads: Cake table setup, Balloon arch, Family group shot",
     );
     expect(container.textContent).toContain("Cover handoff: Title-first cover");
+    expect(container.textContent).toContain(
+      "Open with the portrait and title lockup.",
+    );
     expect(container.textContent).toContain("Spread 1: Collage spread");
+    expect(container.textContent).toContain(
+      "Pair the balloon detail with the family wide shot.",
+    );
     expect(container.textContent).toContain("Spread 2: Caption-led story spread");
+    expect(container.textContent).toContain(
+      "Use the final spread for the celebration closer.",
+    );
     expect(container.textContent).toContain("Checkout setup");
     expect(container.textContent).toContain("Delivery details");
     expect(container.textContent).toContain("Checkout summary");
