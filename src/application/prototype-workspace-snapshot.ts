@@ -11,6 +11,12 @@ export type EventCardSnapshot = {
   name: string;
   groupName: string;
   status: "draft" | "collecting" | "ready";
+  description?: string;
+  votingStartsAt?: string;
+  votingEndsAt?: string;
+  votingClosedManually?: boolean;
+  canVote?: boolean;
+  canOwnerSelectPhotos?: boolean;
   photoCount: number;
 };
 
@@ -77,8 +83,26 @@ export type OrderEntrySnapshot = {
   };
 };
 
+export type GroupMemberSnapshot = {
+  groupId: string;
+  userId: string;
+  displayName: string;
+  role: string;
+};
+
+export type PendingInvitationSnapshot = {
+  invitationId: string;
+  groupId: string;
+  groupName: string;
+  invitedUserId?: string;
+  invitedUserDisplayName?: string;
+  invitedByDisplayName: string;
+};
+
 export type PrototypeWorkspaceSnapshot = {
   workspace: WorkspaceSnapshot;
+  groupMembers?: GroupMemberSnapshot[];
+  pendingInvitations?: PendingInvitationSnapshot[];
   photoWorkflows: PhotoWorkflowSnapshot[];
   candidateReviews: CandidateReviewSnapshot[];
   orderEntries: OrderEntrySnapshot[];

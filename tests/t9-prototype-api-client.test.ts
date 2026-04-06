@@ -6,6 +6,9 @@ import {
   requestPrototypeEventCreate,
   requestPrototypeAuthLogin,
   requestPrototypeAuthLogout,
+  requestPrototypeInvitationAccept,
+  requestPrototypeInvitationDecline,
+  requestPrototypePasswordChange,
   requestPrototypeGroupCreate,
   requestPrototypePhotoCreate,
   requestPrototypePhotoUpload,
@@ -135,6 +138,32 @@ describe("prototype api client", () => {
     });
   });
 
+  it("posts a password change request", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+    });
+
+    await requestPrototypePasswordChange(
+      {
+        currentPassword: "sweetbook123!",
+        nextPassword: "sweetbook456!",
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/account/password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword: "sweetbook123!",
+        nextPassword: "sweetbook456!",
+      }),
+    });
+  });
+
   it("posts a group creation request", async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
@@ -169,6 +198,9 @@ describe("prototype api client", () => {
       {
         groupId: "group-han",
         title: "Second birthday album",
+        description: "Collect the best second birthday moments.",
+        votingStartsAt: "2026-04-10T09:00:00.000Z",
+        votingEndsAt: "2026-04-17T09:00:00.000Z",
       },
       fetchImpl as typeof fetch,
     );
@@ -181,6 +213,9 @@ describe("prototype api client", () => {
       body: JSON.stringify({
         groupId: "group-han",
         title: "Second birthday album",
+        description: "Collect the best second birthday moments.",
+        votingStartsAt: "2026-04-10T09:00:00.000Z",
+        votingEndsAt: "2026-04-17T09:00:00.000Z",
       }),
     });
   });
@@ -209,6 +244,55 @@ describe("prototype api client", () => {
         caption: "Cake table setup",
       }),
     });
+  });
+
+  it("posts invitation accept and decline requests", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+    });
+
+    await requestPrototypeInvitationAccept(
+      {
+        invitationId: "invite-kim",
+        userId: "user-demo",
+      },
+      fetchImpl as typeof fetch,
+    );
+    await requestPrototypeInvitationDecline(
+      {
+        invitationId: "invite-kim",
+        userId: "user-demo",
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      1,
+      "/api/prototype/invitations/invite-kim/accept",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: "user-demo",
+        }),
+      },
+    );
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      "/api/prototype/invitations/invite-kim/decline",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: "user-demo",
+        }),
+      },
+    );
   });
 
   it("posts a photo like request", async () => {

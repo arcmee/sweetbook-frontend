@@ -1,74 +1,296 @@
 import { type ChangeEvent, type FormEvent, type ReactElement } from "react";
 
-import type { PrototypeWorkspaceViewModel } from "../../application/prototype-workspace";
+import type {
+  EventCardViewModel,
+  PrototypeGroupMemberViewModel,
+  PrototypeWorkspaceViewModel,
+} from "../../application/prototype-workspace";
 import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
+import { StatePanel } from "../ui/state-panel";
 
 type GroupScreenProps = {
+  activeGroupName?: string;
+  events: EventCardViewModel[];
+  inviteQuery?: string;
+  inviteResults?: Array<{ userId: string; username: string; displayName: string }>;
+  isInviteOpen?: boolean;
+  isInvitingMember?: boolean;
+  justJoinedByInvitation?: boolean;
+  members: PrototypeGroupMemberViewModel[];
   workspace: PrototypeWorkspaceViewModel;
-  createGroupName?: string;
-  isCreatingGroup?: boolean;
-  onCreateGroup?: () => void | Promise<void>;
-  onCreateGroupNameChange?: (value: string) => void;
-  onSelectGroup?: (groupId: string) => void;
+  createEventTitle?: string;
+  createEventDescription?: string;
+  createEventVotingStartsAt?: string;
+  createEventVotingEndsAt?: string;
+  isCreatingEvent?: boolean;
+  isLeavingGroup?: boolean;
+  isSearchingUsers?: boolean;
+  isTransferringOwner?: boolean;
+  onCreateEvent?: () => void | Promise<void>;
+  onCreateEventDescriptionChange?: (value: string) => void;
+  onCreateEventTitleChange?: (value: string) => void;
+  onCreateEventVotingStartsAtChange?: (value: string) => void;
+  onCreateEventVotingEndsAtChange?: (value: string) => void;
+  onInviteMember?: (userId: string) => void | Promise<void>;
+  onInviteQueryChange?: (value: string) => void;
+  onLeaveGroup?: () => void | Promise<void>;
+  onOpenEvent?: (eventId: string) => void;
+  onSearchInviteCandidates?: () => void | Promise<void>;
+  onToggleInviteOpen?: () => void;
+  onTransferOwner?: (userId: string) => void | Promise<void>;
   selectedGroupId?: string;
+  signedInUserId?: string;
 };
 
 export function GroupScreen({
+  activeGroupName,
+  events,
+  inviteQuery = "",
+  inviteResults = [],
+  isInviteOpen = false,
+  isInvitingMember = false,
+  justJoinedByInvitation = false,
+  members,
   workspace,
-  createGroupName = "",
-  isCreatingGroup = false,
-  onCreateGroup,
-  onCreateGroupNameChange,
-  onSelectGroup,
+  createEventTitle = "",
+  createEventDescription = "",
+  createEventVotingStartsAt = "",
+  createEventVotingEndsAt = "",
+  isCreatingEvent = false,
+  isLeavingGroup = false,
+  isSearchingUsers = false,
+  isTransferringOwner = false,
+  onCreateEvent,
+  onCreateEventDescriptionChange,
+  onCreateEventTitleChange,
+  onCreateEventVotingStartsAtChange,
+  onCreateEventVotingEndsAtChange,
+  onInviteMember,
+  onInviteQueryChange,
+  onLeaveGroup,
+  onOpenEvent,
+  onSearchInviteCandidates,
+  onToggleInviteOpen,
+  onTransferOwner,
   selectedGroupId,
+  signedInUserId,
 }: GroupScreenProps): ReactElement {
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    void onCreateGroup?.();
+    void onCreateEvent?.();
   }
 
   function handleNameChange(event: ChangeEvent<HTMLInputElement>): void {
-    onCreateGroupNameChange?.(event.target.value);
+    onCreateEventTitleChange?.(event.target.value);
   }
 
+  function handleDescriptionChange(event: ChangeEvent<HTMLTextAreaElement>): void {
+    onCreateEventDescriptionChange?.(event.target.value);
+  }
+
+  const activeMembership = members.find((member) => member.userId === signedInUserId);
+  const canManageMembers = activeMembership?.role === "Owner";
+  const canLeaveGroup = activeMembership?.role !== "Owner";
+  const votableEvents = events.filter((event) => event.canVote);
+
   return (
-    <PageSection
-      eyebrow="Group management"
-      title="Group workspace"
-      description="Invite relatives and define who can upload photos."
-    >
-      <form onSubmit={handleSubmit}>
-        <label>
-          New group name
-          <input
-            name="groupName"
-            value={createGroupName}
-            onChange={handleNameChange}
+    <>
+      <PageSection
+        eyebrow="Group page"
+        title={activeGroupName ?? "Group workspace"}
+        description="Review this group's event timeline, manage members, and start new event voting."
+      >
+        <p>
+          {workspace.groupSummary.totalGroups} groups, {workspace.groupSummary.totalMembers} members
+          are available in the workspace.
+        </p>
+        <p>{selectedGroupId ? "Current group is active." : "Select a group from the main page."}</p>
+        {justJoinedByInvitation ? (
+          <>
+            <StatePanel
+              tone="success"
+              title="You joined this group from an invitation"
+              description="Review the event list and member roles before you start uploading photos or voting."
+            />
+            <div>
+              <h3>Start here</h3>
+              {votableEvents.length > 0 ? (
+                <ul>
+                  {votableEvents.map((event) => (
+                    <li key={event.id}>
+                      <strong>{event.name}</strong>
+                      <span> Voting is open now.</span>
+                      <PrimaryAction
+                        label="Open event to vote"
+                        onClick={() => onOpenEvent?.(event.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No active voting is open in this group yet. You can still review the event list below.</p>
+              )}
+            </div>
+          </>
+        ) : null}
+      </PageSection>
+      <PageSection
+        eyebrow="Event list"
+        title="Events in this group"
+        description="Each event should show its description and voting period in later iterations."
+      >
+        <form onSubmit={handleSubmit}>
+          <label>
+            New event title
+            <input
+              name="eventTitle"
+              value={createEventTitle}
+              onChange={handleNameChange}
+            />
+          </label>
+          <label>
+            Event description
+            <textarea
+              name="eventDescription"
+              value={createEventDescription}
+              onChange={handleDescriptionChange}
+            />
+          </label>
+          <label>
+            Voting opens
+            <input
+              name="eventVotingStartsAt"
+              type="datetime-local"
+              value={createEventVotingStartsAt}
+              onChange={(event) => onCreateEventVotingStartsAtChange?.(event.target.value)}
+            />
+          </label>
+          <label>
+            Voting closes
+            <input
+              name="eventVotingEndsAt"
+              type="datetime-local"
+              value={createEventVotingEndsAt}
+              onChange={(event) => onCreateEventVotingEndsAtChange?.(event.target.value)}
+            />
+          </label>
+          <PrimaryAction
+            label={isCreatingEvent ? "Creating event..." : "Create event in this group"}
+            disabled={
+              isCreatingEvent ||
+              createEventTitle.trim().length === 0 ||
+              createEventDescription.trim().length === 0 ||
+              createEventVotingStartsAt.trim().length === 0 ||
+              createEventVotingEndsAt.trim().length === 0
+            }
+            type="submit"
           />
-        </label>
+        </form>
+        <ul>
+          {events.map((event) => (
+            <li key={event.id}>
+              <button type="button" onClick={() => onOpenEvent?.(event.id)}>
+                <strong>{event.name}</strong>
+              </button>
+              <p>{event.description}</p>
+              <span> {event.status}</span>
+              <span> {event.photoCount} photos</span>
+              <p>
+                Voting window: {formatVotingWindow(event.votingStartsAt, event.votingEndsAt)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </PageSection>
+      <PageSection
+        eyebrow="Members"
+        title="Group members"
+        description="Owner transfer, invitation popup, and leave-group rules should be implemented from this section."
+      >
+        <ul>
+          {members.map((member) => (
+            <li key={member.userId}>
+              <strong>{member.displayName}</strong>
+              <span> {member.role}</span>
+              {canManageMembers && member.userId !== signedInUserId ? (
+                <PrimaryAction
+                  label={isTransferringOwner ? "Transferring owner..." : "Transfer owner"}
+                  disabled={isTransferringOwner}
+                  onClick={() => void onTransferOwner?.(member.userId)}
+                />
+              ) : null}
+            </li>
+          ))}
+        </ul>
         <PrimaryAction
-          label={isCreatingGroup ? "Creating family group..." : "Create a family group"}
-          disabled={isCreatingGroup || createGroupName.trim().length === 0}
-          type="submit"
+          label={isInviteOpen ? "Close invite popup" : "Invite member by ID"}
+          onClick={onToggleInviteOpen}
         />
-      </form>
-      <p>
-        {workspace.groupSummary.totalGroups} groups, {workspace.groupSummary.totalMembers} members
-      </p>
-      <ul>
-        {workspace.groups.map((group) => (
-          <li key={group.id}>
-            <button type="button" onClick={() => onSelectGroup?.(group.id)}>
-              <strong>{group.name}</strong>
-            </button>
-            <span> {group.memberCount} members</span>
-            <span> {group.eventCount} events</span>
-            <span> {group.role}</span>
-            <span>{selectedGroupId === group.id ? " Active group" : ""}</span>
-          </li>
-        ))}
-      </ul>
-    </PageSection>
+        {isInviteOpen ? (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void onSearchInviteCandidates?.();
+            }}
+          >
+            <label>
+              Member ID search
+              <input
+                name="inviteQuery"
+                value={inviteQuery}
+                onChange={(event) => onInviteQueryChange?.(event.target.value)}
+              />
+            </label>
+            <PrimaryAction
+              label={isSearchingUsers ? "Searching..." : "Search members"}
+              disabled={isSearchingUsers || inviteQuery.trim().length === 0}
+              type="submit"
+            />
+            <ul>
+              {inviteResults.map((result) => (
+                <li key={result.userId}>
+                  <strong>{result.displayName}</strong>
+                  <span> @{result.username}</span>
+                  <span> {result.userId}</span>
+                  <PrimaryAction
+                    label={isInvitingMember ? "Inviting..." : "Invite"}
+                    disabled={isInvitingMember}
+                    onClick={() => void onInviteMember?.(result.userId)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </form>
+        ) : null}
+        <PrimaryAction
+          label={isLeavingGroup ? "Leaving group..." : "Leave group"}
+          disabled={!canLeaveGroup || isLeavingGroup}
+          onClick={() => void onLeaveGroup?.()}
+        />
+      </PageSection>
+    </>
   );
+}
+
+function formatVotingWindow(votingStartsAt?: string, votingEndsAt?: string): string {
+  if (!votingStartsAt || !votingEndsAt) {
+    return "Not scheduled";
+  }
+
+  return `${formatVotingDate(votingStartsAt)} -> ${formatVotingDate(votingEndsAt)}`;
+}
+
+function formatVotingDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
 }

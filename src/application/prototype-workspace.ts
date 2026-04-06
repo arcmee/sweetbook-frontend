@@ -15,6 +15,27 @@ export type CandidateCardViewModel = CandidateReviewSnapshot["candidates"][numbe
 export type PagePreviewViewModel = CandidateReviewSnapshot["pagePreview"][number];
 export type PrototypeCandidateReviewViewModel = CandidateReviewSnapshot;
 export type PrototypeOrderEntryViewModel = OrderEntrySnapshot;
+export type PrototypeGroupMemberViewModel = {
+  userId: string;
+  displayName: string;
+  role: string;
+};
+export type PrototypeDashboardEventViewModel = {
+  eventId: string;
+  eventName: string;
+  status: EventCardViewModel["status"];
+  previewPhotos: Array<{
+    photoId: string;
+    caption: string;
+    assetUrl?: string;
+    likeCount: number;
+  }>;
+};
+export type PrototypeDashboardGroupViewModel = {
+  groupId: string;
+  groupName: string;
+  events: PrototypeDashboardEventViewModel[];
+};
 
 const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
   workspace: {
@@ -44,6 +65,12 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         name: "First birthday album",
         groupName: "Han family",
         status: "collecting",
+        description: "Collect the best first birthday moments before the family vote closes.",
+        votingStartsAt: "2026-04-01T09:00:00.000Z",
+        votingEndsAt: "2026-04-14T09:00:00.000Z",
+        votingClosedManually: false,
+        canVote: true,
+        canOwnerSelectPhotos: false,
         photoCount: 124,
       },
       {
@@ -51,6 +78,12 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         name: "Winter holiday trip",
         groupName: "Park cousins",
         status: "draft",
+        description: "Prepare the holiday trip highlights before the cousins voting window opens.",
+        votingStartsAt: "2026-04-20T09:00:00.000Z",
+        votingEndsAt: "2026-04-30T09:00:00.000Z",
+        votingClosedManually: false,
+        canVote: false,
+        canOwnerSelectPhotos: false,
         photoCount: 36,
       },
     ],
@@ -163,6 +196,57 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
       },
     },
   ],
+  groupMembers: [
+    {
+      groupId: "group-han",
+      userId: "user-demo",
+      displayName: "SweetBook Demo User",
+      role: "Owner",
+    },
+    {
+      groupId: "group-han",
+      userId: "user-mina",
+      displayName: "Mina",
+      role: "Editor",
+    },
+    {
+      groupId: "group-han",
+      userId: "user-joon",
+      displayName: "Joon",
+      role: "Contributor",
+    },
+    {
+      groupId: "group-han",
+      userId: "user-ara",
+      displayName: "Ara",
+      role: "Contributor",
+    },
+    {
+      groupId: "group-park",
+      userId: "user-soo",
+      displayName: "Soo",
+      role: "Owner",
+    },
+    {
+      groupId: "group-park",
+      userId: "user-demo",
+      displayName: "SweetBook Demo User",
+      role: "Editor",
+    },
+    {
+      groupId: "group-park",
+      userId: "user-yuri",
+      displayName: "Yuri",
+      role: "Contributor",
+    },
+  ],
+  pendingInvitations: [
+    {
+      invitationId: "invite-kim",
+      groupName: "Kim family moments",
+      invitedByDisplayName: "Sena",
+    },
+  ],
 };
 
 export function getDefaultPrototypeWorkspaceSnapshot(): PrototypeWorkspaceSnapshot {
@@ -218,4 +302,69 @@ export function getPrototypeOrderEntryViewModel(
   }
 
   return orderEntry;
+}
+
+export function getPrototypeGroupMembersViewModel(
+  groupId: string,
+  snapshot: PrototypeWorkspaceSnapshot = defaultPrototypeWorkspaceSnapshot,
+): PrototypeGroupMemberViewModel[] {
+  const snapshotMembers =
+    snapshot.groupMembers?.filter((member) => member.groupId === groupId) ?? [];
+  if (snapshotMembers.length > 0) {
+    return snapshotMembers.map((member) => ({
+      userId: member.userId,
+      displayName: member.displayName,
+      role: member.role,
+    }));
+  }
+
+  const group = snapshot.workspace.groups.find((item) => item.id === groupId);
+  if (!group) {
+    throw new Error(`Unknown group members for group: ${groupId}`);
+  }
+
+  return [
+    {
+      userId: "user-demo",
+      displayName: "SweetBook Demo User",
+      role: group.role,
+    },
+  ];
+}
+
+export function getPrototypeDashboardGroupsViewModel(
+  snapshot: PrototypeWorkspaceSnapshot = defaultPrototypeWorkspaceSnapshot,
+): PrototypeDashboardGroupViewModel[] {
+  return snapshot.workspace.groups.map((group) => {
+    const events = snapshot.workspace.events
+      .filter((event) => event.groupName === group.name)
+      .filter((event) => event.status === "collecting" || event.status === "draft")
+      .map((event) => {
+        const workflow = snapshot.photoWorkflows.find(
+          (item) => item.activeEventId === event.id,
+        );
+        const previewPhotos = [...(workflow?.photos ?? [])]
+          .sort((left, right) => right.likeCount - left.likeCount)
+          .slice(0, 5)
+          .map((photo) => ({
+            photoId: photo.id,
+            caption: photo.caption,
+            assetUrl: photo.assetUrl,
+            likeCount: photo.likeCount,
+          }));
+
+        return {
+          eventId: event.id,
+          eventName: event.name,
+          status: event.status,
+          previewPhotos,
+        };
+      });
+
+    return {
+      groupId: group.id,
+      groupName: group.name,
+      events,
+    };
+  });
 }
