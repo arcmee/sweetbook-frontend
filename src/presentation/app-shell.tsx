@@ -61,6 +61,7 @@ export function AppShell({
   );
   const [workspacePending, setWorkspacePending] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  const [workspaceSuccess, setWorkspaceSuccess] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [createGroupName, setCreateGroupName] = useState("");
@@ -164,6 +165,7 @@ export function AppShell({
       setWorkspaceSnapshot(getDefaultPrototypeWorkspaceSnapshot());
       setWorkspacePending(false);
       setWorkspaceError(null);
+      setWorkspaceSuccess(null);
       setSelectedGroupId(null);
       setSelectedEventId(null);
       return;
@@ -209,11 +211,13 @@ export function AppShell({
 
     try {
       setIsCreatingGroup(true);
+      setWorkspaceSuccess(null);
       await requestPrototypeGroupCreate({
         name: nextGroupName,
       });
       await refreshWorkspace();
       setCreateGroupName("");
+      setWorkspaceSuccess(`Created group ${nextGroupName}.`);
     } catch (error: unknown) {
       setWorkspaceError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -236,12 +240,14 @@ export function AppShell({
 
     try {
       setIsCreatingEvent(true);
+      setWorkspaceSuccess(null);
       await requestPrototypeEventCreate({
         groupId: targetGroup.id,
         title: nextEventTitle,
       });
       await refreshWorkspace();
       setCreateEventTitle("");
+      setWorkspaceSuccess(`Created event ${nextEventTitle}.`);
     } catch (error: unknown) {
       setWorkspaceError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -373,6 +379,13 @@ export function AppShell({
           description={workspaceError}
         />
       ) : null}
+      {workspaceSuccess ? (
+        <StatePanel
+          tone="success"
+          title="Workspace updated"
+          description={workspaceSuccess}
+        />
+      ) : null}
 
       {currentRoute.key === "login" ? (
         <LoginScreen onLogin={handleLogin} />
@@ -405,11 +418,20 @@ export function AppShell({
       ) : null}
 
       {currentRoute.key === "albums" ? (
-        <AlbumCandidateScreen workspace={workspace} review={review} />
+        <AlbumCandidateScreen
+          workspace={workspace}
+          review={review}
+          activeGroupName={activeGroup?.name}
+          activeEventName={activeEvent?.name}
+        />
       ) : null}
 
       {currentRoute.key === "orders" ? (
-        <OrderHandoffScreen workspace={workspace} orderEntry={orderEntry} />
+        <OrderHandoffScreen
+          workspace={workspace}
+          orderEntry={orderEntry}
+          activeGroupName={activeGroup?.name}
+        />
       ) : null}
 
       {currentRoute.key !== "groups" &&

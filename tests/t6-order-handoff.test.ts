@@ -34,6 +34,8 @@ describe("frontend order entry and handoff", () => {
     );
 
     expect(markup).toContain("Order handoff");
+    expect(markup).toContain("Current group: Han family");
+    expect(markup).toContain("Current event: First birthday album");
     expect(markup).toContain("Start SweetBook order");
     expect(markup).toContain("3 shortlisted photos ready");
     expect(markup).toContain("Prototype order entry keeps payment and checkout out of scope.");
