@@ -193,10 +193,13 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain(
       "Open with the portrait and title lockup.",
     );
+    expect(container.textContent).toContain("1 photo slot planned");
     expect(container.textContent).toContain("Spread 1: Collage spread");
     expect(container.textContent).toContain(
       "Pair the balloon detail with the family wide shot.",
     );
+    expect(container.textContent).toContain("2 photo slots planned");
+    expect(container.textContent).toContain("Balloon arch, Family group shot");
     expect(container.textContent).toContain("Spread 2: Caption-led story spread");
     expect(container.textContent).toContain(
       "Use the final spread for the celebration closer.",

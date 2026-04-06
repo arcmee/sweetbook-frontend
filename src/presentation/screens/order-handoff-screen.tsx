@@ -279,8 +279,10 @@ export function OrderHandoffScreen({
           ) : null}
           {pagePlan.map((page) => (
             <li key={page.pageId}>
-              {page.title}: {page.layout}
+              <strong>{page.title}</strong>: {page.layout}
               {page.note ? ` - ${page.note}` : ""}
+              <p>{page.photoCount} photo slot{page.photoCount === 1 ? "" : "s"} planned</p>
+              <p>{page.photoCaptions.join(", ")}</p>
             </li>
           ))}
           {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
@@ -310,8 +312,22 @@ function buildOrderPagePlan(
   selectedPhotoCaptions: string[],
   pageLayouts: Record<string, string>,
   pageNotes: Record<string, string>,
-): Array<{ pageId: string; title: string; layout: string; note: string }> {
-  const pages: Array<{ pageId: string; title: string; layout: string; note: string }> = [];
+): Array<{
+  note: string;
+  pageId: string;
+  title: string;
+  layout: string;
+  photoCount: number;
+  photoCaptions: string[];
+}> {
+  const pages: Array<{
+    note: string;
+    pageId: string;
+    title: string;
+    layout: string;
+    photoCount: number;
+    photoCaptions: string[];
+  }> = [];
 
   if (coverPhotoCaption) {
     pages.push({
@@ -320,13 +336,16 @@ function buildOrderPagePlan(
       layout: pageLayouts.cover ?? "Full-bleed cover",
       note:
         pageNotes.cover ?? "Lead with the strongest event-defining moment on the cover.",
+      photoCount: 1,
+      photoCaptions: [coverPhotoCaption],
     });
   }
 
   for (let index = 0; index < selectedPhotoCaptions.length; index += 2) {
     const spreadNumber = index / 2 + 1;
     const pageId = `spread-${spreadNumber}`;
-    const spreadCount = selectedPhotoCaptions.slice(index, index + 2).length;
+    const spreadCaptions = selectedPhotoCaptions.slice(index, index + 2);
+    const spreadCount = spreadCaptions.length;
     pages.push({
       pageId,
       title: `Spread ${spreadNumber}`,
@@ -338,6 +357,8 @@ function buildOrderPagePlan(
         (spreadCount > 1
           ? "Use this spread to balance detail shots with group moments."
           : "Single-photo spread can spotlight a key memory beat."),
+      photoCount: spreadCount,
+      photoCaptions: spreadCaptions,
     });
   }
 

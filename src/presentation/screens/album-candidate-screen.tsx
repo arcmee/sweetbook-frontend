@@ -152,6 +152,7 @@ export function AlbumCandidateScreen({
                     </label>
                   </div>
                 ) : null}
+                <p>{page.photoCaptions.length} photo slot{page.photoCaptions.length === 1 ? "" : "s"} planned</p>
                 <p>{page.photoCaptions.join(", ")}</p>
               </li>
             ))}
