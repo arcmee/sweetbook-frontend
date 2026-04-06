@@ -228,5 +228,12 @@ describe("album page planner interaction", () => {
     });
 
     expect(container.textContent).toContain("Draft readiness: 1 ready, 1 need review.");
+    expect(container.textContent).toContain(
+      "Resolve the flagged pages before opening the SweetBook order handoff.",
+    );
+    const continueButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Continue to order setup",
+    ) as HTMLButtonElement | undefined;
+    expect(continueButton?.disabled).toBe(true);
   });
 });

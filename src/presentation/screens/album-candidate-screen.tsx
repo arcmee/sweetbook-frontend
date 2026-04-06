@@ -85,10 +85,13 @@ export function AlbumCandidateScreen({
         <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
         <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
+        {reviewPageCount > 0 ? (
+          <p>Resolve the flagged pages before opening the SweetBook order handoff.</p>
+        ) : null}
         <PrimaryAction
           label="Continue to order setup"
           onClick={onOpenOrder}
-          disabled={selectedPhotos.length === 0}
+          disabled={selectedPhotos.length === 0 || reviewPageCount > 0}
         />
       </PageSection>
 

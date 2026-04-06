@@ -188,6 +188,9 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Estimated draft pages: 6");
     expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
     expect(container.textContent).toContain(
+      "Resolve the flagged draft pages before this SweetBook handoff can be submitted.",
+    );
+    expect(container.textContent).toContain(
       "Story spreads: Cake table setup, Balloon arch, Family group shot",
     );
     expect(container.textContent).toContain("Cover handoff: Title-first cover");
@@ -260,14 +263,7 @@ describe("order handoff interaction", () => {
 
     const buttons = Array.from(container.querySelectorAll("button"));
     const submitButton = buttons.find((button) => button.textContent === "Submit SweetBook order");
-    expect(submitButton?.textContent).toBe("Submit SweetBook order");
-
-    await act(async () => {
-      submitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(requestSubmit).toHaveBeenCalledTimes(1);
-    expect(container.textContent).toContain("SweetBook order submitted");
-    expect(container.textContent).toContain("Sandbox order ord_1 was submitted");
+    expect(submitButton).toBeUndefined();
+    expect(requestSubmit).toHaveBeenCalledTimes(0);
   });
 });
