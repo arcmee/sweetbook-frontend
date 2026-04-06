@@ -29,11 +29,26 @@ describe("frontend group and event screens", () => {
       buildAppShell({ currentRouteKey: "groups", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Group workspace");
-    expect(markup).toContain("Create a family group");
-    expect(markup).toContain("New group name");
+    expect(markup).toContain("Group page");
+    expect(markup).toContain("Events in this group");
+    expect(markup).toContain("Create event in this group");
+    expect(markup).toContain("Event description");
+    expect(markup).toContain("Voting opens");
     expect(markup).toContain("Han family");
-    expect(markup).toContain("Invite relatives and define who can upload photos.");
+    expect(markup).toContain("Group members");
+  });
+
+  it("renders a main dashboard grouped by family events", () => {
+    const markup = renderToStaticMarkup(
+      buildAppShell({ currentRouteKey: "dashboard", initialSession: demoSession }),
+    );
+
+    expect(markup).toContain("Active family voting");
+    expect(markup).toContain("What needs your attention");
+    expect(markup).toContain("No urgent actions are waiting right now.");
+    expect(markup).toContain("Open group page");
+    expect(markup).toContain("Han family");
+    expect(markup).toContain("First birthday album");
   });
 
   it("renders an event management screen with a selected group context", () => {
@@ -41,11 +56,10 @@ describe("frontend group and event screens", () => {
       buildAppShell({ currentRouteKey: "events", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Event timeline");
-    expect(markup).toContain("Plan a new event");
-    expect(markup).toContain("New event title");
+    expect(markup).toContain("Event page");
     expect(markup).toContain("Active group");
     expect(markup).toContain("First birthday album");
-    expect(markup).toContain("Capture milestones before moving into album selection.");
+    expect(markup).toContain("Collect the best first birthday moments before the family vote closes.");
+    expect(markup).toContain("Members upload event photos here and vote during the active collection window.");
   });
 });

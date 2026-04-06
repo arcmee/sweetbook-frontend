@@ -19,6 +19,8 @@ import { StatePanel } from "../ui/state-panel";
 
 type OrderHandoffScreenProps = {
   activeGroupName?: string;
+  activeEventName?: string;
+  selectedPhotoCaptions?: string[];
   workspace: PrototypeWorkspaceViewModel;
   orderEntry?: PrototypeOrderEntryViewModel;
   requestEstimate?: () => Promise<PrototypeSweetBookEstimate>;
@@ -27,6 +29,8 @@ type OrderHandoffScreenProps = {
 
 export function OrderHandoffScreen({
   activeGroupName,
+  activeEventName,
+  selectedPhotoCaptions = [],
   workspace,
   orderEntry,
   requestEstimate = requestPrototypeSweetBookEstimate,
@@ -91,8 +95,11 @@ export function OrderHandoffScreen({
           onClick={handleEstimateRequest}
         />
         <p>Current group: {activeGroupName ?? "No active group"}</p>
-        <p>Current event: {activeOrderEntry.activeEventName}</p>
-        <p>{activeOrderEntry.selectedCandidateCount} shortlisted photos ready</p>
+        <p>Current event: {activeEventName ?? activeOrderEntry.activeEventName}</p>
+        <p>{selectedPhotoCaptions.length || activeOrderEntry.selectedCandidateCount} shortlisted photos ready</p>
+        {selectedPhotoCaptions.length > 0 ? (
+          <p>Owner selection: {selectedPhotoCaptions.join(", ")}</p>
+        ) : null}
         {canSubmitOrder ? (
           <PrimaryAction
             label={isSubmittingOrder ? "Submitting SweetBook order..." : "Submit SweetBook order"}
@@ -156,6 +163,9 @@ export function OrderHandoffScreen({
       >
         <p>{activeOrderEntry.handoffSummary.bookFormat}</p>
         <ul>
+          {selectedPhotoCaptions.length > 0 ? (
+            <li>{selectedPhotoCaptions.length} owner-approved photos</li>
+          ) : null}
           {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
             <li key={section}>{section}</li>
           ))}

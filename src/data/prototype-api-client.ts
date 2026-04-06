@@ -122,6 +122,9 @@ export async function requestPrototypeEventCreate(
   input: {
     groupId: string;
     title: string;
+    description: string;
+    votingStartsAt: string;
+    votingEndsAt: string;
   },
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
@@ -135,6 +138,217 @@ export async function requestPrototypeEventCreate(
 
   if (!response.ok && response.status !== 201) {
     throw new Error(`Failed to create prototype event: ${response.status}`);
+  }
+}
+
+export async function requestPrototypePasswordChange(
+  input: {
+    currentPassword: string;
+    nextPassword: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/account/password"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`Failed to change prototype password: ${response.status}`);
+  }
+}
+
+export async function searchPrototypeUsers(
+  query: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Array<{ userId: string; username: string; displayName: string }>> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/users/search?q=${encodeURIComponent(query)}`),
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to search prototype users: ${response.status}`);
+  }
+
+  return (await response.json()) as Array<{
+    userId: string;
+    username: string;
+    displayName: string;
+  }>;
+}
+
+export async function requestPrototypeGroupInvite(
+  input: {
+    groupId: string;
+    userId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/groups/${encodeURIComponent(input.groupId)}/invitations`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: input.userId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 201) {
+    throw new Error(`Failed to invite prototype member: ${response.status}`);
+  }
+}
+
+export async function requestPrototypeInvitationAccept(
+  input: {
+    invitationId: string;
+    userId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(
+      `/api/prototype/invitations/${encodeURIComponent(input.invitationId)}/accept`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: input.userId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to accept prototype invitation: ${response.status}`);
+  }
+}
+
+export async function requestPrototypeInvitationDecline(
+  input: {
+    invitationId: string;
+    userId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(
+      `/api/prototype/invitations/${encodeURIComponent(input.invitationId)}/decline`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: input.userId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to decline prototype invitation: ${response.status}`);
+  }
+}
+
+export async function requestPrototypeOwnerTransfer(
+  input: {
+    groupId: string;
+    nextOwnerUserId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/groups/${encodeURIComponent(input.groupId)}/owner`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nextOwnerUserId: input.nextOwnerUserId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to transfer prototype owner: ${response.status}`);
+  }
+}
+
+export async function requestPrototypeGroupLeave(
+  input: {
+    groupId: string;
+    userId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/groups/${encodeURIComponent(input.groupId)}/leave`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: input.userId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to leave prototype group: ${response.status}`);
+  }
+}
+
+export async function requestPrototypeEventVotingClose(
+  input: {
+    eventId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/events/${encodeURIComponent(input.eventId)}/close-voting`),
+    {
+      method: "POST",
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to close prototype event voting: ${response.status}`);
+  }
+}
+
+export async function requestPrototypeEventVotingExtend(
+  input: {
+    eventId: string;
+    votingEndsAt: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/events/${encodeURIComponent(input.eventId)}/extend-voting`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        votingEndsAt: input.votingEndsAt,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to extend prototype event voting: ${response.status}`);
   }
 }
 

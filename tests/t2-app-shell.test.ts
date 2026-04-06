@@ -52,9 +52,14 @@ describe("frontend app shell foundation", () => {
     expect(markup).toContain("SweetBook");
     expect(markup).toContain("Prototype workspace");
     expect(markup).toContain("Login");
-    expect(markup).toContain("Groups");
-    expect(markup).toContain("Group workspace");
-    expect(markup).toContain("Create a family group");
+    expect(markup).toContain("Group");
+    expect(markup).toContain("Events in this group");
+    expect(markup).toContain("Group members");
+    expect(markup).toContain("Account");
+    expect(markup).toContain("My groups");
+    expect(markup).toContain("Notifications");
+    expect(markup).toContain("Accept invite");
+    expect(markup).toContain("Decline");
   });
 
   it("resolves browser paths back to the matching route", () => {

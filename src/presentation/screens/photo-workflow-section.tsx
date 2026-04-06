@@ -5,6 +5,7 @@ import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
 
 type PhotoWorkflowSectionProps = {
+  canVote?: boolean;
   createPhotoCaption?: string;
   createPhotoFileName?: string;
   isCreatingPhoto?: boolean;
@@ -17,6 +18,7 @@ type PhotoWorkflowSectionProps = {
 };
 
 export function PhotoWorkflowSection({
+  canVote = true,
   createPhotoCaption = "",
   createPhotoFileName,
   isCreatingPhoto = false,
@@ -98,7 +100,7 @@ export function PhotoWorkflowSection({
             ) : null}
             <PrimaryAction
               label={isLikingPhoto ? "Saving like..." : "Like photo"}
-              disabled={isLikingPhoto || photo.likedByViewer}
+              disabled={isLikingPhoto || photo.likedByViewer || !canVote}
               onClick={() => onLikePhoto?.(photo.id)}
             />
           </li>

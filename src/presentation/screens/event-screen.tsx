@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent, ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import {
   getPrototypePhotoWorkflowViewModel,
@@ -6,44 +6,39 @@ import {
   type PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
 import { PageSection } from "../ui/page-section";
-import { PrimaryAction } from "../ui/primary-action";
 import { PhotoWorkflowSection } from "./photo-workflow-section";
 
 type EventScreenProps = {
+  canManageVoting?: boolean;
   workspace: PrototypeWorkspaceViewModel;
-  createEventTitle?: string;
   createPhotoCaption?: string;
   createPhotoFileName?: string;
-  isCreatingEvent?: boolean;
   isCreatingPhoto?: boolean;
   isLikingPhoto?: boolean;
-  onCreateEvent?: () => void | Promise<void>;
-  onCreateEventTitleChange?: (value: string) => void;
+  onCloseVoting?: () => void | Promise<void>;
   onCreatePhoto?: () => void | Promise<void>;
   onCreatePhotoCaptionChange?: (value: string) => void;
   onCreatePhotoFileChange?: (file: File | null) => void;
+  onExtendVoting?: () => void | Promise<void>;
   onLikePhoto?: (photoId: string) => void | Promise<void>;
-  onSelectEvent?: (eventId: string) => void;
   selectedEventId?: string;
   selectedGroupName?: string;
   workflow?: PrototypePhotoWorkflowViewModel;
 };
 
 export function EventScreen({
+  canManageVoting = false,
   workspace,
-  createEventTitle = "",
   createPhotoCaption = "",
   createPhotoFileName,
-  isCreatingEvent = false,
   isCreatingPhoto = false,
   isLikingPhoto = false,
-  onCreateEvent,
-  onCreateEventTitleChange,
+  onCloseVoting,
   onCreatePhoto,
   onCreatePhotoCaptionChange,
   onCreatePhotoFileChange,
+  onExtendVoting,
   onLikePhoto,
-  onSelectEvent,
   selectedEventId,
   selectedGroupName,
   workflow,
@@ -53,54 +48,48 @@ export function EventScreen({
   const photoWorkflow =
     workflow ?? getPrototypePhotoWorkflowViewModel(activeEvent?.id ?? "");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    void onCreateEvent?.();
-  }
-
-  function handleTitleChange(event: ChangeEvent<HTMLInputElement>): void {
-    onCreateEventTitleChange?.(event.target.value);
-  }
-
   return (
     <>
       <PageSection
-        eyebrow="Event management"
-        title="Event timeline"
-        description="Capture milestones before moving into album selection."
+        eyebrow="Event page"
+        title={activeEvent?.name ?? "Event workspace"}
+        description="Members upload event photos here and vote during the active collection window."
       >
-        <form onSubmit={handleSubmit}>
-          <label>
-            New event title
-            <input
-              name="eventTitle"
-              value={createEventTitle}
-              onChange={handleTitleChange}
-            />
-          </label>
-          <PrimaryAction
-            label={isCreatingEvent ? "Creating event..." : "Plan a new event"}
-            disabled={isCreatingEvent || createEventTitle.trim().length === 0}
-            type="submit"
-          />
-        </form>
         <p>Active group</p>
         <p>{selectedGroupName ?? "No active group"}</p>
-        <ul>
-          {workspace.events.map((event) => (
-            <li key={event.id}>
-              <button type="button" onClick={() => onSelectEvent?.(event.id)}>
-                <strong>{event.name}</strong>
-              </button>
-              <span> {event.groupName}</span>
-              <span> {event.status}</span>
-              <span> {event.photoCount} photos</span>
-              <span>{selectedEventId === event.id ? " Active event" : ""}</span>
-            </li>
-          ))}
-        </ul>
+        <p>{activeEvent?.description ?? "No event description yet."}</p>
+        <p>Voting status: {activeEvent?.status ?? "draft"}</p>
+        <p>
+          Voting window:{" "}
+          {activeEvent
+            ? `${formatVotingDate(activeEvent.votingStartsAt)} -> ${formatVotingDate(
+                activeEvent.votingEndsAt,
+              )}`
+            : "Not scheduled"}
+        </p>
+        <p>
+          {activeEvent?.canVote
+            ? "Members can still upload and vote in this event."
+            : "Voting is not open for this event right now."}
+        </p>
+        <p>{activeEvent?.photoCount ?? 0} photos currently belong to this event.</p>
+        {canManageVoting ? (
+          <>
+            <button type="button" onClick={() => void onExtendVoting?.()}>
+              Extend voting by 3 days
+            </button>
+            <button
+              type="button"
+              onClick={() => void onCloseVoting?.()}
+              disabled={activeEvent?.canOwnerSelectPhotos}
+            >
+              Close voting now
+            </button>
+          </>
+        ) : null}
       </PageSection>
       <PhotoWorkflowSection
+        canVote={activeEvent?.canVote ?? false}
         workflow={photoWorkflow}
         createPhotoCaption={createPhotoCaption}
         createPhotoFileName={createPhotoFileName}
@@ -113,4 +102,22 @@ export function EventScreen({
       />
     </>
   );
+}
+
+function formatVotingDate(value?: string): string {
+  if (!value) {
+    return "Not scheduled";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
 }

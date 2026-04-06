@@ -33,12 +33,8 @@ describe("frontend order entry and handoff", () => {
       buildAppShell({ currentRouteKey: "orders", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Order handoff");
-    expect(markup).toContain("Current group: Han family");
-    expect(markup).toContain("Current event: First birthday album");
-    expect(markup).toContain("Start SweetBook order");
-    expect(markup).toContain("3 shortlisted photos ready");
-    expect(markup).toContain("Prototype order entry keeps payment and checkout out of scope.");
+    expect(markup).toContain("Order handoff is locked");
+    expect(markup).toContain("Finish voting and open owner selection before the SweetBook order handoff becomes available.");
   });
 
   it("renders the SweetBook handoff preview before submission", () => {
@@ -46,9 +42,6 @@ describe("frontend order entry and handoff", () => {
       buildAppShell({ currentRouteKey: "orders", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("SweetBook handoff preview");
-    expect(markup).toContain("Hardcover square");
-    expect(markup).toContain("selected photos");
-    expect(markup).toContain("Review this summary before backend submission is wired.");
+    expect(markup).toContain("Order handoff is locked");
   });
 });

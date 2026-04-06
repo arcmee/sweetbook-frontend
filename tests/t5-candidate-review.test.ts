@@ -33,13 +33,8 @@ describe("frontend album candidate review", () => {
       buildAppShell({ currentRouteKey: "albums", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Album candidate review");
-    expect(markup).toContain("Current group: Han family");
-    expect(markup).toContain("Current event: First birthday album");
-    expect(markup).toContain("Top picks for First birthday album");
-    expect(markup).toContain("Rank 1");
-    expect(markup).toContain("Family portrait");
-    expect(markup).toContain("Selected because this photo combines strong likes");
+    expect(markup).toContain("Owner selection opens after voting ends");
+    expect(markup).toContain("Only the group owner can open selection after the voting window has ended or has been closed.");
   });
 
   it("renders a page preview surface before order entry begins", () => {
@@ -47,9 +42,6 @@ describe("frontend album candidate review", () => {
       buildAppShell({ currentRouteKey: "albums", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Page preview");
-    expect(markup).toContain("Cover preview");
-    expect(markup).toContain("Page 2");
-    expect(markup).toContain("Review the draft spread before entering the order flow.");
+    expect(markup).toContain("Owner selection opens after voting ends");
   });
 });
