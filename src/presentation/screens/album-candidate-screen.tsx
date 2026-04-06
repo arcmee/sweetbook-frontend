@@ -9,11 +9,15 @@ import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
 
 type AlbumCandidateScreenProps = {
+  activeGroupName?: string;
+  activeEventName?: string;
   workspace: PrototypeWorkspaceViewModel;
   review?: PrototypeCandidateReviewViewModel;
 };
 
 export function AlbumCandidateScreen({
+  activeGroupName,
+  activeEventName,
   workspace,
   review,
 }: AlbumCandidateScreenProps): ReactElement {
@@ -28,6 +32,8 @@ export function AlbumCandidateScreen({
         title="Album candidate review"
         description="Review the draft spread before entering the order flow."
       >
+        <p>Current group: {activeGroupName ?? "No active group"}</p>
+        <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
         <PrimaryAction label="Refresh candidate set" />
         <p>Top picks for {activeReview.activeEventName}</p>
         <ul>

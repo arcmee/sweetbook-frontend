@@ -287,6 +287,8 @@ describe("prototype auth ui", () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
     expect(container.textContent).toContain("Cho family");
+    expect(container.textContent).toContain("Workspace updated");
+    expect(container.textContent).toContain("Created group Cho family.");
   });
 
   it("switches the active group and event context when the user selects a different item", async () => {
@@ -596,6 +598,7 @@ describe("prototype auth ui", () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
     expect(container.textContent).toContain("Graduation album");
+    expect(container.textContent).toContain("Created event Graduation album.");
   });
 });
 
