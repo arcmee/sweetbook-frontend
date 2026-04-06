@@ -12,9 +12,15 @@ import { PhotoWorkflowSection } from "./photo-workflow-section";
 type EventScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
   createEventTitle?: string;
+  createPhotoCaption?: string;
   isCreatingEvent?: boolean;
+  isCreatingPhoto?: boolean;
+  isLikingPhoto?: boolean;
   onCreateEvent?: () => void | Promise<void>;
   onCreateEventTitleChange?: (value: string) => void;
+  onCreatePhoto?: () => void | Promise<void>;
+  onCreatePhotoCaptionChange?: (value: string) => void;
+  onLikePhoto?: (photoId: string) => void | Promise<void>;
   onSelectEvent?: (eventId: string) => void;
   selectedEventId?: string;
   selectedGroupName?: string;
@@ -24,9 +30,15 @@ type EventScreenProps = {
 export function EventScreen({
   workspace,
   createEventTitle = "",
+  createPhotoCaption = "",
   isCreatingEvent = false,
+  isCreatingPhoto = false,
+  isLikingPhoto = false,
   onCreateEvent,
   onCreateEventTitleChange,
+  onCreatePhoto,
+  onCreatePhotoCaptionChange,
+  onLikePhoto,
   onSelectEvent,
   selectedEventId,
   selectedGroupName,
@@ -84,7 +96,15 @@ export function EventScreen({
           ))}
         </ul>
       </PageSection>
-      <PhotoWorkflowSection workflow={photoWorkflow} />
+      <PhotoWorkflowSection
+        workflow={photoWorkflow}
+        createPhotoCaption={createPhotoCaption}
+        isCreatingPhoto={isCreatingPhoto}
+        isLikingPhoto={isLikingPhoto}
+        onCreatePhoto={onCreatePhoto}
+        onCreatePhotoCaptionChange={onCreatePhotoCaptionChange}
+        onLikePhoto={onLikePhoto}
+      />
     </>
   );
 }

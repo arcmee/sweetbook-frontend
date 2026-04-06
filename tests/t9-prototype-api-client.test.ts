@@ -7,6 +7,8 @@ import {
   requestPrototypeAuthLogin,
   requestPrototypeAuthLogout,
   requestPrototypeGroupCreate,
+  requestPrototypePhotoCreate,
+  requestPrototypePhotoLike,
 } from "../src/data/prototype-api-client";
 
 describe("prototype api client", () => {
@@ -178,6 +180,57 @@ describe("prototype api client", () => {
       body: JSON.stringify({
         groupId: "group-han",
         title: "Second birthday album",
+      }),
+    });
+  });
+
+  it("posts a photo creation request", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+    });
+
+    await requestPrototypePhotoCreate(
+      {
+        eventId: "event-birthday",
+        caption: "Cake table setup",
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/photos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        eventId: "event-birthday",
+        caption: "Cake table setup",
+      }),
+    });
+  });
+
+  it("posts a photo like request", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+    });
+
+    await requestPrototypePhotoLike(
+      {
+        photoId: "photo-cake",
+        userId: "user-demo",
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/photos/photo-cake/likes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: "user-demo",
       }),
     });
   });

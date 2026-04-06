@@ -34,6 +34,7 @@ describe("frontend photo upload and like screens", () => {
     );
 
     expect(markup).toContain("Upload photos");
+    expect(markup).toContain("New photo caption");
     expect(markup).toContain("3 pending uploads");
     expect(markup).toContain("124 already in the event");
     expect(markup).toContain("Upload queue is local-only until backend adapters land.");
@@ -45,6 +46,7 @@ describe("frontend photo upload and like screens", () => {
     );
 
     expect(markup).toContain("Like feedback");
+    expect(markup).toContain("Like photo");
     expect(markup).toContain("Liked by you");
     expect(markup).toContain("9 likes");
     expect(markup).toContain("Choose favorites before candidate review begins.");
