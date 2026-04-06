@@ -1,11 +1,17 @@
 import { useState, type ReactElement } from "react";
 
-import type { PrototypeSweetBookEstimate } from "../../application/prototype-sweetbook-estimate";
+import type {
+  PrototypeSweetBookEstimate,
+  PrototypeSweetBookSubmitResult,
+} from "../../application/prototype-sweetbook-estimate";
 import {
   getPrototypeOrderEntryViewModel,
   type PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
-import { requestPrototypeSweetBookEstimate } from "../../data/prototype-api-client";
+import {
+  requestPrototypeSweetBookEstimate,
+  requestPrototypeSweetBookSubmit,
+} from "../../data/prototype-api-client";
 import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
@@ -13,22 +19,30 @@ import { StatePanel } from "../ui/state-panel";
 type OrderHandoffScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
   requestEstimate?: () => Promise<PrototypeSweetBookEstimate>;
+  requestSubmit?: () => Promise<PrototypeSweetBookSubmitResult>;
 };
 
 export function OrderHandoffScreen({
   workspace,
   requestEstimate = requestPrototypeSweetBookEstimate,
+  requestSubmit = requestPrototypeSweetBookSubmit,
 }: OrderHandoffScreenProps): ReactElement {
   const activeEvent = workspace.events[0];
   const orderEntry = getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
   const [isRunningEstimate, setIsRunningEstimate] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [estimateResult, setEstimateResult] =
     useState<PrototypeSweetBookEstimate | null>(null);
+  const [submitResult, setSubmitResult] =
+    useState<PrototypeSweetBookSubmitResult | null>(null);
   const [estimateError, setEstimateError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
     setEstimateError(null);
+    setSubmitError(null);
+    setSubmitResult(null);
 
     try {
       const result = await requestEstimate();
@@ -40,6 +54,23 @@ export function OrderHandoffScreen({
       setIsRunningEstimate(false);
     }
   }
+
+  async function handleSubmitRequest(): Promise<void> {
+    setIsSubmittingOrder(true);
+    setSubmitError(null);
+
+    try {
+      const result = await requestSubmit();
+      setSubmitResult(result);
+    } catch (error: unknown) {
+      setSubmitError(error instanceof Error ? error.message : String(error));
+      setSubmitResult(null);
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  }
+
+  const canSubmitOrder = estimateResult?.status === "ready_for_order";
 
   return (
     <>
@@ -55,6 +86,13 @@ export function OrderHandoffScreen({
         />
         <p>{orderEntry.selectedCandidateCount} shortlisted photos ready</p>
         <p>{orderEntry.activeEventName}</p>
+        {canSubmitOrder ? (
+          <PrimaryAction
+            label={isSubmittingOrder ? "Submitting SweetBook order..." : "Submit SweetBook order"}
+            disabled={isSubmittingOrder}
+            onClick={handleSubmitRequest}
+          />
+        ) : null}
         {isRunningEstimate ? (
           <StatePanel
             tone="loading"
@@ -80,6 +118,27 @@ export function OrderHandoffScreen({
                 : "SweetBook credits need a top-up"
             }
             description={buildEstimateSummary(estimateResult)}
+          />
+        ) : null}
+        {isSubmittingOrder ? (
+          <StatePanel
+            tone="loading"
+            title="SweetBook order submission in progress"
+            description="The backend is submitting the prepared sandbox order to SweetBook."
+          />
+        ) : null}
+        {submitError ? (
+          <StatePanel
+            tone="error"
+            title="SweetBook order submission failed"
+            description={submitError}
+          />
+        ) : null}
+        {submitResult ? (
+          <StatePanel
+            tone="success"
+            title="SweetBook order submitted"
+            description={`Sandbox order ${submitResult.order.orderUid} was submitted for ${submitResult.bookUid}.`}
           />
         ) : null}
       </PageSection>
