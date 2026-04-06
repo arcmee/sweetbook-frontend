@@ -1,9 +1,10 @@
-import type { ReactElement } from "react";
+import { useEffect, useState, type MouseEvent, type ReactElement } from "react";
 
 import { getPrototypeWorkspaceViewModel } from "../application/prototype-workspace";
 import {
   appRoutes,
   defaultRouteKey,
+  getRouteByPath,
   getRouteByKey,
   type AppRouteKey,
 } from "./routes";
@@ -20,10 +21,68 @@ type AppShellProps = {
 };
 
 export function AppShell({
-  currentRouteKey = defaultRouteKey,
+  currentRouteKey,
 }: AppShellProps): ReactElement {
-  const currentRoute = getRouteByKey(currentRouteKey);
+  const [activeRouteKey, setActiveRouteKey] = useState<AppRouteKey>(() => {
+    if (currentRouteKey) {
+      return currentRouteKey;
+    }
+
+    if (typeof window === "undefined") {
+      return defaultRouteKey;
+    }
+
+    return getRouteByPath(window.location.pathname).key;
+  });
+
+  useEffect(() => {
+    if (currentRouteKey) {
+      setActiveRouteKey(currentRouteKey);
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncRouteFromLocation = () => {
+      setActiveRouteKey(getRouteByPath(window.location.pathname).key);
+    };
+
+    syncRouteFromLocation();
+    window.addEventListener("popstate", syncRouteFromLocation);
+
+    return () => {
+      window.removeEventListener("popstate", syncRouteFromLocation);
+    };
+  }, [currentRouteKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (window.location.pathname === "/") {
+      window.history.replaceState({}, "", getRouteByKey(activeRouteKey).path);
+    }
+  }, [activeRouteKey]);
+
+  const currentRoute = getRouteByKey(activeRouteKey);
   const workspace = getPrototypeWorkspaceViewModel();
+
+  function handleNavigation(
+    event: MouseEvent<HTMLAnchorElement>,
+    routeKey: AppRouteKey,
+  ): void {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    event.preventDefault();
+    const route = getRouteByKey(routeKey);
+    window.history.pushState({}, "", route.path);
+    setActiveRouteKey(routeKey);
+  }
 
   return (
     <main>
@@ -39,7 +98,13 @@ export function AppShell({
             .filter((route) => route.showInNavigation)
             .map((route) => (
               <li key={route.key}>
-                <a href={route.path}>{route.label}</a>
+                <a
+                  href={route.path}
+                  aria-current={currentRoute.key === route.key ? "page" : undefined}
+                  onClick={(event) => handleNavigation(event, route.key)}
+                >
+                  {route.label}
+                </a>
               </li>
             ))}
         </ul>

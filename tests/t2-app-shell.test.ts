@@ -3,7 +3,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { buildAppShell } from "../src/presentation/app";
-import { appRoutes, defaultRouteKey } from "../src/presentation/routes";
+import {
+  appRoutes,
+  defaultRouteKey,
+  getRouteByPath,
+} from "../src/presentation/routes";
 import { PageSection } from "../src/presentation/ui/page-section";
 import { PrimaryAction } from "../src/presentation/ui/primary-action";
 import { StatePanel } from "../src/presentation/ui/state-panel";
@@ -40,6 +44,12 @@ describe("frontend app shell foundation", () => {
     expect(markup).toContain("Groups");
     expect(markup).toContain("Group workspace");
     expect(markup).toContain("Create a family group");
+  });
+
+  it("resolves browser paths back to the matching route", () => {
+    expect(getRouteByPath("/app/orders").key).toBe("orders");
+    expect(getRouteByPath("/app/orders/").key).toBe("orders");
+    expect(getRouteByPath("/unknown").key).toBe("login");
   });
 
   it("exports shared UI primitives for later feature screens", () => {
