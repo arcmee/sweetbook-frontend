@@ -22,6 +22,7 @@ type OrderHandoffScreenProps = {
   activeGroupName?: string;
   activeEventName?: string;
   estimatedPageCount?: number;
+  pageLayouts?: Record<string, string>;
   selectedPhotoCount?: number;
   selectedPhotoCaptions?: string[];
   workspace: PrototypeWorkspaceViewModel;
@@ -35,6 +36,7 @@ export function OrderHandoffScreen({
   activeGroupName,
   activeEventName,
   estimatedPageCount,
+  pageLayouts = {},
   selectedPhotoCount,
   selectedPhotoCaptions = [],
   workspace,
@@ -72,6 +74,7 @@ export function OrderHandoffScreen({
       ? selectedPhotoCount
       : fallbackSelectedPhotoCount;
   const draftPageCount = estimatedPageCount ?? activeOrderEntry.selectedCandidateCount * 2;
+  const pagePlan = buildOrderPagePlan(coverPhotoCaption, selectedPhotoCaptions, pageLayouts);
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -267,6 +270,11 @@ export function OrderHandoffScreen({
           {selectedPhotoCaptions.length > 0 ? (
             <li>{selectedPhotoCaptions.length} owner-approved photos</li>
           ) : null}
+          {pagePlan.map((page) => (
+            <li key={page.pageId}>
+              {page.title}: {page.layout}
+            </li>
+          ))}
           {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
             <li key={section}>{section}</li>
           ))}
@@ -287,4 +295,35 @@ function buildEstimateSummary(estimate: PrototypeSweetBookEstimate): string {
   }
 
   return `Sandbox estimate completed for ${estimate.bookUid}. Need ${paidCreditAmount} ${currency}, current balance ${creditBalance} ${currency}.`;
+}
+
+function buildOrderPagePlan(
+  coverPhotoCaption: string | undefined,
+  selectedPhotoCaptions: string[],
+  pageLayouts: Record<string, string>,
+): Array<{ pageId: string; title: string; layout: string }> {
+  const pages: Array<{ pageId: string; title: string; layout: string }> = [];
+
+  if (coverPhotoCaption) {
+    pages.push({
+      pageId: "cover",
+      title: "Cover handoff",
+      layout: pageLayouts.cover ?? "Full-bleed cover",
+    });
+  }
+
+  for (let index = 0; index < selectedPhotoCaptions.length; index += 2) {
+    const spreadNumber = index / 2 + 1;
+    const pageId = `spread-${spreadNumber}`;
+    const spreadCount = selectedPhotoCaptions.slice(index, index + 2).length;
+    pages.push({
+      pageId,
+      title: `Spread ${spreadNumber}`,
+      layout:
+        pageLayouts[pageId] ??
+        (spreadCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight"),
+    });
+  }
+
+  return pages;
 }

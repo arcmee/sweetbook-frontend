@@ -154,6 +154,11 @@ describe("order handoff interaction", () => {
           workspace: getPrototypeWorkspaceViewModel(),
           coverPhotoCaption: "Cake table setup",
           estimatedPageCount: 6,
+          pageLayouts: {
+            cover: "Title-first cover",
+            "spread-1": "Collage spread",
+            "spread-2": "Caption-led story spread",
+          },
           selectedPhotoCount: 3,
           selectedPhotoCaptions: [
             "Cake table setup",
@@ -179,6 +184,9 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain(
       "Story spreads: Cake table setup, Balloon arch, Family group shot",
     );
+    expect(container.textContent).toContain("Cover handoff: Title-first cover");
+    expect(container.textContent).toContain("Spread 1: Collage spread");
+    expect(container.textContent).toContain("Spread 2: Caption-led story spread");
     expect(container.textContent).toContain("Checkout setup");
     expect(container.textContent).toContain("Delivery details");
     expect(container.textContent).toContain("Checkout summary");
