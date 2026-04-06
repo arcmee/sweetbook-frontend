@@ -7,6 +7,16 @@ import {
 } from "../src/application/prototype-workspace";
 import { buildAppShell } from "../src/presentation/app";
 
+const demoSession = {
+  token: "ptok_123",
+  user: {
+    userId: "user-demo",
+    username: "demo",
+    displayName: "SweetBook Demo User",
+    role: "owner",
+  },
+} as const;
+
 describe("frontend photo upload and like screens", () => {
   it("provides event-scoped photo workflow data through the application boundary", () => {
     const workspace = getPrototypeWorkspaceViewModel();
@@ -20,7 +30,7 @@ describe("frontend photo upload and like screens", () => {
 
   it("renders upload guidance and photo status inside the event screen", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "events" }),
+      buildAppShell({ currentRouteKey: "events", initialSession: demoSession }),
     );
 
     expect(markup).toContain("Upload photos");
@@ -31,7 +41,7 @@ describe("frontend photo upload and like screens", () => {
 
   it("renders like feedback for event photos", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "events" }),
+      buildAppShell({ currentRouteKey: "events", initialSession: demoSession }),
     );
 
     expect(markup).toContain("Like feedback");

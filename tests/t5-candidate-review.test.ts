@@ -7,6 +7,16 @@ import {
 } from "../src/application/prototype-workspace";
 import { buildAppShell } from "../src/presentation/app";
 
+const demoSession = {
+  token: "ptok_123",
+  user: {
+    userId: "user-demo",
+    username: "demo",
+    displayName: "SweetBook Demo User",
+    role: "owner",
+  },
+} as const;
+
 describe("frontend album candidate review", () => {
   it("provides candidate review data through the application boundary", () => {
     const workspace = getPrototypeWorkspaceViewModel();
@@ -20,7 +30,7 @@ describe("frontend album candidate review", () => {
 
   it("renders candidate ranking and review copy on the albums route", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "albums" }),
+      buildAppShell({ currentRouteKey: "albums", initialSession: demoSession }),
     );
 
     expect(markup).toContain("Album candidate review");
@@ -32,7 +42,7 @@ describe("frontend album candidate review", () => {
 
   it("renders a page preview surface before order entry begins", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "albums" }),
+      buildAppShell({ currentRouteKey: "albums", initialSession: demoSession }),
     );
 
     expect(markup).toContain("Page preview");

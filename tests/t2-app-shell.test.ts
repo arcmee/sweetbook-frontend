@@ -35,7 +35,18 @@ describe("frontend app shell foundation", () => {
 
   it("renders the global shell, navigation, and active route placeholder", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "groups" }),
+      buildAppShell({
+        currentRouteKey: "groups",
+        initialSession: {
+          token: "ptok_123",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        },
+      }),
     );
 
     expect(markup).toContain("SweetBook");

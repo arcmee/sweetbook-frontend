@@ -6,6 +6,7 @@ import type {
 } from "../../application/prototype-sweetbook-estimate";
 import {
   getPrototypeOrderEntryViewModel,
+  type PrototypeOrderEntryViewModel,
   type PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
 import {
@@ -18,17 +19,20 @@ import { StatePanel } from "../ui/state-panel";
 
 type OrderHandoffScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
+  orderEntry?: PrototypeOrderEntryViewModel;
   requestEstimate?: () => Promise<PrototypeSweetBookEstimate>;
   requestSubmit?: () => Promise<PrototypeSweetBookSubmitResult>;
 };
 
 export function OrderHandoffScreen({
   workspace,
+  orderEntry,
   requestEstimate = requestPrototypeSweetBookEstimate,
   requestSubmit = requestPrototypeSweetBookSubmit,
 }: OrderHandoffScreenProps): ReactElement {
   const activeEvent = workspace.events[0];
-  const orderEntry = getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
+  const activeOrderEntry =
+    orderEntry ?? getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
   const [isRunningEstimate, setIsRunningEstimate] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [estimateResult, setEstimateResult] =
@@ -84,8 +88,8 @@ export function OrderHandoffScreen({
           disabled={isRunningEstimate}
           onClick={handleEstimateRequest}
         />
-        <p>{orderEntry.selectedCandidateCount} shortlisted photos ready</p>
-        <p>{orderEntry.activeEventName}</p>
+        <p>{activeOrderEntry.selectedCandidateCount} shortlisted photos ready</p>
+        <p>{activeOrderEntry.activeEventName}</p>
         {canSubmitOrder ? (
           <PrimaryAction
             label={isSubmittingOrder ? "Submitting SweetBook order..." : "Submit SweetBook order"}
@@ -145,11 +149,11 @@ export function OrderHandoffScreen({
       <PageSection
         eyebrow="SweetBook handoff preview"
         title="SweetBook handoff preview"
-        description={orderEntry.handoffSummary.note}
+        description={activeOrderEntry.handoffSummary.note}
       >
-        <p>{orderEntry.handoffSummary.bookFormat}</p>
+        <p>{activeOrderEntry.handoffSummary.bookFormat}</p>
         <ul>
-          {orderEntry.handoffSummary.payloadSections.map((section) => (
+          {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
             <li key={section}>{section}</li>
           ))}
         </ul>

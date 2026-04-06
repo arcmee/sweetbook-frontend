@@ -1,0 +1,418 @@
+// @vitest-environment jsdom
+
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { AppShell } from "../src/presentation/app-shell";
+import { LoginScreen } from "../src/presentation/screens/login-screen";
+
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
+  true;
+
+describe("prototype auth ui", () => {
+  const containers: HTMLDivElement[] = [];
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.localStorage.clear();
+
+    while (containers.length > 0) {
+      const container = containers.pop();
+      container?.remove();
+    }
+
+    document.body.innerHTML = "";
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("logs in with the demo credentials and reports the session", async () => {
+    const requestLogin = vi.fn().mockResolvedValue({
+      token: "ptok_123",
+      user: {
+        userId: "user-demo",
+        username: "demo",
+        displayName: "SweetBook Demo User",
+        role: "owner",
+      },
+    });
+    const onLogin = vi.fn();
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(LoginScreen, { requestLogin, onLogin }));
+    });
+
+    const form = container.querySelector("form");
+    expect(container.textContent).toContain("demo / sweetbook123!");
+
+    await act(async () => {
+      form?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    expect(requestLogin).toHaveBeenCalledWith({
+      username: "demo",
+      password: "sweetbook123!",
+    });
+    expect(onLogin).toHaveBeenCalledWith({
+      token: "ptok_123",
+      user: expect.objectContaining({
+        displayName: "SweetBook Demo User",
+      }),
+    });
+  });
+
+  it("shows the login screen when a protected route has no saved session", async () => {
+    window.history.replaceState({}, "", "/app/orders");
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(AppShell));
+    });
+
+    expect(container.textContent).toContain("Sign in to SweetBook");
+    expect(container.textContent).not.toContain("Order handoff");
+  });
+
+  it("restores the saved session and refreshes the workspace from the backend snapshot", async () => {
+    window.history.replaceState({}, "", "/app/groups");
+    window.localStorage.setItem("sweetbook.prototype.token", "ptok_saved");
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          token: "ptok_saved",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: {
+              totalGroups: 1,
+              totalMembers: 2,
+            },
+            groups: [
+              {
+                id: "group-db",
+                name: "Database group",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 1,
+              },
+            ],
+            events: [
+              {
+                id: "event-db",
+                name: "Database event",
+                groupName: "Database group",
+                status: "ready",
+                photoCount: 12,
+              },
+            ],
+          },
+          photoWorkflows: [
+            {
+              activeEventId: "event-db",
+              activeEventName: "Database event",
+              uploadState: {
+                pendingCount: 0,
+                uploadedCount: 12,
+                helperText: "Loaded from backend",
+              },
+              photos: [],
+            },
+          ],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(AppShell));
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/prototype/auth/session?token=ptok_saved",
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/prototype/workspace");
+    expect(container.textContent).toContain("Database group");
+  });
+
+  it("creates a group and refreshes the workspace snapshot", async () => {
+    window.history.replaceState({}, "", "/app/groups");
+    window.localStorage.setItem("sweetbook.prototype.token", "ptok_saved");
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          token: "ptok_saved",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: {
+              totalGroups: 1,
+              totalMembers: 2,
+            },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 1,
+              },
+            ],
+            events: [],
+          },
+          photoWorkflows: [],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: {
+              totalGroups: 2,
+              totalMembers: 3,
+            },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 1,
+              },
+              {
+                id: "group-created-2",
+                name: "Prototype family 2",
+                memberCount: 1,
+                role: "Owner",
+                eventCount: 0,
+              },
+            ],
+            events: [],
+          },
+          photoWorkflows: [],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(AppShell));
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const createButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Create a family group",
+    );
+
+    await act(async () => {
+      createButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/prototype/groups", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Prototype family 2",
+      }),
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
+    expect(container.textContent).toContain("Prototype family 2");
+  });
+
+  it("switches the active group and event context when the user selects a different item", async () => {
+    window.history.replaceState({}, "", "/app/events");
+    window.localStorage.setItem("sweetbook.prototype.token", "ptok_saved");
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          token: "ptok_saved",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: {
+              totalGroups: 2,
+              totalMembers: 7,
+            },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 4,
+                role: "Owner",
+                eventCount: 2,
+              },
+              {
+                id: "group-park",
+                name: "Park cousins",
+                memberCount: 3,
+                role: "Editor",
+                eventCount: 1,
+              },
+            ],
+            events: [
+              {
+                id: "event-birthday",
+                name: "First birthday album",
+                groupName: "Han family",
+                status: "collecting",
+                photoCount: 124,
+              },
+              {
+                id: "event-holiday",
+                name: "Winter holiday trip",
+                groupName: "Park cousins",
+                status: "draft",
+                photoCount: 36,
+              },
+            ],
+          },
+          photoWorkflows: [
+            {
+              activeEventId: "event-birthday",
+              activeEventName: "First birthday album",
+              uploadState: {
+                pendingCount: 3,
+                uploadedCount: 124,
+                helperText: "Upload queue is local-only until backend adapters land.",
+              },
+              photos: [
+                {
+                  id: "photo-family",
+                  caption: "Family portrait",
+                  uploadedBy: "Joon",
+                  likeCount: 9,
+                  likedByViewer: false,
+                },
+              ],
+            },
+            {
+              activeEventId: "event-holiday",
+              activeEventName: "Winter holiday trip",
+              uploadState: {
+                pendingCount: 1,
+                uploadedCount: 36,
+                helperText: "Upload queue is local-only until backend adapters land.",
+              },
+              photos: [
+                {
+                  id: "photo-cabin",
+                  caption: "Cabin arrival",
+                  uploadedBy: "Soo",
+                  likeCount: 4,
+                  likedByViewer: false,
+                },
+              ],
+            },
+          ],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        createElement(AppShell, {
+          initialSession: null,
+        }),
+      );
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain("Han family");
+    expect(container.textContent).toContain("First birthday album");
+
+    const holidayButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("Winter holiday trip"),
+    );
+
+    await act(async () => {
+      holidayButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("Park cousins");
+    expect(container.textContent).toContain("Winter holiday trip");
+    expect(container.textContent).toContain("Cabin arrival");
+  });
+});
