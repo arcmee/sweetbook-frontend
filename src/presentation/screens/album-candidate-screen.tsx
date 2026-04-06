@@ -24,13 +24,23 @@ export function AlbumCandidateScreen({
   const activeEvent = workspace.events[0];
   const activeReview =
     review ?? getPrototypeCandidateReviewViewModel(activeEvent?.id ?? "");
+  const pageCards = activeReview.pagePreview.map((page, index) => ({
+    ...page,
+    layoutLabel: index === 0 ? "Full-bleed cover" : page.photoCaptions.length > 1 ? "Two-photo spread" : "Single-photo focus",
+    editNote:
+      index === 0
+        ? "Lead with the strongest milestone image."
+        : page.photoCaptions.length > 1
+          ? "Balance these two photos across the spread."
+          : "Use this page as a quiet transition beat.",
+  }));
 
   return (
     <>
       <PageSection
         eyebrow="Candidate review"
         title="Album candidate review"
-        description="Review the draft spread before entering the order flow."
+        description="Review the draft spread like a lightweight book editor before entering the order flow."
       >
         <p>Current group: {activeGroupName ?? "No active group"}</p>
         <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
@@ -49,15 +59,17 @@ export function AlbumCandidateScreen({
       </PageSection>
       <PageSection
         eyebrow="Page preview"
-        title="Page preview"
-        description="Inspect how the prototype candidate set maps to early album pages."
+        title="Prototype page planner"
+        description="Inspect each draft page card, layout hint, and edit note before handing off the order."
       >
         <ul>
-          {activeReview.pagePreview.map((page) => (
+          {pageCards.map((page) => (
             <li key={page.pageNumber}>
               <strong>{page.title}</strong>
               <span> Page {page.pageNumber}</span>
+              <p>Layout: {page.layoutLabel}</p>
               <p>{page.photoCaptions.join(", ")}</p>
+              <p>{page.editNote}</p>
             </li>
           ))}
         </ul>

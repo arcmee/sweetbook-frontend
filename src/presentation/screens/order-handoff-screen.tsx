@@ -35,6 +35,12 @@ export function OrderHandoffScreen({
   const activeEvent = workspace.events[0];
   const activeOrderEntry =
     orderEntry ?? getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
+  const draftPages = activeOrderEntry.handoffSummary.payloadSections.map((section, index) => ({
+    id: `${section}-${index}`,
+    title: index === 0 ? "Cover handoff" : `Spread ${index}`,
+    layoutLabel: index === 0 ? "Full-bleed cover" : "Story spread",
+    section,
+  }));
   const [isRunningEstimate, setIsRunningEstimate] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [estimateResult, setEstimateResult] =
@@ -155,6 +161,16 @@ export function OrderHandoffScreen({
         description={activeOrderEntry.handoffSummary.note}
       >
         <p>{activeOrderEntry.handoffSummary.bookFormat}</p>
+        <p>Draft page plan prepared for SweetBook handoff.</p>
+        <ul>
+          {draftPages.map((page) => (
+            <li key={page.id}>
+              <strong>{page.title}</strong>
+              <span> {page.layoutLabel}</span>
+              <p>{page.section}</p>
+            </li>
+          ))}
+        </ul>
         <ul>
           {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
             <li key={section}>{section}</li>

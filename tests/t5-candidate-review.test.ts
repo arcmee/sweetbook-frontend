@@ -47,9 +47,11 @@ describe("frontend album candidate review", () => {
       buildAppShell({ currentRouteKey: "albums", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Page preview");
+    expect(markup).toContain("Prototype page planner");
     expect(markup).toContain("Cover preview");
     expect(markup).toContain("Page 2");
-    expect(markup).toContain("Review the draft spread before entering the order flow.");
+    expect(markup).toContain("Layout: Full-bleed cover");
+    expect(markup).toContain("Lead with the strongest milestone image.");
+    expect(markup).toContain("Inspect each draft page card, layout hint, and edit note before handing off the order.");
   });
 });

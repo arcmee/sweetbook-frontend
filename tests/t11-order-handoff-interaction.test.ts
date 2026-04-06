@@ -151,6 +151,9 @@ describe("order handoff interaction", () => {
 
     expect(container.textContent).toContain("SweetBook estimate is ready");
     expect(container.textContent).toContain("available for submission");
+    expect(container.textContent).toContain("Draft page plan prepared for SweetBook handoff.");
+    expect(container.textContent).toContain("Cover handoff Full-bleed cover");
+    expect(container.textContent).toContain("Spread 1 Story spread");
 
     const buttons = container.querySelectorAll("button");
     const submitButton = buttons[1];
