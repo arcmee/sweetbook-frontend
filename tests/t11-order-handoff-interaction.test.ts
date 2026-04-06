@@ -186,6 +186,7 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Chosen cover: Cake table setup");
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
     expect(container.textContent).toContain("Estimated draft pages: 6");
+    expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
     expect(container.textContent).toContain(
       "Story spreads: Cake table setup, Balloon arch, Family group shot",
     );

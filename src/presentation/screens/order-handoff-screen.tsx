@@ -82,6 +82,8 @@ export function OrderHandoffScreen({
     pageLayouts,
     pageNotes,
   );
+  const readyPageCount = pagePlan.filter((page) => page.status === "Ready").length;
+  const reviewPageCount = pagePlan.filter((page) => page.status === "Needs review").length;
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -140,6 +142,7 @@ export function OrderHandoffScreen({
         {selectedPhotoCaptions.length > 0 ? (
           <p>Story spreads: {selectedPhotoCaptions.join(", ")}</p>
         ) : null}
+        <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
         <div>
           <h3>Checkout setup</h3>
           <p>Prepare the final SweetBook handoff before the owner sends the order.</p>

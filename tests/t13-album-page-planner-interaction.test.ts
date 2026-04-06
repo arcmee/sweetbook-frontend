@@ -176,4 +176,57 @@ describe("album page planner interaction", () => {
       "Use this spread to balance detail shots with group moments.",
     );
   });
+
+  it("shows draft readiness counts above the page planner", async () => {
+    const workspace = getPrototypeWorkspaceViewModel();
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        createElement(AlbumCandidateScreen, {
+          workspace,
+          activeGroupName: "Han family",
+          activeEventName: "First birthday album",
+          workflow: {
+            activeEventId: "evt-demo",
+            activeEventName: "First birthday album",
+            canVote: false,
+            photoCountLabel: "3 uploaded",
+            photos: [
+              {
+                id: "photo-1",
+                caption: "Cake table setup",
+                likeCount: 12,
+                likedByViewer: false,
+                uploadedBy: "Ari",
+              },
+              {
+                id: "photo-2",
+                caption: "Balloon arch",
+                likeCount: 9,
+                likedByViewer: false,
+                uploadedBy: "Jules",
+              },
+              {
+                id: "photo-3",
+                caption: "Family group shot",
+                likeCount: 8,
+                likedByViewer: false,
+                uploadedBy: "Ari",
+              },
+            ],
+          },
+          selectedPhotoIds: ["photo-1", "photo-2", "photo-3"],
+          coverPhotoId: "photo-1",
+          pageLayouts: { "spread-1": "Single-photo spotlight" },
+          pageNotes: { "spread-1": "" },
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Draft readiness: 1 ready, 1 need review.");
+  });
 });
