@@ -93,4 +93,75 @@ describe("order handoff interaction", () => {
       "Failed to run prototype SweetBook estimate: 503",
     );
   });
+
+  it("reveals submit action after a ready estimate and shows the submitted order", async () => {
+    const requestEstimate = vi.fn().mockResolvedValue({
+      status: "ready_for_order",
+      bookUid: "bk_123",
+      uploadedPhotoFileName: "photo-1.jpg",
+      pageCount: 24,
+      contentInsertions: [],
+      estimate: {
+        totalAmount: 3100,
+        paidCreditAmount: 3100,
+        creditBalance: 5000,
+        creditSufficient: true,
+        currency: "KRW",
+      },
+    });
+    const requestSubmit = vi.fn().mockResolvedValue({
+      status: "submitted",
+      bookUid: "bk_123",
+      uploadedPhotoFileName: "photo-1.jpg",
+      pageCount: 24,
+      contentInsertions: [],
+      estimate: {
+        totalAmount: 3100,
+        paidCreditAmount: 3100,
+        creditBalance: 5000,
+        creditSufficient: true,
+        currency: "KRW",
+      },
+      order: {
+        orderUid: "ord_1",
+        orderStatus: 20,
+        orderStatusDisplay: "결제완료",
+      },
+    });
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        createElement(OrderHandoffScreen, {
+          workspace: getPrototypeWorkspaceViewModel(),
+          requestEstimate,
+          requestSubmit,
+        }),
+      );
+    });
+
+    const estimateButton = container.querySelector("button");
+    await act(async () => {
+      estimateButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("SweetBook estimate is ready");
+    expect(container.textContent).toContain("available for submission");
+
+    const buttons = container.querySelectorAll("button");
+    const submitButton = buttons[1];
+    expect(submitButton?.textContent).toBe("Submit SweetBook order");
+
+    await act(async () => {
+      submitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(requestSubmit).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("SweetBook order submitted");
+    expect(container.textContent).toContain("Sandbox order ord_1 was submitted");
+  });
 });

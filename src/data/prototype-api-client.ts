@@ -1,5 +1,8 @@
 import type { PrototypeWorkspaceSnapshot } from "../application/prototype-workspace-snapshot";
-import type { PrototypeSweetBookEstimate } from "../application/prototype-sweetbook-estimate";
+import type {
+  PrototypeSweetBookEstimate,
+  PrototypeSweetBookSubmitResult,
+} from "../application/prototype-sweetbook-estimate";
 
 export async function fetchPrototypeWorkspaceSnapshot(
   fetchImpl: typeof fetch = fetch,
@@ -25,6 +28,20 @@ export async function requestPrototypeSweetBookEstimate(
   }
 
   return (await response.json()) as PrototypeSweetBookEstimate;
+}
+
+export async function requestPrototypeSweetBookSubmit(
+  fetchImpl: typeof fetch = fetch,
+): Promise<PrototypeSweetBookSubmitResult> {
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/sweetbook/submit"), {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to submit prototype SweetBook order: ${response.status}`);
+  }
+
+  return (await response.json()) as PrototypeSweetBookSubmitResult;
 }
 
 function resolveApiUrl(path: string): string {

@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { requestPrototypeSweetBookEstimate } from "../src/data/prototype-api-client";
+import {
+  requestPrototypeSweetBookEstimate,
+  requestPrototypeSweetBookSubmit,
+} from "../src/data/prototype-api-client";
 
 describe("prototype SweetBook estimate client", () => {
   it("posts to the backend estimate endpoint and parses the response", async () => {
@@ -45,5 +48,42 @@ describe("prototype SweetBook estimate client", () => {
     await expect(
       requestPrototypeSweetBookEstimate(fetchImpl as typeof fetch),
     ).rejects.toThrow("Failed to run prototype SweetBook estimate: 503");
+  });
+
+  it("posts to the backend submit endpoint and parses the order response", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: "submitted",
+        bookUid: "bk_123",
+        uploadedPhotoFileName: "photo-1.jpg",
+        pageCount: 24,
+        contentInsertions: [],
+        estimate: {
+          totalAmount: 3100,
+          paidCreditAmount: 3100,
+          creditBalance: 5000,
+          creditSufficient: true,
+          currency: "KRW",
+        },
+        order: {
+          orderUid: "ord_1",
+          orderStatus: 20,
+          orderStatusDisplay: "결제완료",
+        },
+      }),
+    });
+
+    const result = await requestPrototypeSweetBookSubmit(
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "/api/prototype/sweetbook/submit",
+      {
+        method: "POST",
+      },
+    );
+    expect(result.order.orderUid).toBe("ord_1");
   });
 });

@@ -34,3 +34,19 @@ export type PrototypeSweetBookEstimate = {
     currency: string;
   };
 };
+
+export type PrototypeSweetBookSubmitResult = {
+  status: "submitted";
+  bookUid: string;
+  uploadedPhotoFileName: string;
+  pageCount: number;
+  contentInsertions: PrototypeSweetBookContentInsertion[];
+  estimate: PrototypeSweetBookEstimate["estimate"];
+  order: {
+    orderUid: string;
+    orderStatus: number | string;
+    orderStatusDisplay?: string | null;
+    paidCreditAmount?: number | null;
+    creditBalanceAfter?: number | null;
+  };
+};
