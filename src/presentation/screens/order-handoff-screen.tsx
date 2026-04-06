@@ -279,8 +279,12 @@ export function OrderHandoffScreen({
           ) : null}
           {pagePlan.map((page) => (
             <li key={page.pageId}>
-              {page.title}: {page.layout}
+              <strong>{page.title}</strong>: {page.layout}
+              <p>Status: {page.status}</p>
               {page.note ? ` - ${page.note}` : ""}
+              {page.warning ? <p>Warning: {page.warning}</p> : null}
+              <p>{page.photoCount} photo slot{page.photoCount === 1 ? "" : "s"} planned</p>
+              <p>{page.photoCaptions.join(", ")}</p>
             </li>
           ))}
           {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
@@ -310,36 +314,91 @@ function buildOrderPagePlan(
   selectedPhotoCaptions: string[],
   pageLayouts: Record<string, string>,
   pageNotes: Record<string, string>,
-): Array<{ pageId: string; title: string; layout: string; note: string }> {
-  const pages: Array<{ pageId: string; title: string; layout: string; note: string }> = [];
+): Array<{
+  note: string;
+  pageId: string;
+  title: string;
+  layout: string;
+  photoCount: number;
+  photoCaptions: string[];
+  status: string;
+  warning: string | null;
+}> {
+  const pages: Array<{
+    note: string;
+    pageId: string;
+    title: string;
+    layout: string;
+    photoCount: number;
+    photoCaptions: string[];
+    status: string;
+    warning: string | null;
+  }> = [];
 
   if (coverPhotoCaption) {
+    const note =
+      pageNotes.cover ?? "Lead with the strongest event-defining moment on the cover.";
     pages.push({
       pageId: "cover",
       title: "Cover handoff",
       layout: pageLayouts.cover ?? "Full-bleed cover",
-      note:
-        pageNotes.cover ?? "Lead with the strongest event-defining moment on the cover.",
+      note,
+      photoCount: 1,
+      photoCaptions: [coverPhotoCaption],
+      status: "Ready",
+      warning: note.trim().length === 0 ? "Add a cover note before handoff." : null,
     });
   }
 
   for (let index = 0; index < selectedPhotoCaptions.length; index += 2) {
     const spreadNumber = index / 2 + 1;
     const pageId = `spread-${spreadNumber}`;
-    const spreadCount = selectedPhotoCaptions.slice(index, index + 2).length;
+    const spreadCaptions = selectedPhotoCaptions.slice(index, index + 2);
+    const spreadCount = spreadCaptions.length;
+    const layout =
+      pageLayouts[pageId] ??
+      (spreadCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight");
+    const note =
+      pageNotes[pageId] ??
+      (spreadCount > 1
+        ? "Use this spread to balance detail shots with group moments."
+        : "Single-photo spread can spotlight a key memory beat.");
+    const warning = getPageWarning(layout, spreadCount, note);
     pages.push({
       pageId,
       title: `Spread ${spreadNumber}`,
-      layout:
-        pageLayouts[pageId] ??
-        (spreadCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight"),
-      note:
-        pageNotes[pageId] ??
-        (spreadCount > 1
-          ? "Use this spread to balance detail shots with group moments."
-          : "Single-photo spread can spotlight a key memory beat."),
+      layout,
+      note,
+      photoCount: spreadCount,
+      photoCaptions: spreadCaptions,
+      status: warning ? "Needs review" : "Ready",
+      warning,
     });
   }
 
   return pages;
+}
+
+function getPageWarning(
+  layout: string,
+  photoCount: number,
+  note: string,
+): string | null {
+  if (note.trim().length === 0) {
+    return "Add an edit note before sending this page to SweetBook.";
+  }
+
+  if (layout === "Single-photo spotlight" && photoCount > 1) {
+    return "Single-photo spotlight works best with one photo.";
+  }
+
+  if (layout === "Balanced two-photo spread" && photoCount < 2) {
+    return "Balanced two-photo spread needs two photos to feel complete.";
+  }
+
+  if (layout === "Collage spread" && photoCount < 2) {
+    return "Collage spread needs at least two photos.";
+  }
+
+  return null;
 }

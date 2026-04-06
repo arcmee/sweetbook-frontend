@@ -124,10 +124,12 @@ export function AlbumCandidateScreen({
           <ul>
             {previewPages.map((page) => (
               <li key={"pageId" in page ? page.pageId : page.pageNumber}>
+                {"status" in page ? <p>Status: {page.status}</p> : null}
                 <strong>{page.title}</strong>
                 <span> Page {page.pageNumber}</span>
                 {"layout" in page ? <p>Layout: {page.layout}</p> : null}
                 {"editNote" in page ? <p>{page.editNote}</p> : null}
+                {"warning" in page && page.warning ? <p>Warning: {page.warning}</p> : null}
                 {"pageId" in page ? (
                   <div>
                     <label>
@@ -150,9 +152,51 @@ export function AlbumCandidateScreen({
                         onChange={(event) => onSetPageNote?.(page.pageId, event.target.value)}
                       />
                     </label>
+                    {"recommendedLayout" in page && page.recommendedLayout !== page.layout ? (
+                      <PrimaryAction
+                        label="Use recommended layout"
+                        onClick={() => onSetPageLayout?.(page.pageId, page.recommendedLayout)}
+                      />
+                    ) : null}
+                    {"recommendedNote" in page &&
+                    page.recommendedNote !== page.editNote ? (
+                      <PrimaryAction
+                        label="Restore suggested note"
+                        onClick={() => onSetPageNote?.(page.pageId, page.recommendedNote)}
+                      />
+                    ) : null}
                   </div>
                 ) : null}
-                <p>{page.photoCaptions.join(", ")}</p>
+                <p>{page.photoCaptions.length} photo slot{page.photoCaptions.length === 1 ? "" : "s"} planned</p>
+                {"photoIds" in page ? (
+                  <ul>
+                    {page.photoCaptions.map((caption, index) => {
+                      const photoId = page.photoIds[index];
+                      const spreadIndex = layoutPhotos.findIndex((photo) => photo.id === photoId);
+                      const canMoveEarlier = spreadIndex > 0;
+                      const canMoveLater =
+                        spreadIndex > -1 && spreadIndex < layoutPhotos.length - 1;
+
+                      return (
+                        <li key={photoId}>
+                          <span>{caption}</span>
+                          <PrimaryAction
+                            label="Move to previous page"
+                            onClick={() => onMovePhotoEarlier?.(photoId)}
+                            disabled={!canMoveEarlier}
+                          />
+                          <PrimaryAction
+                            label="Move to next page"
+                            onClick={() => onMovePhotoLater?.(photoId)}
+                            disabled={!canMoveLater}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p>{page.photoCaptions.join(", ")}</p>
+                )}
               </li>
             ))}
           </ul>
@@ -232,7 +276,12 @@ function buildPreviewPages(
   layout: string;
   pageId: string;
   pageNumber: number;
+  photoIds: string[];
+  recommendedLayout: string;
+  recommendedNote: string;
+  status: string;
   title: string;
+  warning: string | null;
   photoCaptions: string[];
 }> {
   const pages: Array<{
@@ -240,19 +289,33 @@ function buildPreviewPages(
     layout: string;
     pageId: string;
     pageNumber: number;
+    photoIds: string[];
+    recommendedLayout: string;
+    recommendedNote: string;
+    status: string;
     title: string;
+    warning: string | null;
     photoCaptions: string[];
   }> = [];
 
   if (coverPhoto) {
     const pageId = "cover";
+    const recommendedLayout = "Full-bleed cover";
+    const recommendedNote =
+      "Lead with the strongest event-defining moment on the cover.";
+    const layout = pageLayouts[pageId] ?? recommendedLayout;
+    const editNote = pageNotes[pageId] ?? recommendedNote;
     pages.push({
-      editNote:
-        pageNotes[pageId] ?? "Lead with the strongest event-defining moment on the cover.",
-      layout: pageLayouts[pageId] ?? "Full-bleed cover",
+      editNote,
+      layout,
       pageId,
       pageNumber: 1,
+      photoIds: [coverPhoto.id],
+      recommendedLayout,
+      recommendedNote,
+      status: "Ready",
       title: "Cover preview",
+      warning: editNote.trim().length === 0 ? "Add a cover note before handoff." : null,
       photoCaptions: [coverPhoto.caption],
     });
   }
@@ -261,16 +324,25 @@ function buildPreviewPages(
     const spreadPhotos = layoutPhotos.slice(index, index + 2);
     const spreadNumber = index / 2 + 1;
     const pageId = `spread-${spreadNumber}`;
+    const recommendedLayout = getDefaultSpreadLayout(spreadPhotos.length);
+    const recommendedNote =
+      spreadPhotos.length > 1
+        ? "Use this spread to balance detail shots with group moments."
+        : "Single-photo spread can spotlight a key memory beat.";
+    const layout = pageLayouts[pageId] ?? recommendedLayout;
+    const editNote = pageNotes[pageId] ?? recommendedNote;
+    const warning = getPageWarning(layout, spreadPhotos.length, editNote);
     pages.push({
-      editNote:
-        pageNotes[pageId] ??
-        (spreadPhotos.length > 1
-          ? "Use this spread to balance detail shots with group moments."
-          : "Single-photo spread can spotlight a key memory beat."),
-      layout: pageLayouts[pageId] ?? getDefaultSpreadLayout(spreadPhotos.length),
+      editNote,
+      layout,
       pageId,
       pageNumber: pages.length + 1,
+      photoIds: spreadPhotos.map((photo) => photo.id),
+      recommendedLayout,
+      recommendedNote,
+      status: warning ? "Needs review" : "Ready",
       title: `Spread ${pages.length}`,
+      warning,
       photoCaptions: spreadPhotos.map((photo) => photo.caption),
     });
   }
@@ -291,4 +363,28 @@ function getLayoutOptions(isCover: boolean): string[] {
         "Collage spread",
         "Caption-led story spread",
       ];
+}
+
+function getPageWarning(
+  layout: string,
+  photoCount: number,
+  editNote: string,
+): string | null {
+  if (editNote.trim().length === 0) {
+    return "Add an edit note before sending this page to SweetBook.";
+  }
+
+  if (layout === "Single-photo spotlight" && photoCount > 1) {
+    return "Single-photo spotlight works best with one photo.";
+  }
+
+  if (layout === "Balanced two-photo spread" && photoCount < 2) {
+    return "Balanced two-photo spread needs two photos to feel complete.";
+  }
+
+  if (layout === "Collage spread" && photoCount < 2) {
+    return "Collage spread needs at least two photos.";
+  }
+
+  return null;
 }
