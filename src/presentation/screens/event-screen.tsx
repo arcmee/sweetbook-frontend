@@ -13,6 +13,7 @@ type EventScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
   createEventTitle?: string;
   createPhotoCaption?: string;
+  createPhotoFileName?: string;
   isCreatingEvent?: boolean;
   isCreatingPhoto?: boolean;
   isLikingPhoto?: boolean;
@@ -20,6 +21,7 @@ type EventScreenProps = {
   onCreateEventTitleChange?: (value: string) => void;
   onCreatePhoto?: () => void | Promise<void>;
   onCreatePhotoCaptionChange?: (value: string) => void;
+  onCreatePhotoFileChange?: (file: File | null) => void;
   onLikePhoto?: (photoId: string) => void | Promise<void>;
   onSelectEvent?: (eventId: string) => void;
   selectedEventId?: string;
@@ -31,6 +33,7 @@ export function EventScreen({
   workspace,
   createEventTitle = "",
   createPhotoCaption = "",
+  createPhotoFileName,
   isCreatingEvent = false,
   isCreatingPhoto = false,
   isLikingPhoto = false,
@@ -38,6 +41,7 @@ export function EventScreen({
   onCreateEventTitleChange,
   onCreatePhoto,
   onCreatePhotoCaptionChange,
+  onCreatePhotoFileChange,
   onLikePhoto,
   onSelectEvent,
   selectedEventId,
@@ -99,10 +103,12 @@ export function EventScreen({
       <PhotoWorkflowSection
         workflow={photoWorkflow}
         createPhotoCaption={createPhotoCaption}
+        createPhotoFileName={createPhotoFileName}
         isCreatingPhoto={isCreatingPhoto}
         isLikingPhoto={isLikingPhoto}
         onCreatePhoto={onCreatePhoto}
         onCreatePhotoCaptionChange={onCreatePhotoCaptionChange}
+        onCreatePhotoFileChange={onCreatePhotoFileChange}
         onLikePhoto={onLikePhoto}
       />
     </>
