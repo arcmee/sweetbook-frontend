@@ -13,6 +13,20 @@ import { OrderHandoffScreen } from "../src/presentation/screens/order-handoff-sc
 describe("order handoff interaction", () => {
   const containers: HTMLDivElement[] = [];
 
+  function setInputValue(input: HTMLInputElement | null, value: string): void {
+    if (!input) {
+      return;
+    }
+
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
   afterEach(() => {
     while (containers.length > 0) {
       const container = containers.pop();
@@ -138,6 +152,14 @@ describe("order handoff interaction", () => {
       root.render(
         createElement(OrderHandoffScreen, {
           workspace: getPrototypeWorkspaceViewModel(),
+          coverPhotoCaption: "Cake table setup",
+          estimatedPageCount: 6,
+          selectedPhotoCount: 3,
+          selectedPhotoCaptions: [
+            "Cake table setup",
+            "Balloon arch",
+            "Family group shot",
+          ],
           requestEstimate,
           requestSubmit,
         }),
@@ -151,9 +173,62 @@ describe("order handoff interaction", () => {
 
     expect(container.textContent).toContain("SweetBook estimate is ready");
     expect(container.textContent).toContain("available for submission");
+    expect(container.textContent).toContain("Chosen cover: Cake table setup");
+    expect(container.textContent).toContain("Cover candidate: Cake table setup");
+    expect(container.textContent).toContain("Estimated draft pages: 6");
+    expect(container.textContent).toContain(
+      "Story spreads: Cake table setup, Balloon arch, Family group shot",
+    );
+    expect(container.textContent).toContain("Checkout setup");
+    expect(container.textContent).toContain("Delivery details");
+    expect(container.textContent).toContain("Checkout summary");
+    expect(container.textContent).toContain("Owner-approved selection count: 3");
+    expect(container.textContent).toContain("SweetBook draft pages queued: 6");
+    expect(container.textContent).toContain("SweetBook unit price: 3100 KRW");
+    expect(container.textContent).toContain("Total due today: 3400 KRW");
 
-    const buttons = container.querySelectorAll("button");
-    const submitButton = buttons[1];
+    const quantitySelect = container.querySelector(
+      'select[name="bookQuantity"]',
+    ) as HTMLSelectElement | null;
+    const paymentNameInput = container.querySelector(
+      'input[name="paymentName"]',
+    ) as HTMLInputElement | null;
+    const paymentCardInput = container.querySelector(
+      'input[name="paymentCardLastFour"]',
+    ) as HTMLInputElement | null;
+    const recipientNameInput = container.querySelector(
+      'input[name="recipientName"]',
+    ) as HTMLInputElement | null;
+    const deliveryNoteInput = container.querySelector(
+      'input[name="deliveryNote"]',
+    ) as HTMLInputElement | null;
+
+    await act(async () => {
+      if (quantitySelect) {
+        quantitySelect.value = "2";
+        quantitySelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      if (paymentNameInput) {
+        setInputValue(paymentNameInput, "Demo Owner");
+      }
+      if (paymentCardInput) {
+        setInputValue(paymentCardInput, "4242");
+      }
+      if (recipientNameInput) {
+        setInputValue(recipientNameInput, "Han Family");
+      }
+      if (deliveryNoteInput) {
+        setInputValue(deliveryNoteInput, "Leave at front desk");
+      }
+    });
+
+    expect(container.textContent).toContain("Quantity subtotal: 6200 KRW");
+    expect(container.textContent).toContain("Prototype platform fee: 600 KRW");
+    expect(container.textContent).toContain("Total due today: 6800 KRW");
+    expect(container.textContent).toContain("Delivery note: Leave at front desk");
+
+    const buttons = Array.from(container.querySelectorAll("button"));
+    const submitButton = buttons.find((button) => button.textContent === "Submit SweetBook order");
     expect(submitButton?.textContent).toBe("Submit SweetBook order");
 
     await act(async () => {
