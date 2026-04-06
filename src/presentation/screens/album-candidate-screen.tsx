@@ -152,6 +152,19 @@ export function AlbumCandidateScreen({
                         onChange={(event) => onSetPageNote?.(page.pageId, event.target.value)}
                       />
                     </label>
+                    {"recommendedLayout" in page && page.recommendedLayout !== page.layout ? (
+                      <PrimaryAction
+                        label="Use recommended layout"
+                        onClick={() => onSetPageLayout?.(page.pageId, page.recommendedLayout)}
+                      />
+                    ) : null}
+                    {"recommendedNote" in page &&
+                    page.recommendedNote !== page.editNote ? (
+                      <PrimaryAction
+                        label="Restore suggested note"
+                        onClick={() => onSetPageNote?.(page.pageId, page.recommendedNote)}
+                      />
+                    ) : null}
                   </div>
                 ) : null}
                 <p>{page.photoCaptions.length} photo slot{page.photoCaptions.length === 1 ? "" : "s"} planned</p>
@@ -264,6 +277,8 @@ function buildPreviewPages(
   pageId: string;
   pageNumber: number;
   photoIds: string[];
+  recommendedLayout: string;
+  recommendedNote: string;
   status: string;
   title: string;
   warning: string | null;
@@ -275,6 +290,8 @@ function buildPreviewPages(
     pageId: string;
     pageNumber: number;
     photoIds: string[];
+    recommendedLayout: string;
+    recommendedNote: string;
     status: string;
     title: string;
     warning: string | null;
@@ -283,15 +300,19 @@ function buildPreviewPages(
 
   if (coverPhoto) {
     const pageId = "cover";
-    const layout = pageLayouts[pageId] ?? "Full-bleed cover";
-    const editNote =
-      pageNotes[pageId] ?? "Lead with the strongest event-defining moment on the cover.";
+    const recommendedLayout = "Full-bleed cover";
+    const recommendedNote =
+      "Lead with the strongest event-defining moment on the cover.";
+    const layout = pageLayouts[pageId] ?? recommendedLayout;
+    const editNote = pageNotes[pageId] ?? recommendedNote;
     pages.push({
       editNote,
       layout,
       pageId,
       pageNumber: 1,
       photoIds: [coverPhoto.id],
+      recommendedLayout,
+      recommendedNote,
       status: "Ready",
       title: "Cover preview",
       warning: editNote.trim().length === 0 ? "Add a cover note before handoff." : null,
@@ -303,12 +324,13 @@ function buildPreviewPages(
     const spreadPhotos = layoutPhotos.slice(index, index + 2);
     const spreadNumber = index / 2 + 1;
     const pageId = `spread-${spreadNumber}`;
-    const layout = pageLayouts[pageId] ?? getDefaultSpreadLayout(spreadPhotos.length);
-    const editNote =
-      pageNotes[pageId] ??
-      (spreadPhotos.length > 1
+    const recommendedLayout = getDefaultSpreadLayout(spreadPhotos.length);
+    const recommendedNote =
+      spreadPhotos.length > 1
         ? "Use this spread to balance detail shots with group moments."
-        : "Single-photo spread can spotlight a key memory beat.");
+        : "Single-photo spread can spotlight a key memory beat.";
+    const layout = pageLayouts[pageId] ?? recommendedLayout;
+    const editNote = pageNotes[pageId] ?? recommendedNote;
     const warning = getPageWarning(layout, spreadPhotos.length, editNote);
     pages.push({
       editNote,
@@ -316,6 +338,8 @@ function buildPreviewPages(
       pageId,
       pageNumber: pages.length + 1,
       photoIds: spreadPhotos.map((photo) => photo.id),
+      recommendedLayout,
+      recommendedNote,
       status: warning ? "Needs review" : "Ready",
       title: `Spread ${pages.length}`,
       warning,
