@@ -18,8 +18,11 @@ import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
 
 type OrderHandoffScreenProps = {
+  coverPhotoCaption?: string;
   activeGroupName?: string;
   activeEventName?: string;
+  estimatedPageCount?: number;
+  selectedPhotoCount?: number;
   selectedPhotoCaptions?: string[];
   workspace: PrototypeWorkspaceViewModel;
   orderEntry?: PrototypeOrderEntryViewModel;
@@ -28,8 +31,11 @@ type OrderHandoffScreenProps = {
 };
 
 export function OrderHandoffScreen({
+  coverPhotoCaption,
   activeGroupName,
   activeEventName,
+  estimatedPageCount,
+  selectedPhotoCount,
   selectedPhotoCaptions = [],
   workspace,
   orderEntry,
@@ -47,6 +53,25 @@ export function OrderHandoffScreen({
     useState<PrototypeSweetBookSubmitResult | null>(null);
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [bookQuantity, setBookQuantity] = useState("1");
+  const [paymentName, setPaymentName] = useState("");
+  const [paymentCardLastFour, setPaymentCardLastFour] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [deliveryNote, setDeliveryNote] = useState("");
+  const quantity = Math.max(1, Number.parseInt(bookQuantity, 10) || 1);
+  const unitPrice = estimateResult?.estimate.paidCreditAmount ?? 3410;
+  const subtotal = unitPrice * quantity;
+  const platformFee = quantity * 300;
+  const totalDue = subtotal + platformFee;
+  const fallbackSelectedPhotoCount =
+    selectedPhotoCaptions.length > 0
+      ? selectedPhotoCaptions.length
+      : activeOrderEntry.selectedCandidateCount;
+  const shortlistedCount =
+    selectedPhotoCount && selectedPhotoCount > 0
+      ? selectedPhotoCount
+      : fallbackSelectedPhotoCount;
+  const draftPageCount = estimatedPageCount ?? activeOrderEntry.selectedCandidateCount * 2;
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -80,7 +105,11 @@ export function OrderHandoffScreen({
     }
   }
 
-  const canSubmitOrder = estimateResult?.status === "ready_for_order";
+  const canSubmitOrder =
+    estimateResult?.status === "ready_for_order" &&
+    paymentName.trim().length > 0 &&
+    paymentCardLastFour.trim().length === 4 &&
+    recipientName.trim().length > 0;
 
   return (
     <>
@@ -96,10 +125,81 @@ export function OrderHandoffScreen({
         />
         <p>Current group: {activeGroupName ?? "No active group"}</p>
         <p>Current event: {activeEventName ?? activeOrderEntry.activeEventName}</p>
-        <p>{selectedPhotoCaptions.length || activeOrderEntry.selectedCandidateCount} shortlisted photos ready</p>
+        <p>{shortlistedCount} shortlisted photos ready</p>
+        {coverPhotoCaption ? <p>Chosen cover: {coverPhotoCaption}</p> : null}
         {selectedPhotoCaptions.length > 0 ? (
-          <p>Owner selection: {selectedPhotoCaptions.join(", ")}</p>
+          <p>Story spreads: {selectedPhotoCaptions.join(", ")}</p>
         ) : null}
+        <div>
+          <h3>Checkout setup</h3>
+          <p>Prepare the final SweetBook handoff before the owner sends the order.</p>
+          <p>Cover candidate: {coverPhotoCaption ?? "Choose one in the album draft first."}</p>
+          <p>Estimated draft pages: {draftPageCount}</p>
+          <label>
+            Book quantity
+            <select
+              name="bookQuantity"
+              value={bookQuantity}
+              onChange={(event) => setBookQuantity(event.target.value)}
+            >
+              <option value="1">1 copy</option>
+              <option value="2">2 copies</option>
+              <option value="3">3 copies</option>
+              <option value="5">5 copies</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <h3>Delivery details</h3>
+          <label>
+            Recipient name
+            <input
+              name="recipientName"
+              value={recipientName}
+              onChange={(event) => setRecipientName(event.target.value)}
+            />
+          </label>
+          <label>
+            Delivery note
+            <input
+              name="deliveryNote"
+              value={deliveryNote}
+              onChange={(event) => setDeliveryNote(event.target.value)}
+            />
+          </label>
+        </div>
+        <div>
+          <h3>Simple payment card</h3>
+          <label>
+            Payer name
+            <input
+              name="paymentName"
+              value={paymentName}
+              onChange={(event) => setPaymentName(event.target.value)}
+            />
+          </label>
+          <label>
+            Card last 4 digits
+            <input
+              name="paymentCardLastFour"
+              inputMode="numeric"
+              maxLength={4}
+              value={paymentCardLastFour}
+              onChange={(event) => setPaymentCardLastFour(event.target.value.replace(/\D/g, ""))}
+            />
+          </label>
+        </div>
+        <div>
+          <h3>Checkout summary</h3>
+          <p>Ready to submit once the SweetBook estimate and payment card are both complete.</p>
+          <p>Owner-approved selection count: {shortlistedCount}</p>
+          <p>SweetBook draft pages queued: {draftPageCount}</p>
+          <p>SweetBook unit price: {unitPrice} KRW</p>
+          <p>Quantity subtotal: {subtotal} KRW</p>
+          <p>Prototype platform fee: {platformFee} KRW</p>
+          <p>Total due today: {totalDue} KRW</p>
+          {deliveryNote.trim().length > 0 ? <p>Delivery note: {deliveryNote}</p> : null}
+        </div>
         {canSubmitOrder ? (
           <PrimaryAction
             label={isSubmittingOrder ? "Submitting SweetBook order..." : "Submit SweetBook order"}
@@ -162,6 +262,7 @@ export function OrderHandoffScreen({
         description={activeOrderEntry.handoffSummary.note}
       >
         <p>{activeOrderEntry.handoffSummary.bookFormat}</p>
+        <p>This draft now includes quantity selection, recipient details, and a simple payment card before submission.</p>
         <ul>
           {selectedPhotoCaptions.length > 0 ? (
             <li>{selectedPhotoCaptions.length} owner-approved photos</li>

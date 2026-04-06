@@ -1785,7 +1785,7 @@ describe("prototype auth ui", () => {
     });
 
     const removeButtons = Array.from(container.querySelectorAll("button")).filter(
-      (button) => button.textContent === "Remove from album",
+      (button) => button.textContent === "Remove from book",
     );
 
     await act(async () => {
@@ -1793,7 +1793,7 @@ describe("prototype auth ui", () => {
     });
 
     expect(container.textContent).toContain("Updated owner album selection.");
-    expect(container.textContent).toContain("2 owner-approved photos selected");
+    expect(container.textContent).toContain("2 owner-approved photos are queued for this book draft.");
 
     const ordersLink = Array.from(container.querySelectorAll("a")).find(
       (link) => link.textContent === "Order",
@@ -1804,7 +1804,8 @@ describe("prototype auth ui", () => {
     });
 
     expect(container.textContent).toContain("2 shortlisted photos ready");
-    expect(container.textContent).toContain("Owner selection: Family portrait, Gift opening moment");
+    expect(container.textContent).toContain("Chosen cover: Family portrait");
+    expect(container.textContent).toContain("Story spreads: Gift opening moment");
   });
 });
 

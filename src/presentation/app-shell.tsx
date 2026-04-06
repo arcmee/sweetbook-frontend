@@ -91,6 +91,7 @@ export function AppShell({
   const [selectedPhotoIdsByEvent, setSelectedPhotoIdsByEvent] = useState<
     Record<string, string[]>
   >({});
+  const [coverPhotoIdByEvent, setCoverPhotoIdByEvent] = useState<Record<string, string>>({});
   const [createGroupName, setCreateGroupName] = useState("");
   const [createEventTitle, setCreateEventTitle] = useState("");
   const [createEventDescription, setCreateEventDescription] = useState("");
@@ -228,6 +229,7 @@ export function AppShell({
       setSelectedEventId(null);
       setRecentlyJoinedGroupId(null);
       setSelectedPhotoIdsByEvent({});
+      setCoverPhotoIdByEvent({});
       setCreateEventDescription("");
       setCreateEventVotingStartsAt(getDefaultVotingStartInput());
       setCreateEventVotingEndsAt(getDefaultVotingEndInput());
@@ -260,6 +262,29 @@ export function AppShell({
       };
     });
   }, [activeEventId, review]);
+
+  useEffect(() => {
+    if (!activeEventId) {
+      return;
+    }
+
+    const selectedIds = selectedPhotoIdsByEvent[activeEventId] ?? [];
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    setCoverPhotoIdByEvent((current) => {
+      const currentCoverId = current[activeEventId];
+      if (currentCoverId && selectedIds.includes(currentCoverId)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [activeEventId]: selectedIds[0],
+      };
+    });
+  }, [activeEventId, selectedPhotoIdsByEvent]);
 
   useEffect(() => {
     const nextGroup =
@@ -615,12 +640,76 @@ export function AppShell({
         ? existing.filter((id) => id !== photoId)
         : [...existing, photoId];
 
+      setCoverPhotoIdByEvent((currentCoverState) => {
+        const currentCoverId = currentCoverState[activeEventId];
+        if (!nextSelection.includes(currentCoverId)) {
+          const nextCoverId = nextSelection[0];
+          if (!nextCoverId) {
+            const { [activeEventId]: _removed, ...rest } = currentCoverState;
+            return rest;
+          }
+
+          return {
+            ...currentCoverState,
+            [activeEventId]: nextCoverId,
+          };
+        }
+
+        return currentCoverState;
+      });
+
       return {
         ...current,
         [activeEventId]: nextSelection,
       };
     });
     setWorkspaceSuccess("Updated owner album selection.");
+  }
+
+  function handleSetCoverPhoto(photoId: string): void {
+    if (!activeEventId) {
+      return;
+    }
+
+    setCoverPhotoIdByEvent((current) => ({
+      ...current,
+      [activeEventId]: photoId,
+    }));
+    setWorkspaceSuccess("Updated album cover selection.");
+  }
+
+  function moveSelectedPhoto(photoId: string, direction: -1 | 1): void {
+    if (!activeEventId) {
+      return;
+    }
+
+    setSelectedPhotoIdsByEvent((current) => {
+      const existing = current[activeEventId] ?? [];
+      const coverId = coverPhotoIdByEvent[activeEventId] ?? existing[0];
+      const spreadIds = existing.filter((id) => id !== coverId);
+      const currentIndex = spreadIds.indexOf(photoId);
+
+      if (currentIndex === -1) {
+        return current;
+      }
+
+      const targetIndex = currentIndex + direction;
+      if (targetIndex < 0 || targetIndex >= spreadIds.length) {
+        return current;
+      }
+
+      const nextSpreadIds = [...spreadIds];
+      const [movedId] = nextSpreadIds.splice(currentIndex, 1);
+      nextSpreadIds.splice(targetIndex, 0, movedId);
+
+      return {
+        ...current,
+        [activeEventId]: coverId ? [coverId, ...nextSpreadIds] : nextSpreadIds,
+      };
+    });
+    setWorkspaceSuccess(
+      direction < 0 ? "Moved selected spread earlier." : "Moved selected spread later.",
+    );
   }
 
   function handleSelectGroup(groupId: string): void {
@@ -645,6 +734,12 @@ export function AppShell({
   const selectedPhotoIds = selectedPhotoIdsByEvent[activeEventId] ?? [];
   const selectedPhotos =
     workflow?.photos.filter((photo) => selectedPhotoIds.includes(photo.id)) ?? [];
+  const selectedCoverPhoto =
+    selectedPhotos.find((photo) => photo.id === coverPhotoIdByEvent[activeEventId]) ??
+    selectedPhotos[0];
+  const selectedSpreadPhotos = selectedPhotos.filter(
+    (photo) => photo.id !== selectedCoverPhoto?.id,
+  );
   const canOpenOwnerSelection = canManageActiveGroup && Boolean(activeEvent?.canOwnerSelectPhotos);
   const myGroups = workspace.groups;
   const voteNotifications: NotificationActionViewModel[] = workspace.events
@@ -960,8 +1055,13 @@ export function AppShell({
             workflow={workflow}
             activeGroupName={activeGroup?.name}
             activeEventName={activeEvent?.name}
+            coverPhotoId={selectedCoverPhoto?.id}
+            onMovePhotoEarlier={(photoId) => moveSelectedPhoto(photoId, -1)}
+            onMovePhotoLater={(photoId) => moveSelectedPhoto(photoId, 1)}
             selectedPhotoIds={selectedPhotoIds}
+            onSetCoverPhoto={handleSetCoverPhoto}
             onTogglePhotoSelection={handleTogglePhotoSelection}
+            onOpenOrder={() => navigateTo("orders")}
           />
         ) : (
           <StatePanel
@@ -979,7 +1079,10 @@ export function AppShell({
             orderEntry={orderEntry}
             activeGroupName={activeGroup?.name}
             activeEventName={activeEvent?.name}
-            selectedPhotoCaptions={selectedPhotos.map((photo) => photo.caption)}
+            coverPhotoCaption={selectedCoverPhoto?.caption}
+            estimatedPageCount={review?.pagePreview.length}
+            selectedPhotoCount={selectedPhotos.length}
+            selectedPhotoCaptions={selectedSpreadPhotos.map((photo) => photo.caption)}
           />
         ) : (
           <StatePanel
