@@ -153,7 +153,35 @@ export function AlbumCandidateScreen({
                   </div>
                 ) : null}
                 <p>{page.photoCaptions.length} photo slot{page.photoCaptions.length === 1 ? "" : "s"} planned</p>
-                <p>{page.photoCaptions.join(", ")}</p>
+                {"photoIds" in page ? (
+                  <ul>
+                    {page.photoCaptions.map((caption, index) => {
+                      const photoId = page.photoIds[index];
+                      const spreadIndex = layoutPhotos.findIndex((photo) => photo.id === photoId);
+                      const canMoveEarlier = spreadIndex > 0;
+                      const canMoveLater =
+                        spreadIndex > -1 && spreadIndex < layoutPhotos.length - 1;
+
+                      return (
+                        <li key={photoId}>
+                          <span>{caption}</span>
+                          <PrimaryAction
+                            label="Move to previous page"
+                            onClick={() => onMovePhotoEarlier?.(photoId)}
+                            disabled={!canMoveEarlier}
+                          />
+                          <PrimaryAction
+                            label="Move to next page"
+                            onClick={() => onMovePhotoLater?.(photoId)}
+                            disabled={!canMoveLater}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p>{page.photoCaptions.join(", ")}</p>
+                )}
               </li>
             ))}
           </ul>
@@ -233,6 +261,7 @@ function buildPreviewPages(
   layout: string;
   pageId: string;
   pageNumber: number;
+  photoIds: string[];
   title: string;
   photoCaptions: string[];
 }> {
@@ -241,6 +270,7 @@ function buildPreviewPages(
     layout: string;
     pageId: string;
     pageNumber: number;
+    photoIds: string[];
     title: string;
     photoCaptions: string[];
   }> = [];
@@ -253,6 +283,7 @@ function buildPreviewPages(
       layout: pageLayouts[pageId] ?? "Full-bleed cover",
       pageId,
       pageNumber: 1,
+      photoIds: [coverPhoto.id],
       title: "Cover preview",
       photoCaptions: [coverPhoto.caption],
     });
@@ -271,6 +302,7 @@ function buildPreviewPages(
       layout: pageLayouts[pageId] ?? getDefaultSpreadLayout(spreadPhotos.length),
       pageId,
       pageNumber: pages.length + 1,
+      photoIds: spreadPhotos.map((photo) => photo.id),
       title: `Spread ${pages.length}`,
       photoCaptions: spreadPhotos.map((photo) => photo.caption),
     });
