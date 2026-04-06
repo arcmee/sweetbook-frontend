@@ -228,7 +228,7 @@ describe("prototype auth ui", () => {
               },
               {
                 id: "group-created-2",
-                name: "Prototype family 2",
+                name: "Cho family",
                 memberCount: 1,
                 role: "Owner",
                 eventCount: 0,
@@ -260,6 +260,15 @@ describe("prototype auth ui", () => {
     const createButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Create a family group",
     );
+    const groupNameInput = container.querySelector(
+      'input[name="groupName"]',
+    ) as HTMLInputElement | null;
+
+    await act(async () => {
+      if (groupNameInput) {
+        setInputValue(groupNameInput, "Cho family");
+      }
+    });
 
     await act(async () => {
       createButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -273,11 +282,11 @@ describe("prototype auth ui", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: "Prototype family 2",
+        name: "Cho family",
       }),
     });
     expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
-    expect(container.textContent).toContain("Prototype family 2");
+    expect(container.textContent).toContain("Cho family");
   });
 
   it("switches the active group and event context when the user selects a different item", async () => {
@@ -415,4 +424,187 @@ describe("prototype auth ui", () => {
     expect(container.textContent).toContain("Winter holiday trip");
     expect(container.textContent).toContain("Cabin arrival");
   });
+
+  it("creates an event from the typed input and refreshes the workspace snapshot", async () => {
+    window.history.replaceState({}, "", "/app/events");
+    window.localStorage.setItem("sweetbook.prototype.token", "ptok_saved");
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          token: "ptok_saved",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: {
+              totalGroups: 1,
+              totalMembers: 2,
+            },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 1,
+              },
+            ],
+            events: [
+              {
+                id: "event-birthday",
+                name: "First birthday album",
+                groupName: "Han family",
+                status: "collecting",
+                photoCount: 124,
+              },
+            ],
+          },
+          photoWorkflows: [
+            {
+              activeEventId: "event-birthday",
+              activeEventName: "First birthday album",
+              uploadState: {
+                pendingCount: 3,
+                uploadedCount: 124,
+                helperText: "Upload queue is local-only until backend adapters land.",
+              },
+              photos: [],
+            },
+          ],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: {
+              totalGroups: 1,
+              totalMembers: 2,
+            },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 2,
+              },
+            ],
+            events: [
+              {
+                id: "event-birthday",
+                name: "First birthday album",
+                groupName: "Han family",
+                status: "collecting",
+                photoCount: 124,
+              },
+              {
+                id: "event-created-2",
+                name: "Graduation album",
+                groupName: "Han family",
+                status: "draft",
+                photoCount: 0,
+              },
+            ],
+          },
+          photoWorkflows: [
+            {
+              activeEventId: "event-birthday",
+              activeEventName: "First birthday album",
+              uploadState: {
+                pendingCount: 3,
+                uploadedCount: 124,
+                helperText: "Upload queue is local-only until backend adapters land.",
+              },
+              photos: [],
+            },
+            {
+              activeEventId: "event-created-2",
+              activeEventName: "Graduation album",
+              uploadState: {
+                pendingCount: 0,
+                uploadedCount: 0,
+                helperText: "Upload queue is local-only until backend adapters land.",
+              },
+              photos: [],
+            },
+          ],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(AppShell));
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const eventTitleInput = container.querySelector(
+      'input[name="eventTitle"]',
+    ) as HTMLInputElement | null;
+    const createButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Plan a new event",
+    );
+
+    await act(async () => {
+      if (eventTitleInput) {
+        setInputValue(eventTitleInput, "Graduation album");
+      }
+    });
+
+    await act(async () => {
+      createButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/prototype/events", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        groupId: "group-han",
+        title: "Graduation album",
+      }),
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
+    expect(container.textContent).toContain("Graduation album");
+  });
 });
+
+function setInputValue(input: HTMLInputElement, value: string): void {
+  const descriptor = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  );
+  descriptor?.set?.call(input, value);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}

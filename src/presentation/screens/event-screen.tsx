@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { ChangeEvent, FormEvent, ReactElement } from "react";
 
 import {
   getPrototypePhotoWorkflowViewModel,
@@ -11,7 +11,10 @@ import { PhotoWorkflowSection } from "./photo-workflow-section";
 
 type EventScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
+  createEventTitle?: string;
+  isCreatingEvent?: boolean;
   onCreateEvent?: () => void | Promise<void>;
+  onCreateEventTitleChange?: (value: string) => void;
   onSelectEvent?: (eventId: string) => void;
   selectedEventId?: string;
   selectedGroupName?: string;
@@ -20,7 +23,10 @@ type EventScreenProps = {
 
 export function EventScreen({
   workspace,
+  createEventTitle = "",
+  isCreatingEvent = false,
   onCreateEvent,
+  onCreateEventTitleChange,
   onSelectEvent,
   selectedEventId,
   selectedGroupName,
@@ -31,6 +37,15 @@ export function EventScreen({
   const photoWorkflow =
     workflow ?? getPrototypePhotoWorkflowViewModel(activeEvent?.id ?? "");
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    void onCreateEvent?.();
+  }
+
+  function handleTitleChange(event: ChangeEvent<HTMLInputElement>): void {
+    onCreateEventTitleChange?.(event.target.value);
+  }
+
   return (
     <>
       <PageSection
@@ -38,7 +53,21 @@ export function EventScreen({
         title="Event timeline"
         description="Capture milestones before moving into album selection."
       >
-        <PrimaryAction label="Plan a new event" onClick={onCreateEvent} />
+        <form onSubmit={handleSubmit}>
+          <label>
+            New event title
+            <input
+              name="eventTitle"
+              value={createEventTitle}
+              onChange={handleTitleChange}
+            />
+          </label>
+          <PrimaryAction
+            label={isCreatingEvent ? "Creating event..." : "Plan a new event"}
+            disabled={isCreatingEvent || createEventTitle.trim().length === 0}
+            type="submit"
+          />
+        </form>
         <p>Active group</p>
         <p>{selectedGroupName ?? "No active group"}</p>
         <ul>
