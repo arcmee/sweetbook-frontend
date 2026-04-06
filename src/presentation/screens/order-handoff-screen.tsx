@@ -18,6 +18,7 @@ import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
 
 type OrderHandoffScreenProps = {
+  activeGroupName?: string;
   workspace: PrototypeWorkspaceViewModel;
   orderEntry?: PrototypeOrderEntryViewModel;
   requestEstimate?: () => Promise<PrototypeSweetBookEstimate>;
@@ -25,6 +26,7 @@ type OrderHandoffScreenProps = {
 };
 
 export function OrderHandoffScreen({
+  activeGroupName,
   workspace,
   orderEntry,
   requestEstimate = requestPrototypeSweetBookEstimate,
@@ -88,8 +90,9 @@ export function OrderHandoffScreen({
           disabled={isRunningEstimate}
           onClick={handleEstimateRequest}
         />
+        <p>Current group: {activeGroupName ?? "No active group"}</p>
+        <p>Current event: {activeOrderEntry.activeEventName}</p>
         <p>{activeOrderEntry.selectedCandidateCount} shortlisted photos ready</p>
-        <p>{activeOrderEntry.activeEventName}</p>
         {canSubmitOrder ? (
           <PrimaryAction
             label={isSubmittingOrder ? "Submitting SweetBook order..." : "Submit SweetBook order"}

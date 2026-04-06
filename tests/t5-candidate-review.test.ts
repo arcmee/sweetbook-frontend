@@ -34,6 +34,8 @@ describe("frontend album candidate review", () => {
     );
 
     expect(markup).toContain("Album candidate review");
+    expect(markup).toContain("Current group: Han family");
+    expect(markup).toContain("Current event: First birthday album");
     expect(markup).toContain("Top picks for First birthday album");
     expect(markup).toContain("Rank 1");
     expect(markup).toContain("Family portrait");
