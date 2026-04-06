@@ -138,6 +138,51 @@ export async function requestPrototypeEventCreate(
   }
 }
 
+export async function requestPrototypePhotoCreate(
+  input: {
+    eventId: string;
+    caption: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/photos"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok && response.status !== 201) {
+    throw new Error(`Failed to create prototype photo: ${response.status}`);
+  }
+}
+
+export async function requestPrototypePhotoLike(
+  input: {
+    photoId: string;
+    userId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/photos/${encodeURIComponent(input.photoId)}/likes`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: input.userId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 201) {
+    throw new Error(`Failed to like prototype photo: ${response.status}`);
+  }
+}
+
 function resolveApiUrl(path: string): string {
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
   return apiBaseUrl ? `${apiBaseUrl}${path}` : path;

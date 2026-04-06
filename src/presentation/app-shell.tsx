@@ -15,6 +15,8 @@ import {
   requestPrototypeEventCreate,
   requestPrototypeAuthLogout,
   requestPrototypeGroupCreate,
+  requestPrototypePhotoCreate,
+  requestPrototypePhotoLike,
 } from "../data/prototype-api-client";
 import {
   appRoutes,
@@ -66,8 +68,11 @@ export function AppShell({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [createGroupName, setCreateGroupName] = useState("");
   const [createEventTitle, setCreateEventTitle] = useState("");
+  const [createPhotoCaption, setCreatePhotoCaption] = useState("");
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [isCreatingPhoto, setIsCreatingPhoto] = useState(false);
+  const [isLikingPhoto, setIsLikingPhoto] = useState(false);
 
   useEffect(() => {
     if (currentRouteKey) {
@@ -168,6 +173,7 @@ export function AppShell({
       setWorkspaceSuccess(null);
       setSelectedGroupId(null);
       setSelectedEventId(null);
+      setCreatePhotoCaption("");
       return;
     }
 
@@ -252,6 +258,52 @@ export function AppShell({
       setWorkspaceError(error instanceof Error ? error.message : String(error));
     } finally {
       setIsCreatingEvent(false);
+    }
+  }
+
+  async function handleCreatePhoto(): Promise<void> {
+    if (!activeEvent) {
+      setWorkspaceError("An event is required before adding a prototype photo.");
+      return;
+    }
+
+    const nextCaption = createPhotoCaption.trim();
+    if (!nextCaption) {
+      setWorkspaceError("A photo caption is required.");
+      return;
+    }
+
+    try {
+      setIsCreatingPhoto(true);
+      setWorkspaceSuccess(null);
+      await requestPrototypePhotoCreate({
+        eventId: activeEvent.id,
+        caption: nextCaption,
+      });
+      await refreshWorkspace();
+      setCreatePhotoCaption("");
+      setWorkspaceSuccess(`Added photo ${nextCaption}.`);
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsCreatingPhoto(false);
+    }
+  }
+
+  async function handleLikePhoto(photoId: string): Promise<void> {
+    try {
+      setIsLikingPhoto(true);
+      setWorkspaceSuccess(null);
+      await requestPrototypePhotoLike({
+        photoId,
+        userId: "user-demo",
+      });
+      await refreshWorkspace();
+      setWorkspaceSuccess("Saved photo like.");
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsLikingPhoto(false);
     }
   }
 
@@ -407,12 +459,18 @@ export function AppShell({
         <EventScreen
           workspace={workspace}
           createEventTitle={createEventTitle}
+          createPhotoCaption={createPhotoCaption}
           isCreatingEvent={isCreatingEvent}
+          isCreatingPhoto={isCreatingPhoto}
+          isLikingPhoto={isLikingPhoto}
           selectedEventId={activeEvent?.id}
           selectedGroupName={activeGroup?.name}
           workflow={workflow}
           onCreateEvent={handleCreateEvent}
           onCreateEventTitleChange={setCreateEventTitle}
+          onCreatePhoto={handleCreatePhoto}
+          onCreatePhotoCaptionChange={setCreatePhotoCaption}
+          onLikePhoto={handleLikePhoto}
           onSelectEvent={handleSelectEvent}
         />
       ) : null}
