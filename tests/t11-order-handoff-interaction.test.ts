@@ -156,7 +156,7 @@ describe("order handoff interaction", () => {
           estimatedPageCount: 6,
           pageLayouts: {
             cover: "Title-first cover",
-            "spread-1": "Collage spread",
+            "spread-1": "Single-photo spotlight",
             "spread-2": "Caption-led story spread",
           },
           pageNotes: {
@@ -193,10 +193,15 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain(
       "Open with the portrait and title lockup.",
     );
+    expect(container.textContent).toContain("Status: Ready");
     expect(container.textContent).toContain("1 photo slot planned");
-    expect(container.textContent).toContain("Spread 1: Collage spread");
+    expect(container.textContent).toContain("Spread 1: Single-photo spotlight");
     expect(container.textContent).toContain(
       "Pair the balloon detail with the family wide shot.",
+    );
+    expect(container.textContent).toContain("Status: Needs review");
+    expect(container.textContent).toContain(
+      "Warning: Single-photo spotlight works best with one photo.",
     );
     expect(container.textContent).toContain("2 photo slots planned");
     expect(container.textContent).toContain("Balloon arch, Family group shot");
