@@ -4,6 +4,16 @@ import { describe, expect, it } from "vitest";
 import { buildAppShell } from "../src/presentation/app";
 import { getPrototypeWorkspaceViewModel } from "../src/application/prototype-workspace";
 
+const demoSession = {
+  token: "ptok_123",
+  user: {
+    userId: "user-demo",
+    username: "demo",
+    displayName: "SweetBook Demo User",
+    role: "owner",
+  },
+} as const;
+
 describe("frontend group and event screens", () => {
   it("provides prototype workspace data through an application boundary", () => {
     const viewModel = getPrototypeWorkspaceViewModel();
@@ -16,7 +26,7 @@ describe("frontend group and event screens", () => {
 
   it("renders a group management screen with creation guidance", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "groups" }),
+      buildAppShell({ currentRouteKey: "groups", initialSession: demoSession }),
     );
 
     expect(markup).toContain("Group workspace");
@@ -27,7 +37,7 @@ describe("frontend group and event screens", () => {
 
   it("renders an event management screen with a selected group context", () => {
     const markup = renderToStaticMarkup(
-      buildAppShell({ currentRouteKey: "events" }),
+      buildAppShell({ currentRouteKey: "events", initialSession: demoSession }),
     );
 
     expect(markup).toContain("Event timeline");

@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 
 import {
   getPrototypeCandidateReviewViewModel,
+  type PrototypeCandidateReviewViewModel,
   type PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
 import { PageSection } from "../ui/page-section";
@@ -9,13 +10,16 @@ import { PrimaryAction } from "../ui/primary-action";
 
 type AlbumCandidateScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
+  review?: PrototypeCandidateReviewViewModel;
 };
 
 export function AlbumCandidateScreen({
   workspace,
+  review,
 }: AlbumCandidateScreenProps): ReactElement {
   const activeEvent = workspace.events[0];
-  const review = getPrototypeCandidateReviewViewModel(activeEvent?.id ?? "");
+  const activeReview =
+    review ?? getPrototypeCandidateReviewViewModel(activeEvent?.id ?? "");
 
   return (
     <>
@@ -25,9 +29,9 @@ export function AlbumCandidateScreen({
         description="Review the draft spread before entering the order flow."
       >
         <PrimaryAction label="Refresh candidate set" />
-        <p>Top picks for {review.activeEventName}</p>
+        <p>Top picks for {activeReview.activeEventName}</p>
         <ul>
-          {review.candidates.map((candidate) => (
+          {activeReview.candidates.map((candidate) => (
             <li key={candidate.photoId}>
               <strong>Rank {candidate.rank}</strong>
               <span> {candidate.caption}</span>
@@ -43,7 +47,7 @@ export function AlbumCandidateScreen({
         description="Inspect how the prototype candidate set maps to early album pages."
       >
         <ul>
-          {review.pagePreview.map((page) => (
+          {activeReview.pagePreview.map((page) => (
             <li key={page.pageNumber}>
               <strong>{page.title}</strong>
               <span> Page {page.pageNumber}</span>
