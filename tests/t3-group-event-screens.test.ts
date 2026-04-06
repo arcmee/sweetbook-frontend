@@ -31,6 +31,7 @@ describe("frontend group and event screens", () => {
 
     expect(markup).toContain("Group workspace");
     expect(markup).toContain("Create a family group");
+    expect(markup).toContain("New group name");
     expect(markup).toContain("Han family");
     expect(markup).toContain("Invite relatives and define who can upload photos.");
   });
@@ -42,6 +43,7 @@ describe("frontend group and event screens", () => {
 
     expect(markup).toContain("Event timeline");
     expect(markup).toContain("Plan a new event");
+    expect(markup).toContain("New event title");
     expect(markup).toContain("Active group");
     expect(markup).toContain("First birthday album");
     expect(markup).toContain("Capture milestones before moving into album selection.");

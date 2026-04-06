@@ -63,6 +63,10 @@ export function AppShell({
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [createGroupName, setCreateGroupName] = useState("");
+  const [createEventTitle, setCreateEventTitle] = useState("");
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
 
   useEffect(() => {
     if (currentRouteKey) {
@@ -197,15 +201,23 @@ export function AppShell({
   }, [selectedEventId, selectedGroupId, workspace.events, workspace.groups]);
 
   async function handleCreateGroup(): Promise<void> {
-    const nextIndex = workspace.groupSummary.totalGroups + 1;
+    const nextGroupName = createGroupName.trim();
+    if (!nextGroupName) {
+      setWorkspaceError("A group name is required.");
+      return;
+    }
 
     try {
+      setIsCreatingGroup(true);
       await requestPrototypeGroupCreate({
-        name: `Prototype family ${nextIndex}`,
+        name: nextGroupName,
       });
       await refreshWorkspace();
+      setCreateGroupName("");
     } catch (error: unknown) {
       setWorkspaceError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsCreatingGroup(false);
     }
   }
 
@@ -216,14 +228,24 @@ export function AppShell({
       return;
     }
 
+    const nextEventTitle = createEventTitle.trim();
+    if (!nextEventTitle) {
+      setWorkspaceError("An event title is required.");
+      return;
+    }
+
     try {
+      setIsCreatingEvent(true);
       await requestPrototypeEventCreate({
         groupId: targetGroup.id,
-        title: `Prototype event ${workspace.events.length + 1}`,
+        title: nextEventTitle,
       });
       await refreshWorkspace();
+      setCreateEventTitle("");
     } catch (error: unknown) {
       setWorkspaceError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsCreatingEvent(false);
     }
   }
 
@@ -359,7 +381,10 @@ export function AppShell({
       {currentRoute.key === "groups" ? (
         <GroupScreen
           workspace={workspace}
+          createGroupName={createGroupName}
+          isCreatingGroup={isCreatingGroup}
           onCreateGroup={handleCreateGroup}
+          onCreateGroupNameChange={setCreateGroupName}
           onSelectGroup={handleSelectGroup}
           selectedGroupId={activeGroup?.id}
         />
@@ -368,10 +393,13 @@ export function AppShell({
       {currentRoute.key === "events" ? (
         <EventScreen
           workspace={workspace}
+          createEventTitle={createEventTitle}
+          isCreatingEvent={isCreatingEvent}
           selectedEventId={activeEvent?.id}
           selectedGroupName={activeGroup?.name}
           workflow={workflow}
           onCreateEvent={handleCreateEvent}
+          onCreateEventTitleChange={setCreateEventTitle}
           onSelectEvent={handleSelectEvent}
         />
       ) : null}
