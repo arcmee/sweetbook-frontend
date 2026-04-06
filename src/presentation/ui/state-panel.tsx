@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 
-type StateTone = "loading" | "empty" | "error";
+type StateTone = "loading" | "empty" | "error" | "success";
 
 type StatePanelProps = {
   tone: StateTone;

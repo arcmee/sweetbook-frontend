@@ -84,3 +84,16 @@ export function getRouteByKey(routeKey: AppRouteKey): AppRoute {
 
   return route;
 }
+
+export function getRouteByPath(pathname: string): AppRoute {
+  const normalizedPathname = pathname.replace(/\/$/, "") || "/";
+  const route =
+    appRoutes.find((item) => item.path === normalizedPathname) ??
+    appRoutes.find((item) => item.path === pathname);
+
+  if (!route) {
+    return getRouteByKey(defaultRouteKey);
+  }
+
+  return route;
+}
