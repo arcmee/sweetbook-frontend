@@ -29,6 +29,9 @@ export type PhotoCardSnapshot = {
   uploadedBy: string;
   likeCount: number;
   likedByViewer: boolean;
+  assetUrl?: string;
+  assetFileName?: string;
+  mediaType?: string;
 };
 
 export type PhotoWorkflowSnapshot = {

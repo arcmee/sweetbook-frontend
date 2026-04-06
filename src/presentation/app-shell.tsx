@@ -15,7 +15,7 @@ import {
   requestPrototypeEventCreate,
   requestPrototypeAuthLogout,
   requestPrototypeGroupCreate,
-  requestPrototypePhotoCreate,
+  requestPrototypePhotoUpload,
   requestPrototypePhotoLike,
 } from "../data/prototype-api-client";
 import {
@@ -69,6 +69,7 @@ export function AppShell({
   const [createGroupName, setCreateGroupName] = useState("");
   const [createEventTitle, setCreateEventTitle] = useState("");
   const [createPhotoCaption, setCreatePhotoCaption] = useState("");
+  const [createPhotoFile, setCreatePhotoFile] = useState<File | null>(null);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [isCreatingPhoto, setIsCreatingPhoto] = useState(false);
@@ -174,6 +175,7 @@ export function AppShell({
       setSelectedGroupId(null);
       setSelectedEventId(null);
       setCreatePhotoCaption("");
+      setCreatePhotoFile(null);
       return;
     }
 
@@ -272,17 +274,23 @@ export function AppShell({
       setWorkspaceError("A photo caption is required.");
       return;
     }
+    if (!createPhotoFile) {
+      setWorkspaceError("A photo file is required.");
+      return;
+    }
 
     try {
       setIsCreatingPhoto(true);
       setWorkspaceSuccess(null);
-      await requestPrototypePhotoCreate({
+      await requestPrototypePhotoUpload({
         eventId: activeEvent.id,
         caption: nextCaption,
+        file: createPhotoFile,
       });
       await refreshWorkspace();
       setCreatePhotoCaption("");
-      setWorkspaceSuccess(`Added photo ${nextCaption}.`);
+      setCreatePhotoFile(null);
+      setWorkspaceSuccess(`Uploaded photo ${nextCaption}.`);
     } catch (error: unknown) {
       setWorkspaceError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -460,6 +468,7 @@ export function AppShell({
           workspace={workspace}
           createEventTitle={createEventTitle}
           createPhotoCaption={createPhotoCaption}
+          createPhotoFileName={createPhotoFile?.name}
           isCreatingEvent={isCreatingEvent}
           isCreatingPhoto={isCreatingPhoto}
           isLikingPhoto={isLikingPhoto}
@@ -470,6 +479,7 @@ export function AppShell({
           onCreateEventTitleChange={setCreateEventTitle}
           onCreatePhoto={handleCreatePhoto}
           onCreatePhotoCaptionChange={setCreatePhotoCaption}
+          onCreatePhotoFileChange={setCreatePhotoFile}
           onLikePhoto={handleLikePhoto}
           onSelectEvent={handleSelectEvent}
         />

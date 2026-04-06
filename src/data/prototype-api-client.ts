@@ -158,6 +158,29 @@ export async function requestPrototypePhotoCreate(
   }
 }
 
+export async function requestPrototypePhotoUpload(
+  input: {
+    eventId: string;
+    caption: string;
+    file: File;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const formData = new FormData();
+  formData.set("eventId", input.eventId);
+  formData.set("caption", input.caption);
+  formData.set("file", input.file);
+
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/photo-uploads"), {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok && response.status !== 201) {
+    throw new Error(`Failed to upload prototype photo: ${response.status}`);
+  }
+}
+
 export async function requestPrototypePhotoLike(
   input: {
     photoId: string;

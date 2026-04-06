@@ -726,13 +726,22 @@ describe("prototype auth ui", () => {
     const photoCaptionInput = container.querySelector(
       'input[name="photoCaption"]',
     ) as HTMLInputElement | null;
+    const photoFileInput = container.querySelector(
+      'input[name="photoFile"]',
+    ) as HTMLInputElement | null;
     const createPhotoButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Add event photos",
+      (button) => button.textContent === "Upload event photo",
     );
+    const photoFile = new File(["demo-image"], "balloon-arch.jpg", {
+      type: "image/jpeg",
+    });
 
     await act(async () => {
       if (photoCaptionInput) {
         setInputValue(photoCaptionInput, "Balloon arch");
+      }
+      if (photoFileInput) {
+        setInputFiles(photoFileInput, [photoFile]);
       }
     });
 
@@ -742,17 +751,14 @@ describe("prototype auth ui", () => {
       await Promise.resolve();
     });
 
-    expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/prototype/photos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        eventId: "event-birthday",
-        caption: "Balloon arch",
-      }),
-    });
-    expect(container.textContent).toContain("Added photo Balloon arch.");
+    const uploadCall = fetchMock.mock.calls[2] as [string, RequestInit];
+    expect(uploadCall[0]).toBe("/api/prototype/photo-uploads");
+    expect(uploadCall[1].method).toBe("POST");
+    expect(uploadCall[1].body).toBeInstanceOf(FormData);
+    expect((uploadCall[1].body as FormData).get("eventId")).toBe("event-birthday");
+    expect((uploadCall[1].body as FormData).get("caption")).toBe("Balloon arch");
+    expect((uploadCall[1].body as FormData).get("file")).toBe(photoFile);
+    expect(container.textContent).toContain("Uploaded photo Balloon arch.");
     expect(container.textContent).toContain("125 already in the event");
   });
 
@@ -922,5 +928,13 @@ function setInputValue(input: HTMLInputElement, value: string): void {
   );
   descriptor?.set?.call(input, value);
   input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function setInputFiles(input: HTMLInputElement, files: File[]): void {
+  Object.defineProperty(input, "files", {
+    configurable: true,
+    value: files,
+  });
   input.dispatchEvent(new Event("change", { bubbles: true }));
 }

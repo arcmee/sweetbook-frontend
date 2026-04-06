@@ -6,20 +6,24 @@ import { PrimaryAction } from "../ui/primary-action";
 
 type PhotoWorkflowSectionProps = {
   createPhotoCaption?: string;
+  createPhotoFileName?: string;
   isCreatingPhoto?: boolean;
   isLikingPhoto?: boolean;
   onCreatePhoto?: () => void | Promise<void>;
   onCreatePhotoCaptionChange?: (value: string) => void;
+  onCreatePhotoFileChange?: (file: File | null) => void;
   onLikePhoto?: (photoId: string) => void | Promise<void>;
   workflow: PrototypePhotoWorkflowViewModel;
 };
 
 export function PhotoWorkflowSection({
   createPhotoCaption = "",
+  createPhotoFileName,
   isCreatingPhoto = false,
   isLikingPhoto = false,
   onCreatePhoto,
   onCreatePhotoCaptionChange,
+  onCreatePhotoFileChange,
   onLikePhoto,
   workflow,
 }: PhotoWorkflowSectionProps): ReactElement {
@@ -30,6 +34,10 @@ export function PhotoWorkflowSection({
 
   function handleCaptionChange(event: ChangeEvent<HTMLInputElement>): void {
     onCreatePhotoCaptionChange?.(event.target.value);
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
+    onCreatePhotoFileChange?.(event.target.files?.[0] ?? null);
   }
 
   return (
@@ -47,9 +55,23 @@ export function PhotoWorkflowSection({
             onChange={handleCaptionChange}
           />
         </label>
+        <label>
+          Photo file
+          <input
+            accept="image/*"
+            name="photoFile"
+            type="file"
+            onChange={handleFileChange}
+          />
+        </label>
+        <p>{createPhotoFileName ?? "No file selected"}</p>
         <PrimaryAction
-          label={isCreatingPhoto ? "Adding event photo..." : "Add event photos"}
-          disabled={isCreatingPhoto || createPhotoCaption.trim().length === 0}
+          label={isCreatingPhoto ? "Uploading photo..." : "Upload event photo"}
+          disabled={
+            isCreatingPhoto ||
+            createPhotoCaption.trim().length === 0 ||
+            !createPhotoFileName
+          }
           type="submit"
         />
       </form>
@@ -64,6 +86,16 @@ export function PhotoWorkflowSection({
             <span> {photo.uploadedBy}</span>
             <span> {photo.likeCount} likes</span>
             <span> {photo.likedByViewer ? "Liked by you" : "Not liked yet"}</span>
+            <span> {photo.assetFileName ?? "No uploaded file"}</span>
+            {photo.assetUrl ? (
+              <div>
+                <img
+                  alt={`${photo.caption} preview`}
+                  src={photo.assetUrl}
+                  style={{ maxWidth: "160px" }}
+                />
+              </div>
+            ) : null}
             <PrimaryAction
               label={isLikingPhoto ? "Saving like..." : "Like photo"}
               disabled={isLikingPhoto || photo.likedByViewer}

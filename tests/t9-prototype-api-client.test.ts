@@ -8,6 +8,7 @@ import {
   requestPrototypeAuthLogout,
   requestPrototypeGroupCreate,
   requestPrototypePhotoCreate,
+  requestPrototypePhotoUpload,
   requestPrototypePhotoLike,
 } from "../src/data/prototype-api-client";
 
@@ -233,5 +234,32 @@ describe("prototype api client", () => {
         userId: "user-demo",
       }),
     });
+  });
+
+  it("posts a multipart photo upload request", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+    });
+    const file = new File(["demo-image"], "balloon-arch.jpg", {
+      type: "image/jpeg",
+    });
+
+    await requestPrototypePhotoUpload(
+      {
+        eventId: "event-birthday",
+        caption: "Balloon arch",
+        file,
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    const [url, options] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/prototype/photo-uploads");
+    expect(options.method).toBe("POST");
+    expect(options.body).toBeInstanceOf(FormData);
+    expect((options.body as FormData).get("eventId")).toBe("event-birthday");
+    expect((options.body as FormData).get("caption")).toBe("Balloon arch");
+    expect((options.body as FormData).get("file")).toBe(file);
   });
 });
