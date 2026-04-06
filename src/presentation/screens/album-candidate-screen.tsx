@@ -15,7 +15,11 @@ type AlbumCandidateScreenProps = {
   onMovePhotoEarlier?: (photoId: string) => void;
   onMovePhotoLater?: (photoId: string) => void;
   onOpenOrder?: () => void;
+  onSetPageLayout?: (pageId: string, layout: string) => void;
+  onSetPageNote?: (pageId: string, note: string) => void;
   onSetCoverPhoto?: (photoId: string) => void;
+  pageLayouts?: Record<string, string>;
+  pageNotes?: Record<string, string>;
   selectedPhotoIds?: string[];
   workflow?: PrototypePhotoWorkflowViewModel;
   onTogglePhotoSelection?: (photoId: string) => void;
@@ -30,7 +34,11 @@ export function AlbumCandidateScreen({
   onMovePhotoEarlier,
   onMovePhotoLater,
   onOpenOrder,
+  onSetPageLayout,
+  onSetPageNote,
   onSetCoverPhoto,
+  pageLayouts = {},
+  pageNotes = {},
   selectedPhotoIds = [],
   workflow,
   onTogglePhotoSelection,
@@ -57,7 +65,7 @@ export function AlbumCandidateScreen({
   const layoutPhotos = selectedPhotos.filter((photo) => photo.id !== coverPhoto?.id);
   const previewPages =
     selectedPhotos.length > 0
-      ? buildPreviewPages(coverPhoto, layoutPhotos)
+      ? buildPreviewPages(coverPhoto, layoutPhotos, pageLayouts, pageNotes)
       : activeReview.pagePreview;
 
   return (
@@ -115,9 +123,35 @@ export function AlbumCandidateScreen({
           <h3>Prototype page preview</h3>
           <ul>
             {previewPages.map((page) => (
-              <li key={page.pageNumber}>
+              <li key={"pageId" in page ? page.pageId : page.pageNumber}>
                 <strong>{page.title}</strong>
                 <span> Page {page.pageNumber}</span>
+                {"layout" in page ? <p>Layout: {page.layout}</p> : null}
+                {"editNote" in page ? <p>{page.editNote}</p> : null}
+                {"pageId" in page ? (
+                  <div>
+                    <label>
+                      Page layout
+                      <select
+                        value={page.layout}
+                        onChange={(event) => onSetPageLayout?.(page.pageId, event.target.value)}
+                      >
+                        {getLayoutOptions(page.pageId === "cover").map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Edit note
+                      <input
+                        value={page.editNote}
+                        onChange={(event) => onSetPageNote?.(page.pageId, event.target.value)}
+                      />
+                    </label>
+                  </div>
+                ) : null}
                 <p>{page.photoCaptions.join(", ")}</p>
               </li>
             ))}
@@ -191,15 +225,32 @@ function buildPreviewPages(
     | PrototypePhotoWorkflowViewModel["photos"][number]
     | undefined,
   layoutPhotos: PrototypePhotoWorkflowViewModel["photos"],
+  pageLayouts: Record<string, string>,
+  pageNotes: Record<string, string>,
 ): Array<{
+  editNote: string;
+  layout: string;
+  pageId: string;
   pageNumber: number;
   title: string;
   photoCaptions: string[];
 }> {
-  const pages: Array<{ pageNumber: number; title: string; photoCaptions: string[] }> = [];
+  const pages: Array<{
+    editNote: string;
+    layout: string;
+    pageId: string;
+    pageNumber: number;
+    title: string;
+    photoCaptions: string[];
+  }> = [];
 
   if (coverPhoto) {
+    const pageId = "cover";
     pages.push({
+      editNote:
+        pageNotes[pageId] ?? "Lead with the strongest event-defining moment on the cover.",
+      layout: pageLayouts[pageId] ?? "Full-bleed cover",
+      pageId,
       pageNumber: 1,
       title: "Cover preview",
       photoCaptions: [coverPhoto.caption],
@@ -208,7 +259,16 @@ function buildPreviewPages(
 
   for (let index = 0; index < layoutPhotos.length; index += 2) {
     const spreadPhotos = layoutPhotos.slice(index, index + 2);
+    const spreadNumber = index / 2 + 1;
+    const pageId = `spread-${spreadNumber}`;
     pages.push({
+      editNote:
+        pageNotes[pageId] ??
+        (spreadPhotos.length > 1
+          ? "Use this spread to balance detail shots with group moments."
+          : "Single-photo spread can spotlight a key memory beat."),
+      layout: pageLayouts[pageId] ?? getDefaultSpreadLayout(spreadPhotos.length),
+      pageId,
       pageNumber: pages.length + 1,
       title: `Spread ${pages.length}`,
       photoCaptions: spreadPhotos.map((photo) => photo.caption),
@@ -216,4 +276,19 @@ function buildPreviewPages(
   }
 
   return pages;
+}
+
+function getDefaultSpreadLayout(photoCount: number): string {
+  return photoCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight";
+}
+
+function getLayoutOptions(isCover: boolean): string[] {
+  return isCover
+    ? ["Full-bleed cover", "Centered portrait cover", "Title-first cover"]
+    : [
+        "Balanced two-photo spread",
+        "Single-photo spotlight",
+        "Collage spread",
+        "Caption-led story spread",
+      ];
 }

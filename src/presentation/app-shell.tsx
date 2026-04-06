@@ -92,6 +92,12 @@ export function AppShell({
     Record<string, string[]>
   >({});
   const [coverPhotoIdByEvent, setCoverPhotoIdByEvent] = useState<Record<string, string>>({});
+  const [pageLayoutByEvent, setPageLayoutByEvent] = useState<
+    Record<string, Record<string, string>>
+  >({});
+  const [pageNotesByEvent, setPageNotesByEvent] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [createGroupName, setCreateGroupName] = useState("");
   const [createEventTitle, setCreateEventTitle] = useState("");
   const [createEventDescription, setCreateEventDescription] = useState("");
@@ -230,6 +236,8 @@ export function AppShell({
       setRecentlyJoinedGroupId(null);
       setSelectedPhotoIdsByEvent({});
       setCoverPhotoIdByEvent({});
+      setPageLayoutByEvent({});
+      setPageNotesByEvent({});
       setCreateEventDescription("");
       setCreateEventVotingStartsAt(getDefaultVotingStartInput());
       setCreateEventVotingEndsAt(getDefaultVotingEndInput());
@@ -678,6 +686,36 @@ export function AppShell({
     setWorkspaceSuccess("Updated album cover selection.");
   }
 
+  function handleSetPageLayout(pageId: string, layout: string): void {
+    if (!activeEventId) {
+      return;
+    }
+
+    setPageLayoutByEvent((current) => ({
+      ...current,
+      [activeEventId]: {
+        ...(current[activeEventId] ?? {}),
+        [pageId]: layout,
+      },
+    }));
+    setWorkspaceSuccess("Updated draft page layout.");
+  }
+
+  function handleSetPageNote(pageId: string, note: string): void {
+    if (!activeEventId) {
+      return;
+    }
+
+    setPageNotesByEvent((current) => ({
+      ...current,
+      [activeEventId]: {
+        ...(current[activeEventId] ?? {}),
+        [pageId]: note,
+      },
+    }));
+    setWorkspaceSuccess("Updated draft page note.");
+  }
+
   function moveSelectedPhoto(photoId: string, direction: -1 | 1): void {
     if (!activeEventId) {
       return;
@@ -1056,9 +1094,13 @@ export function AppShell({
             activeGroupName={activeGroup?.name}
             activeEventName={activeEvent?.name}
             coverPhotoId={selectedCoverPhoto?.id}
+            pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
+            pageNotes={pageNotesByEvent[activeEventId] ?? {}}
             onMovePhotoEarlier={(photoId) => moveSelectedPhoto(photoId, -1)}
             onMovePhotoLater={(photoId) => moveSelectedPhoto(photoId, 1)}
             selectedPhotoIds={selectedPhotoIds}
+            onSetPageLayout={handleSetPageLayout}
+            onSetPageNote={handleSetPageNote}
             onSetCoverPhoto={handleSetCoverPhoto}
             onTogglePhotoSelection={handleTogglePhotoSelection}
             onOpenOrder={() => navigateTo("orders")}
@@ -1081,6 +1123,8 @@ export function AppShell({
             activeEventName={activeEvent?.name}
             coverPhotoCaption={selectedCoverPhoto?.caption}
             estimatedPageCount={review?.pagePreview.length}
+            pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
+            pageNotes={pageNotesByEvent[activeEventId] ?? {}}
             selectedPhotoCount={selectedPhotos.length}
             selectedPhotoCaptions={selectedSpreadPhotos.map((photo) => photo.caption)}
           />
