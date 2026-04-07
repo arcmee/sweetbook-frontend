@@ -52,6 +52,12 @@ export function DashboardScreen({
   workspace,
 }: DashboardScreenProps): ReactElement {
   const completedOrders = Object.entries(submittedOrdersByEvent);
+  const inProgressGroups = groupedEvents
+    .map((group) => ({
+      ...group,
+      events: group.events.filter((event) => !submittedOrdersByEvent[event.eventId]),
+    }))
+    .filter((group) => group.events.length > 0);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -120,24 +126,28 @@ export function DashboardScreen({
       </PageSection>
       <PageSection
         eyebrow="Priority groups"
-        title="Groups with live voting"
-        description="Use this list to spot which family groups currently have active voting momentum."
+        title="Groups still in progress"
+        description="Use this list to focus on groups that still need voting, owner review, or handoff work."
       >
-        <ul>
-          {groupedEvents.map((group) => {
-            const liveEvents = group.events.filter((event) => event.status === "collecting");
-            return (
-              <li key={group.groupId}>
-                <strong>{group.groupName}</strong>
-                <p>
-                  {liveEvents.length > 0
-                    ? `${liveEvents.length} live voting event${liveEvents.length === 1 ? "" : "s"} right now.`
-                    : "No live voting is active right now."}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
+        {inProgressGroups.length > 0 ? (
+          <ul>
+            {inProgressGroups.map((group) => {
+              const liveEvents = group.events.filter((event) => event.status === "collecting");
+              return (
+                <li key={group.groupId}>
+                  <strong>{group.groupName}</strong>
+                  <p>
+                    {liveEvents.length > 0
+                      ? `${liveEvents.length} live voting event${liveEvents.length === 1 ? "" : "s"} right now.`
+                      : "This group still has unfinished event work."}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p>No active group work remains right now.</p>
+        )}
       </PageSection>
       {completedOrders.length > 0 ? (
         <PageSection
@@ -178,12 +188,12 @@ export function DashboardScreen({
           </ul>
         </PageSection>
       ) : null}
-      {groupedEvents.map((group) => (
+      {inProgressGroups.map((group) => (
         <PageSection
           key={group.groupId}
           eyebrow="Group"
           title={group.groupName}
-          description="Current voting events for this family group."
+          description="Current events in this family group that still need action."
         >
           <PrimaryAction label="Open group page" onClick={() => onOpenGroup?.(group.groupId)} />
           <ul>
