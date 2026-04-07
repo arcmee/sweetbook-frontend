@@ -82,6 +82,12 @@ export type OrderEntrySnapshot = {
   activeEventId: string;
   activeEventName: string;
   selectedCandidateCount: number;
+  pagePlanner: {
+    selectedPhotoIds: string[];
+    coverPhotoId?: string;
+    pageLayouts: Record<string, string>;
+    pageNotes: Record<string, string>;
+  };
   operationSummary: {
     stage: "blocked" | "ready_for_handoff";
     label: string;

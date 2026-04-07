@@ -8,6 +8,10 @@ import {
   requestPrototypeAuthLogout,
   requestPrototypeInvitationAccept,
   requestPrototypeInvitationDecline,
+  requestPrototypePagePlanCover,
+  requestPrototypePagePlanLayout,
+  requestPrototypePagePlanNote,
+  requestPrototypePagePlanSelection,
   requestPrototypePasswordChange,
   requestPrototypeGroupCreate,
   requestPrototypePhotoCreate,
@@ -318,6 +322,97 @@ describe("prototype api client", () => {
         userId: "user-demo",
       }),
     });
+  });
+
+  it("posts page planner selection, cover, layout, and note requests", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+    });
+
+    await requestPrototypePagePlanSelection(
+      {
+        eventId: "event-birthday",
+        selectedPhotoIds: ["photo-cake", "photo-family"],
+      },
+      fetchImpl as typeof fetch,
+    );
+    await requestPrototypePagePlanCover(
+      {
+        eventId: "event-birthday",
+        coverPhotoId: "photo-family",
+      },
+      fetchImpl as typeof fetch,
+    );
+    await requestPrototypePagePlanLayout(
+      {
+        eventId: "event-birthday",
+        pageId: "spread-1",
+        layout: "Collage spread",
+      },
+      fetchImpl as typeof fetch,
+    );
+    await requestPrototypePagePlanNote(
+      {
+        eventId: "event-birthday",
+        pageId: "spread-1",
+        note: "Use the candid moments here.",
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      1,
+      "/api/prototype/events/event-birthday/page-plan/selection",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selectedPhotoIds: ["photo-cake", "photo-family"],
+        }),
+      },
+    );
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      "/api/prototype/events/event-birthday/page-plan/cover",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          coverPhotoId: "photo-family",
+        }),
+      },
+    );
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      3,
+      "/api/prototype/events/event-birthday/page-plan/pages/spread-1/layout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          layout: "Collage spread",
+        }),
+      },
+    );
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      4,
+      "/api/prototype/events/event-birthday/page-plan/pages/spread-1/note",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          note: "Use the candid moments here.",
+        }),
+      },
+    );
   });
 
   it("posts a multipart photo upload request", async () => {

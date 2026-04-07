@@ -19,6 +19,10 @@ import {
   requestPrototypeEventVotingClose,
   requestPrototypeEventVotingExtend,
   requestPrototypeAuthLogout,
+  requestPrototypePagePlanCover,
+  requestPrototypePagePlanLayout,
+  requestPrototypePagePlanNote,
+  requestPrototypePagePlanSelection,
   requestPrototypeInvitationAccept,
   requestPrototypeInvitationDecline,
   requestPrototypePasswordChange,
@@ -99,16 +103,6 @@ export function AppShell({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [recentlyJoinedGroupId, setRecentlyJoinedGroupId] = useState<string | null>(null);
   const [ownerReviewEntryEventId, setOwnerReviewEntryEventId] = useState<string | null>(null);
-  const [selectedPhotoIdsByEvent, setSelectedPhotoIdsByEvent] = useState<
-    Record<string, string[]>
-  >({});
-  const [coverPhotoIdByEvent, setCoverPhotoIdByEvent] = useState<Record<string, string>>({});
-  const [pageLayoutByEvent, setPageLayoutByEvent] = useState<
-    Record<string, Record<string, string>>
-  >({});
-  const [pageNotesByEvent, setPageNotesByEvent] = useState<
-    Record<string, Record<string, string>>
-  >({});
   const [submittedOrdersByEvent, setSubmittedOrdersByEvent] = useState<
     Record<string, SubmittedOrderViewModel>
   >({});
@@ -249,10 +243,6 @@ export function AppShell({
       setSelectedEventId(null);
       setRecentlyJoinedGroupId(null);
       setOwnerReviewEntryEventId(null);
-      setSelectedPhotoIdsByEvent({});
-      setCoverPhotoIdByEvent({});
-      setPageLayoutByEvent({});
-      setPageNotesByEvent({});
       setSubmittedOrdersByEvent({});
       setCreateEventDescription("");
       setCreateEventVotingStartsAt(getDefaultVotingStartInput());
@@ -269,46 +259,6 @@ export function AppShell({
 
     void refreshWorkspace();
   }, [session]);
-
-  useEffect(() => {
-    if (!activeEventId || !review) {
-      return;
-    }
-
-    setSelectedPhotoIdsByEvent((current) => {
-      if (current[activeEventId]) {
-        return current;
-      }
-
-      return {
-        ...current,
-        [activeEventId]: review.candidates.map((candidate) => candidate.photoId),
-      };
-    });
-  }, [activeEventId, review]);
-
-  useEffect(() => {
-    if (!activeEventId) {
-      return;
-    }
-
-    const selectedIds = selectedPhotoIdsByEvent[activeEventId] ?? [];
-    if (selectedIds.length === 0) {
-      return;
-    }
-
-    setCoverPhotoIdByEvent((current) => {
-      const currentCoverId = current[activeEventId];
-      if (currentCoverId && selectedIds.includes(currentCoverId)) {
-        return current;
-      }
-
-      return {
-        ...current,
-        [activeEventId]: selectedIds[0],
-      };
-    });
-  }, [activeEventId, selectedPhotoIdsByEvent]);
 
   useEffect(() => {
     const nextGroup =
@@ -653,83 +603,82 @@ export function AppShell({
     }
   }
 
-  function handleTogglePhotoSelection(photoId: string): void {
+  async function handleTogglePhotoSelection(photoId: string): Promise<void> {
     if (!activeEventId) {
       return;
     }
 
-    setSelectedPhotoIdsByEvent((current) => {
-      const existing = current[activeEventId] ?? [];
+    try {
+      setWorkspaceSuccess(null);
+      const existing = orderEntry?.pagePlanner?.selectedPhotoIds ?? [];
       const nextSelection = existing.includes(photoId)
         ? existing.filter((id) => id !== photoId)
         : [...existing, photoId];
-
-      setCoverPhotoIdByEvent((currentCoverState) => {
-        const currentCoverId = currentCoverState[activeEventId];
-        if (!nextSelection.includes(currentCoverId)) {
-          const nextCoverId = nextSelection[0];
-          if (!nextCoverId) {
-            const { [activeEventId]: _removed, ...rest } = currentCoverState;
-            return rest;
-          }
-
-          return {
-            ...currentCoverState,
-            [activeEventId]: nextCoverId,
-          };
-        }
-
-        return currentCoverState;
+      await requestPrototypePagePlanSelection({
+        eventId: activeEventId,
+        selectedPhotoIds: nextSelection,
       });
-
-      return {
-        ...current,
-        [activeEventId]: nextSelection,
-      };
-    });
-    setWorkspaceSuccess("Updated owner album selection.");
+      await refreshWorkspace();
+      setWorkspaceSuccess("Updated owner album selection.");
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    }
   }
 
-  function handleSetCoverPhoto(photoId: string): void {
+  async function handleSetCoverPhoto(photoId: string): Promise<void> {
     if (!activeEventId) {
       return;
     }
 
-    setCoverPhotoIdByEvent((current) => ({
-      ...current,
-      [activeEventId]: photoId,
-    }));
-    setWorkspaceSuccess("Updated album cover selection.");
+    try {
+      setWorkspaceSuccess(null);
+      await requestPrototypePagePlanCover({
+        eventId: activeEventId,
+        coverPhotoId: photoId,
+      });
+      await refreshWorkspace();
+      setWorkspaceSuccess("Updated album cover selection.");
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    }
   }
 
-  function handleSetPageLayout(pageId: string, layout: string): void {
+  async function handleSetPageLayout(pageId: string, layout: string): Promise<void> {
     if (!activeEventId) {
       return;
     }
 
-    setPageLayoutByEvent((current) => ({
-      ...current,
-      [activeEventId]: {
-        ...(current[activeEventId] ?? {}),
-        [pageId]: layout,
-      },
-    }));
-    setWorkspaceSuccess("Updated draft page layout.");
+    try {
+      setWorkspaceSuccess(null);
+      await requestPrototypePagePlanLayout({
+        eventId: activeEventId,
+        pageId,
+        layout,
+      });
+      await refreshWorkspace();
+      setWorkspaceSuccess("Updated draft page layout.");
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    }
   }
 
-  function handleSetPageNote(pageId: string, note: string): void {
+  async function handleSetPageNote(pageId: string, note: string): Promise<void> {
     if (!activeEventId) {
       return;
     }
 
-    setPageNotesByEvent((current) => ({
-      ...current,
-      [activeEventId]: {
-        ...(current[activeEventId] ?? {}),
-        [pageId]: note,
-      },
-    }));
-    setWorkspaceSuccess("Updated draft page note.");
+    try {
+      setWorkspaceSuccess(null);
+      await requestPrototypePagePlanNote({
+        eventId: activeEventId,
+        pageId,
+        note,
+      });
+      await refreshWorkspace();
+      setWorkspaceSuccess("Updated draft page note.");
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    }
   }
 
   async function handleToggleOwnerApproval(): Promise<void> {
@@ -755,38 +704,42 @@ export function AppShell({
     }
   }
 
-  function moveSelectedPhoto(photoId: string, direction: -1 | 1): void {
+  async function moveSelectedPhoto(photoId: string, direction: -1 | 1): Promise<void> {
     if (!activeEventId) {
       return;
     }
 
-    setSelectedPhotoIdsByEvent((current) => {
-      const existing = current[activeEventId] ?? [];
-      const coverId = coverPhotoIdByEvent[activeEventId] ?? existing[0];
-      const spreadIds = existing.filter((id) => id !== coverId);
-      const currentIndex = spreadIds.indexOf(photoId);
+    const existing = orderEntry?.pagePlanner?.selectedPhotoIds ?? [];
+    const coverId = orderEntry?.pagePlanner?.coverPhotoId ?? existing[0];
+    const spreadIds = existing.filter((id) => id !== coverId);
+    const currentIndex = spreadIds.indexOf(photoId);
 
-      if (currentIndex === -1) {
-        return current;
-      }
+    if (currentIndex === -1) {
+      return;
+    }
 
-      const targetIndex = currentIndex + direction;
-      if (targetIndex < 0 || targetIndex >= spreadIds.length) {
-        return current;
-      }
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= spreadIds.length) {
+      return;
+    }
 
-      const nextSpreadIds = [...spreadIds];
-      const [movedId] = nextSpreadIds.splice(currentIndex, 1);
-      nextSpreadIds.splice(targetIndex, 0, movedId);
+    const nextSpreadIds = [...spreadIds];
+    const [movedId] = nextSpreadIds.splice(currentIndex, 1);
+    nextSpreadIds.splice(targetIndex, 0, movedId);
 
-      return {
-        ...current,
-        [activeEventId]: coverId ? [coverId, ...nextSpreadIds] : nextSpreadIds,
-      };
-    });
-    setWorkspaceSuccess(
-      direction < 0 ? "Moved selected spread earlier." : "Moved selected spread later.",
-    );
+    try {
+      setWorkspaceSuccess(null);
+      await requestPrototypePagePlanSelection({
+        eventId: activeEventId,
+        selectedPhotoIds: coverId ? [coverId, ...nextSpreadIds] : nextSpreadIds,
+      });
+      await refreshWorkspace();
+      setWorkspaceSuccess(
+        direction < 0 ? "Moved selected spread earlier." : "Moved selected spread later.",
+      );
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    }
   }
 
   function handleSelectGroup(groupId: string): void {
@@ -821,11 +774,11 @@ export function AppShell({
     navigateTo("albums");
   }
 
-  const selectedPhotoIds = selectedPhotoIdsByEvent[activeEventId] ?? [];
+  const selectedPhotoIds = orderEntry?.pagePlanner?.selectedPhotoIds ?? [];
   const selectedPhotos =
     workflow?.photos.filter((photo) => selectedPhotoIds.includes(photo.id)) ?? [];
   const selectedCoverPhoto =
-    selectedPhotos.find((photo) => photo.id === coverPhotoIdByEvent[activeEventId]) ??
+    selectedPhotos.find((photo) => photo.id === orderEntry?.pagePlanner?.coverPhotoId) ??
     selectedPhotos[0];
   const selectedSpreadPhotos = selectedPhotos.filter(
     (photo) => photo.id !== selectedCoverPhoto?.id,
@@ -1276,8 +1229,8 @@ export function AppShell({
             openedFromOwnerReview={ownerReviewEntryEventId === activeEventId}
             coverPhotoId={selectedCoverPhoto?.id}
             isOwnerApproved={isOwnerApproved}
-            pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
-            pageNotes={pageNotesByEvent[activeEventId] ?? {}}
+            pageLayouts={orderEntry?.pagePlanner?.pageLayouts ?? {}}
+            pageNotes={orderEntry?.pagePlanner?.pageNotes ?? {}}
             onMovePhotoEarlier={(photoId) => moveSelectedPhoto(photoId, -1)}
             onMovePhotoLater={(photoId) => moveSelectedPhoto(photoId, 1)}
             selectedPhotoIds={selectedPhotoIds}
@@ -1309,8 +1262,8 @@ export function AppShell({
             initialSubmitResult={submittedOrdersByEvent[activeEventId] ?? null}
             isOwnerApproved={isOwnerApproved}
             onSubmitSuccess={handleSubmitSuccess}
-            pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
-            pageNotes={pageNotesByEvent[activeEventId] ?? {}}
+            pageLayouts={orderEntry?.pagePlanner?.pageLayouts ?? {}}
+            pageNotes={orderEntry?.pagePlanner?.pageNotes ?? {}}
             selectedPhotoCount={selectedPhotos.length}
             selectedPhotoCaptions={selectedSpreadPhotos.map((photo) => photo.caption)}
           />

@@ -201,6 +201,18 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
       activeEventId: "event-birthday",
       activeEventName: "First birthday album",
       selectedCandidateCount: 3,
+      pagePlanner: {
+        selectedPhotoIds: ["photo-cake", "photo-family", "photo-gift"],
+        coverPhotoId: "photo-cake",
+        pageLayouts: {
+          cover: "Full-bleed cover",
+          "spread-1": "Balanced two-photo spread",
+        },
+        pageNotes: {
+          cover: "Lead with the strongest event-defining moment on the cover.",
+          "spread-1": "Use this spread to balance detail shots with group moments.",
+        },
+      },
       operationSummary: {
         stage: "ready_for_handoff",
         label: "Ready for handoff prep",
