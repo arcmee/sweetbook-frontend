@@ -65,6 +65,10 @@ describe("dashboard and group completion summaries", () => {
     );
 
     expect(markup).toContain("1 SweetBook handoff completed in this group.");
+    expect(markup).toContain("SweetBook operations");
+    expect(markup).toContain("0 waiting for owner review");
+    expect(markup).toContain("0 still blocked by voting or setup");
+    expect(markup).toContain("1 completed");
     expect(markup).toContain("Completed handoffs");
     expect(markup).toContain(
       "Use this archive to revisit events that already finished the SweetBook submission flow.",
@@ -156,7 +160,13 @@ describe("dashboard and group completion summaries", () => {
     expect(dashboardMarkup).toContain("0 submitted");
 
     expect(groupMarkup).toContain("Attention needed");
+    expect(groupMarkup).toContain("SweetBook operations");
+    expect(groupMarkup).toContain("1 waiting for owner review");
+    expect(groupMarkup).toContain("1 still blocked by voting or setup");
+    expect(groupMarkup).toContain("0 completed");
     expect(groupMarkup).toContain("Open urgent vote");
     expect(groupMarkup).toContain("This event is ready for owner photo selection and SweetBook handoff.");
+    expect(groupMarkup).toContain("SweetBook flow: Still collecting votes before owner review can open.");
+    expect(groupMarkup).toContain("SweetBook flow: Waiting for owner review and SweetBook handoff.");
   });
 });
