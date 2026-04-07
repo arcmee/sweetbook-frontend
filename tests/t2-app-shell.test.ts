@@ -57,7 +57,9 @@ describe("frontend app shell foundation", () => {
     expect(markup).toContain("Group members");
     expect(markup).toContain("Account");
     expect(markup).toContain("My groups");
-    expect(markup).toContain("Notifications");
+    expect(markup).toContain("Notification center");
+    expect(markup).toContain("Group invitations");
+    expect(markup).toContain("Voting reminders");
     expect(markup).toContain("Accept invite");
     expect(markup).toContain("Decline");
   });

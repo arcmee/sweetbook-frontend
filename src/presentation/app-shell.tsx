@@ -831,6 +831,18 @@ export function AppShell({
     }),
   );
   const notifications = [...invitationNotifications, ...voteNotifications];
+  const notificationGroups = [
+    {
+      title: "Group invitations",
+      emptyMessage: "No pending invitations right now.",
+      items: invitationNotifications,
+    },
+    {
+      title: "Voting reminders",
+      emptyMessage: "No voting reminders right now.",
+      items: voteNotifications,
+    },
+  ];
   const dashboardActions = [
     ...voteNotifications.map((notification) => ({
       id: `dashboard-${notification.id}`,
@@ -929,7 +941,9 @@ export function AppShell({
             <h2>Account</h2>
             <p>{session.user.displayName}</p>
             <p>@{session.user.username}</p>
+            <p>Role: {session.user.role}</p>
             <h3>My groups</h3>
+            <p>{myGroups.length} groups you can open from anywhere in the workspace.</p>
             <ul>
               {myGroups.map((group) => (
                 <li key={group.id}>
@@ -939,27 +953,37 @@ export function AppShell({
                 </li>
               ))}
             </ul>
-            <h3>Notifications</h3>
+            <h3>Notification center</h3>
             <p>{notifications.length} active</p>
-            <ul>
-              {notifications.map((notification) => (
-                <li key={notification.id}>
-                  <span>{notification.message}</span>
-                  <button type="button" onClick={() => void notification.onPrimaryAction()}>
-                    {notification.primaryActionLabel}
-                  </button>
-                  {notification.secondaryActionLabel && notification.onSecondaryAction ? (
-                    <button
-                      type="button"
-                      onClick={() => void notification.onSecondaryAction?.()}
-                    >
-                      {notification.secondaryActionLabel}
-                    </button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            {notificationGroups.map((group) => (
+              <section key={group.title} aria-label={group.title}>
+                <h4>{group.title}</h4>
+                {group.items.length > 0 ? (
+                  <ul>
+                    {group.items.map((notification) => (
+                      <li key={notification.id}>
+                        <span>{notification.message}</span>
+                        <button type="button" onClick={() => void notification.onPrimaryAction()}>
+                          {notification.primaryActionLabel}
+                        </button>
+                        {notification.secondaryActionLabel && notification.onSecondaryAction ? (
+                          <button
+                            type="button"
+                            onClick={() => void notification.onSecondaryAction?.()}
+                          >
+                            {notification.secondaryActionLabel}
+                          </button>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>{group.emptyMessage}</p>
+                )}
+              </section>
+            ))}
             <h3>Change password</h3>
+            <p>Use a simple prototype password change flow from the account panel.</p>
             <label>
               Current password
               <input

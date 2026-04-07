@@ -101,11 +101,13 @@ export function GroupScreen({
         title={activeGroupName ?? "Group workspace"}
         description="Review this group's event timeline, manage members, and start new event voting."
       >
+        <h3>Group operations</h3>
         <p>
           {workspace.groupSummary.totalGroups} groups, {workspace.groupSummary.totalMembers} members
           are available in the workspace.
         </p>
         <p>{selectedGroupId ? "Current group is active." : "Select a group from the main page."}</p>
+        <p>{events.length} events and {members.length} members are currently linked to this group.</p>
         {justJoinedByInvitation ? (
           <>
             <StatePanel
@@ -138,8 +140,9 @@ export function GroupScreen({
       <PageSection
         eyebrow="Event list"
         title="Events in this group"
-        description="Each event should show its description and voting period in later iterations."
+        description="Create new events, monitor the voting schedule, and jump into the active event workspace."
       >
+        <h3>Event operations</h3>
         <form onSubmit={handleSubmit}>
           <label>
             New event title
@@ -194,11 +197,12 @@ export function GroupScreen({
                 <strong>{event.name}</strong>
               </button>
               <p>{event.description}</p>
-              <span> {event.status}</span>
+              <span> Status: {event.status}</span>
               <span> {event.photoCount} photos</span>
               <p>
                 Voting window: {formatVotingWindow(event.votingStartsAt, event.votingEndsAt)}
               </p>
+              <p>{getEventManagementHint(event)}</p>
             </li>
           ))}
         </ul>
@@ -206,8 +210,14 @@ export function GroupScreen({
       <PageSection
         eyebrow="Members"
         title="Group members"
-        description="Owner transfer, invitation popup, and leave-group rules should be implemented from this section."
+        description="Invite people into the group, review member roles, transfer ownership, and handle leave-group rules."
       >
+        <h3>Member management</h3>
+        <p>
+          {canManageMembers
+            ? "You can invite members and transfer owner access from this panel."
+            : "You can review members here, but only the owner can invite or transfer ownership."}
+        </p>
         <ul>
           {members.map((member) => (
             <li key={member.userId}>
@@ -268,6 +278,9 @@ export function GroupScreen({
           disabled={!canLeaveGroup || isLeavingGroup}
           onClick={() => void onLeaveGroup?.()}
         />
+        {!canLeaveGroup ? (
+          <p>Owners must transfer ownership before leaving the group.</p>
+        ) : null}
       </PageSection>
     </>
   );
@@ -293,4 +306,16 @@ function formatVotingDate(value: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(parsed);
+}
+
+function getEventManagementHint(event: EventCardViewModel): string {
+  if (event.canOwnerSelectPhotos) {
+    return "Voting has ended and owner photo selection is unlocked.";
+  }
+
+  if (event.canVote) {
+    return "Voting is open and members can still upload photos and react.";
+  }
+
+  return "Voting is not open yet for this event.";
 }

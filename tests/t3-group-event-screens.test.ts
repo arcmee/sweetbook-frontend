@@ -30,12 +30,15 @@ describe("frontend group and event screens", () => {
     );
 
     expect(markup).toContain("Group page");
+    expect(markup).toContain("Group operations");
     expect(markup).toContain("Events in this group");
+    expect(markup).toContain("Event operations");
     expect(markup).toContain("Create event in this group");
     expect(markup).toContain("Event description");
     expect(markup).toContain("Voting opens");
     expect(markup).toContain("Han family");
     expect(markup).toContain("Group members");
+    expect(markup).toContain("Member management");
   });
 
   it("renders a main dashboard grouped by family events", () => {

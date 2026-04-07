@@ -163,6 +163,9 @@ describe("prototype auth ui", () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/prototype/workspace");
     expect(container.textContent).toContain("Database group");
+    expect(container.textContent).toContain("Notification center");
+    expect(container.textContent).toContain("Group invitations");
+    expect(container.textContent).toContain("Voting reminders");
   });
 
   it("creates a group and refreshes the workspace snapshot", async () => {
