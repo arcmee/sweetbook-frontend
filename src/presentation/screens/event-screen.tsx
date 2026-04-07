@@ -293,15 +293,7 @@ function getSweetBookOperationHeadline(
     return "Choose an event to inspect its SweetBook flow.";
   }
 
-  if (activeEvent.canOwnerSelectPhotos) {
-    return "This event is waiting for owner review and SweetBook handoff.";
-  }
-
-  if (activeEvent.canVote) {
-    return "This event is still collecting votes before owner review opens.";
-  }
-
-  return "This event is still in setup before SweetBook planning can begin.";
+  return activeEvent.operationSummary?.detail ?? "This event is still in setup before SweetBook planning can begin.";
 }
 
 function getSweetBookOperationHint(
@@ -316,11 +308,11 @@ function getSweetBookOperationHint(
     return "Select an event to see its current flow into owner review and SweetBook handoff.";
   }
 
-  if (activeEvent.canOwnerSelectPhotos) {
+  if (activeEvent.operationSummary?.stage === "owner_review") {
     return "Open the owner review flow to finalize the draft and continue into SweetBook handoff.";
   }
 
-  if (activeEvent.canVote) {
+  if (activeEvent.operationSummary?.stage === "voting") {
     return "Keep collecting uploads and likes until the voting window closes.";
   }
 

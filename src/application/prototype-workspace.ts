@@ -65,6 +65,11 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         name: "First birthday album",
         groupName: "Han family",
         status: "collecting",
+        operationSummary: {
+          stage: "voting",
+          label: "Voting in progress",
+          detail: "Collecting likes before the owner review opens.",
+        },
         description: "Collect the best first birthday moments before the family vote closes.",
         votingStartsAt: "2026-04-01T09:00:00.000Z",
         votingEndsAt: "2026-04-14T09:00:00.000Z",
@@ -78,6 +83,11 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         name: "Winter holiday trip",
         groupName: "Park cousins",
         status: "draft",
+        operationSummary: {
+          stage: "setup",
+          label: "Setup in progress",
+          detail: "Waiting for the voting window to open and more event setup to finish.",
+        },
         description: "Prepare the holiday trip highlights before the cousins voting window opens.",
         votingStartsAt: "2026-04-20T09:00:00.000Z",
         votingEndsAt: "2026-04-30T09:00:00.000Z",
@@ -189,6 +199,11 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
       activeEventId: "event-birthday",
       activeEventName: "First birthday album",
       selectedCandidateCount: 3,
+      operationSummary: {
+        stage: "ready_for_handoff",
+        label: "Ready for handoff prep",
+        detail: "Owner review can continue with a draft handoff summary.",
+      },
       handoffSummary: {
         bookFormat: "Hardcover square",
         payloadSections: ["selected photos", "page preview", "event title"],

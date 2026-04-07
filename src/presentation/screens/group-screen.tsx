@@ -402,11 +402,11 @@ function formatVotingDate(value: string): string {
 }
 
 function getEventManagementHint(event: EventCardViewModel): string {
-  if (event.canOwnerSelectPhotos) {
+  if (event.operationSummary?.stage === "owner_review") {
     return "Voting has ended and owner photo selection is unlocked.";
   }
 
-  if (event.canVote) {
+  if (event.operationSummary?.stage === "voting") {
     return "Voting is open and members can still upload photos and react.";
   }
 
@@ -421,11 +421,11 @@ function getEventFlowStatus(
     return "Completed and archived.";
   }
 
-  if (event.canOwnerSelectPhotos) {
+  if (event.operationSummary?.stage === "owner_review") {
     return "Waiting for owner review and SweetBook handoff.";
   }
 
-  if (event.canVote) {
+  if (event.operationSummary?.stage === "voting") {
     return "Still collecting votes before owner review can open.";
   }
 

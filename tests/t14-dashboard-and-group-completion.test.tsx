@@ -170,7 +170,7 @@ describe("dashboard and group completion summaries", () => {
     expect(groupMarkup).toContain("0 completed");
     expect(groupMarkup).toContain("Open urgent vote");
     expect(groupMarkup).toContain("This event is ready for owner photo selection and SweetBook handoff.");
-    expect(groupMarkup).toContain("SweetBook flow: Still collecting votes before owner review can open.");
-    expect(groupMarkup).toContain("SweetBook flow: Waiting for owner review and SweetBook handoff.");
+    expect(groupMarkup).toContain("SweetBook flow: Collecting likes before the owner review opens.");
+    expect(groupMarkup).toContain("SweetBook flow: Voting is closed and the SweetBook operation can move into owner review.");
   });
 });

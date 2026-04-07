@@ -55,6 +55,18 @@ export function OrderHandoffScreen({
   const activeEvent = workspace.events[0];
   const activeOrderEntry =
     orderEntry ?? getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
+  const operationSummary = activeOrderEntry.operationSummary ?? {
+    stage:
+      activeOrderEntry.selectedCandidateCount > 0 ? "ready_for_handoff" : "blocked",
+    label:
+      activeOrderEntry.selectedCandidateCount > 0
+        ? "Ready for handoff prep"
+        : "Blocked before handoff",
+    detail:
+      activeOrderEntry.selectedCandidateCount > 0
+        ? "Owner review can continue with a draft handoff summary."
+        : "Add more liked photos before the SweetBook operation can continue.",
+  };
   const [isRunningEstimate, setIsRunningEstimate] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [estimateResult, setEstimateResult] =
@@ -165,7 +177,7 @@ export function OrderHandoffScreen({
                 : null;
   const handoffStatus =
     nextBlocker === null
-      ? "Ready to submit to SweetBook"
+      ? operationSummary.label
       : estimateResult === null
         ? "Estimate required before handoff"
         : "Blocked until remaining checks are resolved";
@@ -312,6 +324,7 @@ export function OrderHandoffScreen({
         <div>
           <h3>SweetBook handoff summary</h3>
           <p>Status: {handoffStatus}</p>
+          <p>Operation detail: {operationSummary.detail}</p>
           <p>Draft payload pages: {pagePlan.length}</p>
           <p>Estimated checkout total: {totalDue} KRW</p>
           <p>
