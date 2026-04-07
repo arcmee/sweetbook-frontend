@@ -835,7 +835,7 @@ export function AppShell({
   const orderLockState = getOrderLockState(activeEvent?.status, canManageActiveGroup);
   const myGroups = workspace.groups;
   const voteNotifications: NotificationActionViewModel[] = workspace.events
-    .filter((event) => event.canVote)
+    .filter((event) => getOperationStage(event) === "voting")
     .filter((event) => {
       const eventWorkflow = resolveWorkspaceSlice(event.id, () =>
         getPrototypePhotoWorkflowViewModel(event.id, workspaceSnapshot),
@@ -850,7 +850,9 @@ export function AppShell({
       onPrimaryAction: () => handleSelectEvent(event.id),
     }));
   const urgentVoteNotifications: NotificationActionViewModel[] = workspace.events
-    .filter((event) => event.canVote && isVotingClosingSoon(event.votingEndsAt))
+    .filter(
+      (event) => getOperationStage(event) === "voting" && isVotingClosingSoon(event.votingEndsAt),
+    )
     .map((event) => ({
       id: `urgent-vote-${event.id}`,
       message: `${event.name} is closing soon. Cast your vote before ${formatNotificationDate(event.votingEndsAt)}.`,
@@ -860,8 +862,7 @@ export function AppShell({
   const ownerReviewNotifications: NotificationActionViewModel[] = workspace.events
     .filter(
       (event) =>
-        event.status === "ready" &&
-        event.canOwnerSelectPhotos &&
+        getOperationStage(event) === "owner_review" &&
         workspace.groups.some(
           (group) => group.name === event.groupName && group.role === "Owner",
         ),
@@ -918,6 +919,20 @@ export function AppShell({
     ...invitationNotifications.map((notification) => ({
       id: `dashboard-${notification.id}`,
       title: "Review a group invitation",
+      description: notification.message,
+      ctaLabel: notification.primaryActionLabel,
+      onCta: () => void notification.onPrimaryAction(),
+    })),
+    ...urgentVoteNotifications.map((notification) => ({
+      id: `dashboard-${notification.id}`,
+      title: "Vote before the deadline closes",
+      description: notification.message,
+      ctaLabel: notification.primaryActionLabel,
+      onCta: () => void notification.onPrimaryAction(),
+    })),
+    ...ownerReviewNotifications.map((notification) => ({
+      id: `dashboard-${notification.id}`,
+      title: "Continue the SweetBook operation",
       description: notification.message,
       ctaLabel: notification.primaryActionLabel,
       onCta: () => void notification.onPrimaryAction(),
@@ -1471,4 +1486,22 @@ function formatNotificationDate(value?: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(parsed);
+}
+
+function getOperationStage(
+  event: PrototypeWorkspaceViewModel["events"][number],
+): "setup" | "voting" | "owner_review" {
+  if (event.operationSummary?.stage) {
+    return event.operationSummary.stage;
+  }
+
+  if (event.canOwnerSelectPhotos || event.status === "ready") {
+    return "owner_review";
+  }
+
+  if (event.canVote || event.status === "collecting") {
+    return "voting";
+  }
+
+  return "setup";
 }
