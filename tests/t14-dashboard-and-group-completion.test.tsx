@@ -93,4 +93,62 @@ describe("dashboard and group completion summaries", () => {
     expect(markup).toContain("Final order state: paid");
     expect(markup).toContain("Order ord_789 was submitted for book bk_789");
   });
+
+  it("highlights urgent voting and owner review queues", () => {
+    const workspace = {
+      ...getPrototypeWorkspaceViewModel(),
+      events: [
+        {
+          id: "event-soon",
+          name: "Picnic vote",
+          groupName: "Han family",
+          status: "collecting" as const,
+          description: "Vote before the picnic deadline ends.",
+          votingStartsAt: "2026-04-07T00:00:00.000Z",
+          votingEndsAt: "2026-04-08T00:00:00.000Z",
+          canVote: true,
+          canOwnerSelectPhotos: false,
+          photoCount: 12,
+        },
+        {
+          id: "event-ready",
+          name: "Owner review queue",
+          groupName: "Han family",
+          status: "ready" as const,
+          description: "Ready for final owner selection.",
+          votingStartsAt: "2026-04-01T00:00:00.000Z",
+          votingEndsAt: "2026-04-05T00:00:00.000Z",
+          canVote: false,
+          canOwnerSelectPhotos: true,
+          photoCount: 8,
+        },
+      ],
+    };
+    const dashboardMarkup = renderToStaticMarkup(
+      <DashboardScreen workspace={workspace} groupedEvents={[]} />,
+    );
+    const groupMarkup = renderToStaticMarkup(
+      <GroupScreen
+        activeGroupName="Han family"
+        events={workspace.events}
+        members={[
+          {
+            userId: "user-demo",
+            displayName: "SweetBook Demo User",
+            role: "Owner",
+          },
+        ]}
+        workspace={workspace}
+      />,
+    );
+
+    expect(dashboardMarkup).toContain("Voting closing soon");
+    expect(dashboardMarkup).toContain("Vote in this event");
+    expect(dashboardMarkup).toContain("Ready for owner selection");
+    expect(dashboardMarkup).toContain("Open owner review");
+
+    expect(groupMarkup).toContain("Attention needed");
+    expect(groupMarkup).toContain("Open urgent vote");
+    expect(groupMarkup).toContain("This event is ready for owner photo selection and SweetBook handoff.");
+  });
 });
