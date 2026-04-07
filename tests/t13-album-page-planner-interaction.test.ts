@@ -228,6 +228,14 @@ describe("album page planner interaction", () => {
     });
 
     expect(container.textContent).toContain("Draft readiness: 1 ready, 1 need review.");
+    expect(container.textContent).toContain("Owner handoff checklist");
+    expect(container.textContent).toContain("Done: Choose a cover photo");
+    expect(container.textContent).toContain(
+      "Done: Approve at least 3 photos for the draft",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Resolve all draft page warnings",
+    );
     expect(container.textContent).toContain(
       "Resolve the flagged pages before opening the SweetBook order handoff.",
     );
@@ -289,6 +297,13 @@ describe("album page planner interaction", () => {
     });
 
     expect(container.textContent).toContain("Draft readiness: 2 ready, 0 need review.");
+    expect(container.textContent).toContain("Done: Choose a cover photo");
+    expect(container.textContent).toContain(
+      "Done: Approve at least 3 photos for the draft",
+    );
+    expect(container.textContent).toContain(
+      "Done: Resolve all draft page warnings",
+    );
     expect(container.textContent).toContain(
       "All pages are ready. You can continue to the SweetBook handoff.",
     );

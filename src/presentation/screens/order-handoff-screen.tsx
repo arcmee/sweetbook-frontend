@@ -87,6 +87,34 @@ export function OrderHandoffScreen({
   const pendingChecks = pagePlan
     .filter((page) => page.warning)
     .map((page) => `${page.title}: ${page.warning}`);
+  const handoffChecklist = [
+    {
+      label: "Choose a cover photo",
+      done: Boolean(coverPhotoCaption),
+    },
+    {
+      label: "Keep at least 3 owner-approved photos",
+      done: shortlistedCount >= 3,
+    },
+    {
+      label: "Resolve all draft page warnings",
+      done: reviewPageCount === 0,
+    },
+    {
+      label: "Run the SweetBook estimate",
+      done: estimateResult !== null,
+    },
+    {
+      label: "Fill in recipient details",
+      done: recipientName.trim().length > 0,
+    },
+    {
+      label: "Enter payer name and card digits",
+      done:
+        paymentName.trim().length > 0 &&
+        paymentCardLastFour.trim().length === 4,
+    },
+  ];
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -147,6 +175,16 @@ export function OrderHandoffScreen({
           <p>Story spreads: {selectedPhotoCaptions.join(", ")}</p>
         ) : null}
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
+        <div>
+          <h3>Owner handoff checklist</h3>
+          <ul>
+            {handoffChecklist.map((item) => (
+              <li key={item.label}>
+                {item.done ? "Done" : "Pending"}: {item.label}
+              </li>
+            ))}
+          </ul>
+        </div>
         {reviewPageCount > 0 ? (
           <>
             <p>Resolve the flagged draft pages before this SweetBook handoff can be submitted.</p>
