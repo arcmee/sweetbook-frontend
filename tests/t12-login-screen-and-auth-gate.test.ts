@@ -414,6 +414,10 @@ describe("prototype auth ui", () => {
 
     expect(window.location.pathname).toBe("/app/albums");
     expect(container.textContent).toContain("Build the album draft");
+    expect(container.textContent).toContain("Opened from the owner review queue.");
+    expect(container.textContent).toContain(
+      "Voting is finished. Finalize the draft here before opening the SweetBook handoff.",
+    );
   });
 
   it("creates a group and refreshes the workspace snapshot", async () => {
