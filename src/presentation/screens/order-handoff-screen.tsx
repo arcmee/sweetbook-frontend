@@ -64,6 +64,9 @@ export function OrderHandoffScreen({
   const [paymentCardLastFour, setPaymentCardLastFour] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [deliveryNote, setDeliveryNote] = useState("");
+  const [confirmDraftPayload, setConfirmDraftPayload] = useState(false);
+  const [confirmDeliveryDetails, setConfirmDeliveryDetails] = useState(false);
+  const [confirmPaymentSummary, setConfirmPaymentSummary] = useState(false);
   const quantity = Math.max(1, Number.parseInt(bookQuantity, 10) || 1);
   const unitPrice = estimateResult?.estimate.paidCreditAmount ?? 3410;
   const subtotal = unitPrice * quantity;
@@ -120,6 +123,18 @@ export function OrderHandoffScreen({
       label: "Keep owner approval active for handoff",
       done: isOwnerApproved,
     },
+    {
+      label: "Confirm the SweetBook draft payload",
+      done: confirmDraftPayload,
+    },
+    {
+      label: "Confirm delivery details",
+      done: confirmDeliveryDetails,
+    },
+    {
+      label: "Confirm the payment summary",
+      done: confirmPaymentSummary,
+    },
   ];
   const nextBlocker =
     !coverPhotoCaption
@@ -137,6 +152,12 @@ export function OrderHandoffScreen({
               : paymentName.trim().length === 0 ||
                   paymentCardLastFour.trim().length !== 4
                 ? "Enter the payer name and card digits."
+                : !confirmDraftPayload
+                  ? "Confirm the SweetBook draft payload."
+                  : !confirmDeliveryDetails
+                    ? "Confirm the delivery details."
+                    : !confirmPaymentSummary
+                      ? "Confirm the payment summary."
                 : null;
   const handoffStatus =
     nextBlocker === null
@@ -183,7 +204,10 @@ export function OrderHandoffScreen({
     isOwnerApproved &&
     paymentName.trim().length > 0 &&
     paymentCardLastFour.trim().length === 4 &&
-    recipientName.trim().length > 0;
+    recipientName.trim().length > 0 &&
+    confirmDraftPayload &&
+    confirmDeliveryDetails &&
+    confirmPaymentSummary;
 
   return (
     <>
@@ -318,6 +342,36 @@ export function OrderHandoffScreen({
           <p>Prototype platform fee: {platformFee} KRW</p>
           <p>Total due today: {totalDue} KRW</p>
           {deliveryNote.trim().length > 0 ? <p>Delivery note: {deliveryNote}</p> : null}
+        </div>
+        <div>
+          <h3>Final confirmation</h3>
+          <label>
+            <input
+              type="checkbox"
+              name="confirmDraftPayload"
+              checked={confirmDraftPayload}
+              onChange={(event) => setConfirmDraftPayload(event.target.checked)}
+            />
+            I reviewed the SweetBook draft payload and page plan.
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              name="confirmDeliveryDetails"
+              checked={confirmDeliveryDetails}
+              onChange={(event) => setConfirmDeliveryDetails(event.target.checked)}
+            />
+            I confirmed the recipient and delivery details.
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              name="confirmPaymentSummary"
+              checked={confirmPaymentSummary}
+              onChange={(event) => setConfirmPaymentSummary(event.target.checked)}
+            />
+            I confirmed the quantity and payment summary.
+          </label>
         </div>
         {canSubmitOrder ? (
           <PrimaryAction

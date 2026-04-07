@@ -27,6 +27,16 @@ describe("order handoff interaction", () => {
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  function setCheckboxValue(input: HTMLInputElement | null, checked: boolean): void {
+    if (!input) {
+      return;
+    }
+
+    if (input.checked !== checked) {
+      input.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    }
+  }
+
   afterEach(() => {
     while (containers.length > 0) {
       const container = containers.pop();
@@ -219,6 +229,15 @@ describe("order handoff interaction", () => {
       "Pending: Keep owner approval active for handoff",
     );
     expect(container.textContent).toContain(
+      "Pending: Confirm the SweetBook draft payload",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Confirm delivery details",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Confirm the payment summary",
+    );
+    expect(container.textContent).toContain(
       "Resolve the flagged draft pages before this SweetBook handoff can be submitted.",
     );
     expect(container.textContent).toContain(
@@ -389,6 +408,18 @@ describe("order handoff interaction", () => {
         container.querySelector('input[name="recipientName"]') as HTMLInputElement | null,
         "Han Family",
       );
+      setCheckboxValue(
+        container.querySelector('input[name="confirmDraftPayload"]') as HTMLInputElement | null,
+        true,
+      );
+      setCheckboxValue(
+        container.querySelector('input[name="confirmDeliveryDetails"]') as HTMLInputElement | null,
+        true,
+      );
+      setCheckboxValue(
+        container.querySelector('input[name="confirmPaymentSummary"]') as HTMLInputElement | null,
+        true,
+      );
     });
 
     const submitButton = Array.from(container.querySelectorAll("button")).find(
@@ -408,6 +439,15 @@ describe("order handoff interaction", () => {
     );
     expect(container.textContent).toContain(
       "Done: Keep owner approval active for handoff",
+    );
+    expect(container.textContent).toContain(
+      "Done: Confirm the SweetBook draft payload",
+    );
+    expect(container.textContent).toContain(
+      "Done: Confirm delivery details",
+    );
+    expect(container.textContent).toContain(
+      "Done: Confirm the payment summary",
     );
     expect(container.textContent).toContain(
       "Next blocker: No blockers remain. This draft is ready for SweetBook submission.",
