@@ -97,6 +97,7 @@ export function AppShell({
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [recentlyJoinedGroupId, setRecentlyJoinedGroupId] = useState<string | null>(null);
+  const [ownerReviewEntryEventId, setOwnerReviewEntryEventId] = useState<string | null>(null);
   const [selectedPhotoIdsByEvent, setSelectedPhotoIdsByEvent] = useState<
     Record<string, string[]>
   >({});
@@ -249,6 +250,7 @@ export function AppShell({
       setSelectedGroupId(null);
       setSelectedEventId(null);
       setRecentlyJoinedGroupId(null);
+      setOwnerReviewEntryEventId(null);
       setSelectedPhotoIdsByEvent({});
       setCoverPhotoIdByEvent({});
       setPageLayoutByEvent({});
@@ -787,6 +789,7 @@ export function AppShell({
   function handleSelectGroup(groupId: string): void {
     setSelectedGroupId(groupId);
     setRecentlyJoinedGroupId((current) => (current === groupId ? current : null));
+    setOwnerReviewEntryEventId(null);
     const nextGroup = workspace.groups.find((group) => group.id === groupId);
     const nextEvent = workspace.events.find((event) => event.groupName === nextGroup?.name);
     setSelectedEventId(nextEvent?.id ?? null);
@@ -795,6 +798,7 @@ export function AppShell({
 
   function handleSelectEvent(eventId: string): void {
     setSelectedEventId(eventId);
+    setOwnerReviewEntryEventId(null);
     const nextEvent = workspace.events.find((event) => event.id === eventId);
     const nextGroup = workspace.groups.find((group) => group.name === nextEvent?.groupName);
     if (nextGroup) {
@@ -805,6 +809,7 @@ export function AppShell({
 
   function handleOpenOwnerReview(eventId: string): void {
     setSelectedEventId(eventId);
+    setOwnerReviewEntryEventId(eventId);
     const nextEvent = workspace.events.find((event) => event.id === eventId);
     const nextGroup = workspace.groups.find((group) => group.name === nextEvent?.groupName);
     if (nextGroup) {
@@ -965,6 +970,10 @@ export function AppShell({
   }
 
   function navigateTo(routeKey: AppRouteKey): void {
+    if (routeKey !== "albums") {
+      setOwnerReviewEntryEventId(null);
+    }
+
     if (typeof window !== "undefined") {
       window.history.pushState({}, "", getRouteByKey(routeKey).path);
     }
@@ -1243,6 +1252,7 @@ export function AppShell({
             workflow={workflow}
             activeGroupName={activeGroup?.name}
             activeEventName={activeEvent?.name}
+            openedFromOwnerReview={ownerReviewEntryEventId === activeEventId}
             coverPhotoId={selectedCoverPhoto?.id}
             isOwnerApproved={ownerApprovalByEvent[activeEventId] ?? false}
             pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}

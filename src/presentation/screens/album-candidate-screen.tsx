@@ -13,6 +13,7 @@ type AlbumCandidateScreenProps = {
   activeEventName?: string;
   coverPhotoId?: string;
   isOwnerApproved?: boolean;
+  openedFromOwnerReview?: boolean;
   onMovePhotoEarlier?: (photoId: string) => void;
   onMovePhotoLater?: (photoId: string) => void;
   onOpenOrder?: () => void;
@@ -34,6 +35,7 @@ export function AlbumCandidateScreen({
   activeEventName,
   coverPhotoId,
   isOwnerApproved = false,
+  openedFromOwnerReview = false,
   onMovePhotoEarlier,
   onMovePhotoLater,
   onOpenOrder,
@@ -119,6 +121,12 @@ export function AlbumCandidateScreen({
       >
         <p>Current group: {activeGroupName ?? "No active group"}</p>
         <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
+        {openedFromOwnerReview ? (
+          <>
+            <p>Opened from the owner review queue.</p>
+            <p>Voting is finished. Finalize the draft here before opening the SweetBook handoff.</p>
+          </>
+        ) : null}
         <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
         <p>
