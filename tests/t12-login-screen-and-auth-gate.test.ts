@@ -414,9 +414,14 @@ describe("prototype auth ui", () => {
 
     expect(window.location.pathname).toBe("/app/albums");
     expect(container.textContent).toContain("Build the album draft");
+    expect(container.textContent).toContain("Owner review goals");
     expect(container.textContent).toContain("Opened from the owner review queue.");
     expect(container.textContent).toContain(
       "Voting is finished. Finalize the draft here before opening the SweetBook handoff.",
+    );
+    expect(container.textContent).toContain("Done: Lock a cover image for this event.");
+    expect(container.textContent).toContain(
+      "Pending: Record the final owner approval for SweetBook.",
     );
   });
 
