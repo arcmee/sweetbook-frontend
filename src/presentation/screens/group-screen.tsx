@@ -9,6 +9,12 @@ import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
 
+type GroupSubmittedOrderSummary = {
+  bookUid: string;
+  orderStatusDisplay?: string | null;
+  orderUid: string;
+};
+
 type GroupScreenProps = {
   activeGroupName?: string;
   events: EventCardViewModel[];
@@ -41,6 +47,7 @@ type GroupScreenProps = {
   onTransferOwner?: (userId: string) => void | Promise<void>;
   selectedGroupId?: string;
   signedInUserId?: string;
+  submittedOrdersByEvent?: Record<string, GroupSubmittedOrderSummary>;
 };
 
 export function GroupScreen({
@@ -75,6 +82,7 @@ export function GroupScreen({
   onTransferOwner,
   selectedGroupId,
   signedInUserId,
+  submittedOrdersByEvent = {},
 }: GroupScreenProps): ReactElement {
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -108,6 +116,11 @@ export function GroupScreen({
         </p>
         <p>{selectedGroupId ? "Current group is active." : "Select a group from the main page."}</p>
         <p>{events.length} events and {members.length} members are currently linked to this group.</p>
+        <p>
+          {
+            events.filter((event) => submittedOrdersByEvent[event.id]).length
+          } SweetBook handoff{events.filter((event) => submittedOrdersByEvent[event.id]).length === 1 ? "" : "s"} completed in this group.
+        </p>
         {justJoinedByInvitation ? (
           <>
             <StatePanel
@@ -203,6 +216,13 @@ export function GroupScreen({
                 Voting window: {formatVotingWindow(event.votingStartsAt, event.votingEndsAt)}
               </p>
               <p>{getEventManagementHint(event)}</p>
+              {submittedOrdersByEvent[event.id] ? (
+                <StatePanel
+                  tone="success"
+                  title="SweetBook order completed"
+                  description={`Order ${submittedOrdersByEvent[event.id]?.orderUid} was submitted for book ${submittedOrdersByEvent[event.id]?.bookUid}${submittedOrdersByEvent[event.id]?.orderStatusDisplay ? ` (${submittedOrdersByEvent[event.id]?.orderStatusDisplay})` : ""}.`}
+                />
+              ) : null}
             </li>
           ))}
         </ul>

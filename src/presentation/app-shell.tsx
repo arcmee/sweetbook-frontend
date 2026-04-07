@@ -60,6 +60,15 @@ type NotificationActionViewModel = {
   onSecondaryAction?: () => void | Promise<void>;
 };
 
+type SubmittedOrderViewModel = {
+  bookUid: string;
+  order: {
+    orderStatusDisplay?: string | null;
+    orderUid: string;
+  };
+  status: "submitted";
+};
+
 const prototypeTokenStorageKey = "sweetbook.prototype.token";
 
 export function AppShell({
@@ -101,6 +110,9 @@ export function AppShell({
   const [ownerApprovalByEvent, setOwnerApprovalByEvent] = useState<Record<string, boolean>>(
     {},
   );
+  const [submittedOrdersByEvent, setSubmittedOrdersByEvent] = useState<
+    Record<string, SubmittedOrderViewModel>
+  >({});
   const [createGroupName, setCreateGroupName] = useState("");
   const [createEventTitle, setCreateEventTitle] = useState("");
   const [createEventDescription, setCreateEventDescription] = useState("");
@@ -242,6 +254,7 @@ export function AppShell({
       setPageLayoutByEvent({});
       setPageNotesByEvent({});
       setOwnerApprovalByEvent({});
+      setSubmittedOrdersByEvent({});
       setCreateEventDescription("");
       setCreateEventVotingStartsAt(getDefaultVotingStartInput());
       setCreateEventVotingEndsAt(getDefaultVotingEndInput());
@@ -875,6 +888,33 @@ export function AppShell({
         ]
       : []),
   ];
+  const completedOrdersForDashboard = Object.fromEntries(
+    Object.entries(submittedOrdersByEvent).map(([eventId, order]) => {
+      const event = workspace.events.find((item) => item.id === eventId);
+      const group = workspace.groups.find((item) => item.name === event?.groupName);
+
+      return [
+        eventId,
+        {
+          ...order,
+          groupId: group?.id ?? "",
+          groupName: event?.groupName ?? "Unknown group",
+        },
+      ];
+    }),
+  );
+
+  function handleSubmitSuccess(result: SubmittedOrderViewModel): void {
+    if (!activeEventId) {
+      return;
+    }
+
+    setSubmittedOrdersByEvent((current) => ({
+      ...current,
+      [activeEventId]: result,
+    }));
+    setWorkspaceSuccess(`Completed SweetBook handoff for ${activeEvent?.name ?? "this event"}.`);
+  }
 
   function navigateTo(routeKey: AppRouteKey): void {
     if (typeof window !== "undefined") {
@@ -1083,6 +1123,7 @@ export function AppShell({
           recentlyJoinedGroupName={
             workspace.groups.find((group) => group.id === recentlyJoinedGroupId)?.name ?? null
           }
+          submittedOrdersByEvent={completedOrdersForDashboard}
         />
       ) : null}
 
@@ -1119,6 +1160,7 @@ export function AppShell({
           onTransferOwner={handleTransferOwner}
           selectedGroupId={activeGroup?.id}
           signedInUserId={session?.user.userId}
+          submittedOrdersByEvent={submittedOrdersByEvent}
         />
       ) : null}
 
@@ -1182,7 +1224,9 @@ export function AppShell({
             activeEventName={activeEvent?.name}
             coverPhotoCaption={selectedCoverPhoto?.caption}
             estimatedPageCount={review?.pagePreview.length}
+            initialSubmitResult={submittedOrdersByEvent[activeEventId] ?? null}
             isOwnerApproved={ownerApprovalByEvent[activeEventId] ?? false}
+            onSubmitSuccess={handleSubmitSuccess}
             pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
             pageNotes={pageNotesByEvent[activeEventId] ?? {}}
             selectedPhotoCount={selectedPhotos.length}
