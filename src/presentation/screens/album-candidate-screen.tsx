@@ -110,7 +110,11 @@ export function AlbumCandidateScreen({
       done: isOwnerApproved,
     },
   ];
-  const handoffStatus = canOpenOrder ? "Ready for SweetBook handoff" : "Blocked";
+  const sweetBookOperationStatus = canOpenOrder
+    ? "Ready for SweetBook handoff"
+    : isOwnerApproved
+      ? "Waiting on draft checks"
+      : "Waiting for owner approval";
 
   return (
     <>
@@ -166,8 +170,8 @@ export function AlbumCandidateScreen({
           />
         </div>
         <div>
-          <h3>SweetBook handoff summary</h3>
-          <p>Status: {handoffStatus}</p>
+          <h3>SweetBook operation</h3>
+          <p>Status: {sweetBookOperationStatus}</p>
           <p>Cover payload: {coverPhoto?.caption ?? "No cover selected yet."}</p>
           <p>Spread payload count: {layoutPhotos.length}</p>
           <p>Draft page payload count: {previewPages.length}</p>

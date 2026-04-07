@@ -194,7 +194,7 @@ describe("order handoff interaction", () => {
 
     expect(container.textContent).toContain("SweetBook estimate is ready");
     expect(container.textContent).toContain("available for submission");
-    expect(container.textContent).toContain("Owner handoff status");
+    expect(container.textContent).toContain("SweetBook operation");
     expect(container.textContent).toContain(
       "Owner approval is still required before SweetBook handoff can finish.",
     );
