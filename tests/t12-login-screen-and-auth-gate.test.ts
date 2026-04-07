@@ -165,7 +165,124 @@ describe("prototype auth ui", () => {
     expect(container.textContent).toContain("Database group");
     expect(container.textContent).toContain("Notification center");
     expect(container.textContent).toContain("Group invitations");
+    expect(container.textContent).toContain("Voting closing soon");
+    expect(container.textContent).toContain("Owner review queue");
     expect(container.textContent).toContain("Voting reminders");
+  });
+
+  it("prioritizes urgent voting and owner review items in the notification center", async () => {
+    window.history.replaceState({}, "", "/app");
+    window.localStorage.setItem("sweetbook.prototype.token", "ptok_saved");
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          token: "ptok_saved",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: { totalGroups: 1, totalMembers: 2 },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 2,
+              },
+            ],
+            events: [
+              {
+                id: "event-soon",
+                name: "Picnic vote",
+                groupName: "Han family",
+                status: "collecting",
+                description: "Vote before the picnic deadline ends.",
+                votingStartsAt: "2026-04-07T00:00:00.000Z",
+                votingEndsAt: "2026-04-08T00:00:00.000Z",
+                canVote: true,
+                canOwnerSelectPhotos: false,
+                photoCount: 3,
+              },
+              {
+                id: "event-ready",
+                name: "Owner review queue",
+                groupName: "Han family",
+                status: "ready",
+                description: "Ready for owner selection.",
+                votingStartsAt: "2026-04-01T00:00:00.000Z",
+                votingEndsAt: "2026-04-05T00:00:00.000Z",
+                canVote: false,
+                canOwnerSelectPhotos: true,
+                photoCount: 6,
+              },
+            ],
+          },
+          pendingInvitations: [],
+          photoWorkflows: [
+            {
+              activeEventId: "event-soon",
+              activeEventName: "Picnic vote",
+              uploadState: {
+                pendingCount: 0,
+                uploadedCount: 3,
+                helperText: "Loaded from backend",
+              },
+              photos: [
+                {
+                  id: "photo-picnic",
+                  caption: "Picnic blanket",
+                  uploadedBy: "Mina",
+                  likeCount: 0,
+                  likedByViewer: false,
+                },
+              ],
+            },
+            {
+              activeEventId: "event-ready",
+              activeEventName: "Owner review queue",
+              uploadState: {
+                pendingCount: 0,
+                uploadedCount: 6,
+                helperText: "Loaded from backend",
+              },
+              photos: [],
+            },
+          ],
+          candidateReviews: [],
+          orderEntries: [],
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(AppShell));
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain("Voting closing soon");
+    expect(container.textContent).toContain("Open urgent vote");
+    expect(container.textContent).toContain("Owner review queue");
+    expect(container.textContent).toContain("Open owner review");
   });
 
   it("creates a group and refreshes the workspace snapshot", async () => {
