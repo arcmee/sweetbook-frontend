@@ -33,8 +33,10 @@ describe("frontend order entry and handoff", () => {
       buildAppShell({ currentRouteKey: "orders", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Order handoff is locked");
-    expect(markup).toContain("Finish voting and open owner selection before the SweetBook order handoff becomes available.");
+    expect(markup).toContain("Order handoff is locked while voting is still open");
+    expect(markup).toContain(
+      "Finish voting and complete owner selection before the SweetBook order handoff becomes available.",
+    );
   });
 
   it("renders the SweetBook handoff preview before submission", () => {
@@ -42,6 +44,6 @@ describe("frontend order entry and handoff", () => {
       buildAppShell({ currentRouteKey: "orders", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Order handoff is locked");
+    expect(markup).toContain("Order handoff is locked while voting is still open");
   });
 });
