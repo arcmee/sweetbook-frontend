@@ -47,9 +47,9 @@ describe("prototype api client", () => {
       }),
     });
 
-    const snapshot = await fetchPrototypeWorkspaceSnapshot(fetchImpl as typeof fetch);
+    const snapshot = await fetchPrototypeWorkspaceSnapshot(undefined, fetchImpl as typeof fetch);
 
-    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/workspace");
+    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/workspace", undefined);
     expect(snapshot.workspace.groups[0]?.name).toBe("Han family");
   });
 
@@ -60,7 +60,7 @@ describe("prototype api client", () => {
     });
 
     await expect(
-      fetchPrototypeWorkspaceSnapshot(fetchImpl as typeof fetch),
+      fetchPrototypeWorkspaceSnapshot(undefined, fetchImpl as typeof fetch),
     ).rejects.toThrow("Failed to load prototype workspace snapshot: 503");
   });
 

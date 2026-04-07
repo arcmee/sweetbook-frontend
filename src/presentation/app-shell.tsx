@@ -228,7 +228,7 @@ export function AppShell({
     setWorkspacePending(true);
     setWorkspaceError(null);
     try {
-      const snapshot = await fetchPrototypeWorkspaceSnapshot();
+      const snapshot = await fetchPrototypeWorkspaceSnapshot(session?.token);
       setWorkspaceSnapshot(snapshot);
       return snapshot;
     } catch (error: unknown) {
@@ -306,6 +306,7 @@ export function AppShell({
       setWorkspaceSuccess(null);
       await requestPrototypeGroupCreate({
         name: nextGroupName,
+        token: session?.token,
       });
       await refreshWorkspace();
       setCreateGroupName("");
@@ -397,9 +398,12 @@ export function AppShell({
     try {
       setIsLikingPhoto(true);
       setWorkspaceSuccess(null);
+      if (!session?.user.userId) {
+        throw new Error("A signed-in user is required to like a photo.");
+      }
       await requestPrototypePhotoLike({
         photoId,
-        userId: "user-demo",
+        userId: session.user.userId,
       });
       await refreshWorkspace();
       setWorkspaceSuccess("Saved photo like.");

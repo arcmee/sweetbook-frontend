@@ -6,9 +6,12 @@ import type {
 import type { PrototypeAuthSession } from "../application/prototype-auth";
 
 export async function fetchPrototypeWorkspaceSnapshot(
+  token?: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PrototypeWorkspaceSnapshot> {
-  const response = await fetchImpl(resolveApiUrl("/api/prototype/workspace"));
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/workspace"), token ? {
+    headers: buildPrototypeAuthHeaders(token),
+  } : undefined);
 
   if (!response.ok) {
     throw new Error(`Failed to load prototype workspace snapshot: ${response.status}`);
@@ -136,6 +139,7 @@ export async function requestPrototypeAuthLogout(
 export async function requestPrototypeGroupCreate(
   input: {
     name: string;
+    token?: string;
   },
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
@@ -143,8 +147,11 @@ export async function requestPrototypeGroupCreate(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(input.token ? buildPrototypeAuthHeaders(input.token) : {}),
     },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      name: input.name,
+    }),
   });
 
   if (!response.ok && response.status !== 201) {
