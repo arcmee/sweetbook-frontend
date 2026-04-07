@@ -131,7 +131,7 @@ export function GroupScreen({
         <p>
           {
             completedEvents.length
-          } SweetBook handoff{completedEvents.length === 1 ? "" : "s"} completed in this group.
+          } SweetBook operation{completedEvents.length === 1 ? "" : "s"} completed in this group.
         </p>
         <div>
           <h3>SweetBook operations</h3>
@@ -144,7 +144,7 @@ export function GroupScreen({
         {events.some((event) => submittedOrdersByEvent[event.id]) ? (
           <div>
             <h3>Completed SweetBook operations</h3>
-            <p>Use this archive to revisit events that already finished the SweetBook submission flow.</p>
+            <p>Use this archive to revisit events that already finished the SweetBook operation flow.</p>
             <ul>
               {events
                 .filter((event) => submittedOrdersByEvent[event.id])

@@ -270,7 +270,7 @@ export function OrderHandoffScreen({
           <h3>SweetBook operation</h3>
           <p>
             {submitResult
-              ? "SweetBook handoff completed for this draft."
+              ? "SweetBook operation completed for this draft."
               : isOwnerApproved
                 ? "Owner approval is locked. Finish the remaining handoff checks."
                 : "Owner approval is still required before SweetBook handoff can finish."}
