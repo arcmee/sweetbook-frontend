@@ -799,7 +799,12 @@ export function AppShell({
   const selectedSpreadPhotos = selectedPhotos.filter(
     (photo) => photo.id !== selectedCoverPhoto?.id,
   );
-  const canOpenOwnerSelection = canManageActiveGroup && Boolean(activeEvent?.canOwnerSelectPhotos);
+  const canOpenOwnerSelection =
+    canManageActiveGroup &&
+    activeEvent?.status === "ready" &&
+    Boolean(activeEvent?.canOwnerSelectPhotos);
+  const selectionLockState = getSelectionLockState(activeEvent?.status, canManageActiveGroup);
+  const orderLockState = getOrderLockState(activeEvent?.status, canManageActiveGroup);
   const myGroups = workspace.groups;
   const voteNotifications: NotificationActionViewModel[] = workspace.events
     .filter((event) => event.canVote)
@@ -1162,8 +1167,8 @@ export function AppShell({
         ) : (
           <StatePanel
             tone="empty"
-            title="Owner selection opens after voting ends"
-            description="Only the group owner can open selection after the voting window has ended or has been closed."
+            title={selectionLockState.title}
+            description={selectionLockState.description}
           />
         )
       ) : null}
@@ -1186,8 +1191,8 @@ export function AppShell({
         ) : (
           <StatePanel
             tone="empty"
-            title="Order handoff is locked"
-            description="Finish voting and open owner selection before the SweetBook order handoff becomes available."
+            title={orderLockState.title}
+            description={orderLockState.description}
           />
         )
       ) : null}
@@ -1259,4 +1264,72 @@ function resolveWorkspaceSlice<T>(
   } catch {
     return undefined;
   }
+}
+
+function getSelectionLockState(
+  eventStatus: PrototypeWorkspaceSnapshot["workspace"]["events"][number]["status"] | undefined,
+  canManageActiveGroup: boolean | undefined,
+): {
+  title: string;
+  description: string;
+} {
+  if (!canManageActiveGroup) {
+    return {
+      title: "Owner selection is only available to the group owner",
+      description: "Only the group owner can move from voting into the final SweetBook photo selection stage.",
+    };
+  }
+
+  if (eventStatus === "draft") {
+    return {
+      title: "Owner selection opens after voting starts and finishes",
+      description: "This event is still in draft setup. Open voting first, collect reactions, and then finish voting before the owner selection page becomes available.",
+    };
+  }
+
+  if (eventStatus === "collecting") {
+    return {
+      title: "Owner selection opens after voting ends",
+      description: "Voting is still running for this event. Close or finish the voting window before the owner selection page becomes available.",
+    };
+  }
+
+  return {
+    title: "Owner selection is waiting on the event state",
+    description: "This event is not yet ready for owner photo selection.",
+  };
+}
+
+function getOrderLockState(
+  eventStatus: PrototypeWorkspaceSnapshot["workspace"]["events"][number]["status"] | undefined,
+  canManageActiveGroup: boolean | undefined,
+): {
+  title: string;
+  description: string;
+} {
+  if (!canManageActiveGroup) {
+    return {
+      title: "Order handoff is only available to the group owner",
+      description: "Only the group owner can review the final draft and continue into the SweetBook handoff flow.",
+    };
+  }
+
+  if (eventStatus === "draft") {
+    return {
+      title: "Order handoff stays locked until voting is complete",
+      description: "This event is still in draft setup. Start voting, finish the collection window, and then complete owner selection before the SweetBook handoff opens.",
+    };
+  }
+
+  if (eventStatus === "collecting") {
+    return {
+      title: "Order handoff is locked while voting is still open",
+      description: "Finish voting and complete owner selection before the SweetBook order handoff becomes available.",
+    };
+  }
+
+  return {
+    title: "Order handoff is waiting on the event state",
+    description: "This event is not yet ready for the SweetBook handoff stage.",
+  };
 }

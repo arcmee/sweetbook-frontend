@@ -34,7 +34,9 @@ describe("frontend album candidate review", () => {
     );
 
     expect(markup).toContain("Owner selection opens after voting ends");
-    expect(markup).toContain("Only the group owner can open selection after the voting window has ended or has been closed.");
+    expect(markup).toContain(
+      "Voting is still running for this event. Close or finish the voting window before the owner selection page becomes available.",
+    );
   });
 
   it("renders a page preview surface before order entry begins", () => {
@@ -43,5 +45,6 @@ describe("frontend album candidate review", () => {
     );
 
     expect(markup).toContain("Owner selection opens after voting ends");
+    expect(markup).toContain("Voting is still running for this event.");
   });
 });
