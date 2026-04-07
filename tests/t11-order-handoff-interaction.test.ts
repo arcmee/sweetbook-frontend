@@ -473,8 +473,9 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain(
       "Next blocker: No blockers remain. This draft is ready for SweetBook submission.",
     );
+    expect(container.textContent).toContain("Status: Ready for handoff prep");
     expect(container.textContent).toContain(
-      "Status: Ready to submit to SweetBook",
+      "Operation detail: Owner review can continue with a draft handoff summary.",
     );
     expect(container.textContent).toContain("Estimated checkout total: 3400 KRW");
     expect(container.textContent).toContain("Done: Draft prepared");

@@ -11,6 +11,11 @@ export type EventCardSnapshot = {
   name: string;
   groupName: string;
   status: "draft" | "collecting" | "ready";
+  operationSummary: {
+    stage: "setup" | "voting" | "owner_review";
+    label: string;
+    detail: string;
+  };
   description?: string;
   votingStartsAt?: string;
   votingEndsAt?: string;
@@ -76,6 +81,11 @@ export type OrderEntrySnapshot = {
   activeEventId: string;
   activeEventName: string;
   selectedCandidateCount: number;
+  operationSummary: {
+    stage: "blocked" | "ready_for_handoff";
+    label: string;
+    detail: string;
+  };
   handoffSummary: {
     bookFormat: string;
     payloadSections: string[];
