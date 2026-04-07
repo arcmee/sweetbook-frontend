@@ -115,6 +115,11 @@ describe("dashboard and group completion summaries", () => {
           name: "Picnic vote",
           groupName: "Han family",
           status: "collecting" as const,
+          operationSummary: {
+            stage: "voting" as const,
+            label: "Voting in progress",
+            detail: "Collecting likes before the owner review opens.",
+          },
           description: "Vote before the picnic deadline ends.",
           votingStartsAt: "2026-04-07T00:00:00.000Z",
           votingEndsAt: "2026-04-08T00:00:00.000Z",
@@ -127,6 +132,11 @@ describe("dashboard and group completion summaries", () => {
           name: "Owner review queue",
           groupName: "Han family",
           status: "ready" as const,
+          operationSummary: {
+            stage: "owner_review" as const,
+            label: "Owner review ready",
+            detail: "Voting is closed and the SweetBook operation can move into owner review.",
+          },
           description: "Ready for final owner selection.",
           votingStartsAt: "2026-04-01T00:00:00.000Z",
           votingEndsAt: "2026-04-05T00:00:00.000Z",

@@ -62,19 +62,18 @@ export function DashboardScreen({
     .filter((group) => group.events.length > 0);
   const urgentVotingEvents = workspace.events.filter(
     (event) =>
-      event.status === "collecting" &&
+      event.operationSummary?.stage === "voting" &&
       isVotingClosingSoon(event.votingEndsAt) &&
       !submittedOrdersByEvent[event.id],
   );
   const ownerReviewEvents = workspace.events.filter(
     (event) =>
-      event.status === "ready" &&
-      event.canOwnerSelectPhotos &&
+      event.operationSummary?.stage === "owner_review" &&
       !submittedOrdersByEvent[event.id],
   );
   const blockedHandoffEvents = workspace.events.filter(
     (event) =>
-      event.status !== "ready" &&
+      event.operationSummary?.stage !== "owner_review" &&
       !submittedOrdersByEvent[event.id],
   );
 
