@@ -27,6 +27,8 @@ describe("dashboard and group completion summaries", () => {
 
     expect(markup).toContain("Recent SweetBook completions");
     expect(markup).toContain("Completed groups to revisit");
+    expect(markup).toContain("Groups still in progress");
+    expect(markup).toContain("No active group work remains right now.");
     expect(markup).toContain("Order ord_123 for book bk_123");
     expect(markup).toContain("Review completed group");
     expect(markup).toContain("Open completed group page");
