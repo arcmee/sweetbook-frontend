@@ -39,6 +39,8 @@ describe("frontend photo upload and like screens", () => {
     expect(markup).toContain("3 pending uploads");
     expect(markup).toContain("124 already in the event");
     expect(markup).toContain("Upload queue is local-only until backend adapters land.");
+    expect(markup).toContain("Extend voting by 3 days");
+    expect(markup).toContain("Close voting now");
   });
 
   it("renders like feedback for event photos", () => {
