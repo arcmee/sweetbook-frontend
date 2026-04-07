@@ -25,8 +25,8 @@ describe("dashboard and group completion summaries", () => {
       />,
     );
 
-    expect(markup).toContain("Recent SweetBook completions");
-    expect(markup).toContain("Completed groups to revisit");
+    expect(markup).toContain("Recent SweetBook operation completions");
+    expect(markup).toContain("Completed SweetBook operations");
     expect(markup).toContain("Groups still in progress");
     expect(markup).toContain("SweetBook handoff queue");
     expect(markup).toContain("0 owner review ready");
@@ -34,8 +34,8 @@ describe("dashboard and group completion summaries", () => {
     expect(markup).toContain("1 submitted");
     expect(markup).toContain("No active group work remains right now.");
     expect(markup).toContain("Order ord_123 for book bk_123");
-    expect(markup).toContain("Review completed group");
-    expect(markup).toContain("Open completed group page");
+    expect(markup).toContain("Review completed operation");
+    expect(markup).toContain("Open completed operation");
   });
 
   it("shows completed handoff details on the group page", () => {
@@ -69,13 +69,13 @@ describe("dashboard and group completion summaries", () => {
     expect(markup).toContain("0 waiting for owner review");
     expect(markup).toContain("0 still blocked by voting or setup");
     expect(markup).toContain("1 completed");
-    expect(markup).toContain("Completed handoffs");
+    expect(markup).toContain("Completed SweetBook operations");
     expect(markup).toContain(
       "Use this archive to revisit events that already finished the SweetBook submission flow.",
     );
-    expect(markup).toContain("Open completed event");
+    expect(markup).toContain("Open completed operation");
     expect(markup).toContain("Final status: paid");
-    expect(markup).toContain("SweetBook order completed");
+    expect(markup).toContain("SweetBook operation completed");
     expect(markup).toContain("Order ord_456 was submitted for book bk_456");
   });
 
@@ -94,11 +94,11 @@ describe("dashboard and group completion summaries", () => {
       />,
     );
 
-    expect(markup).toContain("SweetBook order already completed");
+    expect(markup).toContain("SweetBook operation already completed");
     expect(markup).toContain("SweetBook operation");
-    expect(markup).toContain("SweetBook handoff completed for this event.");
+    expect(markup).toContain("SweetBook operation completed for this event.");
     expect(markup).toContain("Order ord_789 is already archived for this event.");
-    expect(markup).toContain("Completed handoff archive");
+    expect(markup).toContain("Completed SweetBook operation");
     expect(markup).toContain("Book draft: bk_789");
     expect(markup).toContain("Order reference: ord_789");
     expect(markup).toContain("Final order state: paid");

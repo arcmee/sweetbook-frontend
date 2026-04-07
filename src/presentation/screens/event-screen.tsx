@@ -70,11 +70,11 @@ export function EventScreen({
           <>
             <StatePanel
               tone="success"
-              title="SweetBook order already completed"
+              title="SweetBook operation already completed"
               description={`Order ${submittedOrder.orderUid} was submitted for book ${submittedOrder.bookUid}${submittedOrder.orderStatusDisplay ? ` (${submittedOrder.orderStatusDisplay})` : ""}.`}
             />
             <div>
-              <h3>Completed handoff archive</h3>
+              <h3>Completed SweetBook operation</h3>
               <p>Book draft: {submittedOrder.bookUid}</p>
               <p>Order reference: {submittedOrder.orderUid}</p>
               <p>
@@ -286,7 +286,7 @@ function getSweetBookOperationHeadline(
   submittedOrder: EventSubmittedOrderSummary | undefined,
 ): string {
   if (submittedOrder) {
-    return "SweetBook handoff completed for this event.";
+    return "SweetBook operation completed for this event.";
   }
 
   if (!activeEvent) {
