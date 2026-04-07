@@ -596,6 +596,7 @@ export function AppShell({
     try {
       setIsChangingPassword(true);
       await requestPrototypePasswordChange({
+        token: session?.token ?? "",
         currentPassword,
         nextPassword,
       });
@@ -982,6 +983,10 @@ export function AppShell({
     navigateTo("dashboard");
   }
 
+  function handleSignup(nextSession: PrototypeAuthSession): void {
+    handleLogin(nextSession);
+  }
+
   async function handleLogout(): Promise<void> {
     const token = session?.token;
 
@@ -1045,7 +1050,10 @@ export function AppShell({
           />
         ) : null}
         {currentRoute.key === "signup" ? (
-          <SignupScreen onOpenLogin={() => navigateTo("login")} />
+          <SignupScreen
+            onOpenLogin={() => navigateTo("login")}
+            onSignup={handleSignup}
+          />
         ) : null}
         {currentRoute.key === "login" ? (
           <LoginScreen onLogin={handleLogin} />

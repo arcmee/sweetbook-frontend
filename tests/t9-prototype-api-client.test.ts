@@ -6,6 +6,7 @@ import {
   requestPrototypeEventCreate,
   requestPrototypeAuthLogin,
   requestPrototypeAuthLogout,
+  requestPrototypeAuthSignup,
   requestPrototypeInvitationAccept,
   requestPrototypeInvitationDecline,
   requestPrototypePagePlanCover,
@@ -98,6 +99,44 @@ describe("prototype api client", () => {
     expect(session.user.displayName).toBe("SweetBook Demo User");
   });
 
+  it("posts prototype signup credentials and returns the auth session", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        token: "jwt.header.signature",
+        user: {
+          userId: "user-tester",
+          username: "tester",
+          displayName: "Tester",
+          role: "member",
+        },
+      }),
+    });
+
+    const session = await requestPrototypeAuthSignup(
+      {
+        displayName: "Tester",
+        username: "tester",
+        password: "password123",
+      },
+      fetchImpl as typeof fetch,
+    );
+
+    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        displayName: "Tester",
+        username: "tester",
+        password: "password123",
+      }),
+    });
+    expect(session.user.username).toBe("tester");
+  });
+
   it("loads an auth session for a saved token", async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
@@ -149,6 +188,7 @@ describe("prototype api client", () => {
 
     await requestPrototypePasswordChange(
       {
+        token: "ptok_123",
         currentPassword: "sweetbook123!",
         nextPassword: "sweetbook456!",
       },
@@ -159,8 +199,10 @@ describe("prototype api client", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer ptok_123",
       },
       body: JSON.stringify({
+        token: "ptok_123",
         currentPassword: "sweetbook123!",
         nextPassword: "sweetbook456!",
       }),
