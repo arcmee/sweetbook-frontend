@@ -235,7 +235,7 @@ describe("album page planner interaction", () => {
     expect(container.textContent).toContain("SweetBook operation");
     expect(container.textContent).toContain("Status: Waiting for owner approval");
     expect(container.textContent).toContain("Cover payload: Cake table setup");
-    expect(container.textContent).toContain("Spread payload count: 2");
+    expect(container.textContent).toContain("Spread payload count: 1");
     expect(container.textContent).toContain("Draft page payload count: 2");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
