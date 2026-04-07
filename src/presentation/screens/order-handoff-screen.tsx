@@ -266,6 +266,27 @@ export function OrderHandoffScreen({
           disabled={isRunningEstimate}
           onClick={handleEstimateRequest}
         />
+        <div>
+          <h3>Owner handoff status</h3>
+          <p>
+            {submitResult
+              ? "SweetBook handoff completed for this draft."
+              : isOwnerApproved
+                ? "Owner approval is locked. Finish the remaining handoff checks."
+                : "Owner approval is still required before SweetBook handoff can finish."}
+          </p>
+          <ul>
+            <li>{isOwnerApproved ? "Done" : "Pending"}: Draft approved by the group owner</li>
+            <li>
+              {nextBlocker === null
+                ? "Done"
+                : estimateResult === null
+                  ? "Pending"
+                  : "In progress"}: Handoff checks cleared
+            </li>
+            <li>{submitResult ? "Done" : "Pending"}: SweetBook order submitted</li>
+          </ul>
+        </div>
         <p>Current group: {activeGroupName ?? "No active group"}</p>
         <p>Current event: {activeEventName ?? activeOrderEntry.activeEventName}</p>
         <p>{shortlistedCount} shortlisted photos ready</p>
