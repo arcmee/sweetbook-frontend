@@ -162,7 +162,11 @@ describe("prototype auth ui", () => {
         Authorization: "Bearer ptok_saved",
       },
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/prototype/workspace");
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/prototype/workspace", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(container.textContent).toContain("Database group");
     expect(container.textContent).toContain("Notification center");
     expect(container.textContent).toContain("Group invitations");
@@ -541,12 +545,17 @@ describe("prototype auth ui", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer ptok_saved",
       },
       body: JSON.stringify({
         name: "Cho family",
       }),
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(container.textContent).toContain("Cho family");
     expect(container.textContent).toContain("Workspace updated");
     expect(container.textContent).toContain("Created group Cho family.");
@@ -883,7 +892,11 @@ describe("prototype auth ui", () => {
         votingEndsAt: "2026-04-17T00:00:00.000Z",
       }),
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(container.textContent).toContain("Graduation album");
     expect(container.textContent).toContain("Created event Graduation album.");
   });
@@ -1064,7 +1077,11 @@ describe("prototype auth ui", () => {
         userId: "user-haru",
       }),
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(5, "/api/prototype/workspace");
+    expect(fetchMock).toHaveBeenNthCalledWith(5, "/api/prototype/workspace", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(container.textContent).toContain("Haru");
     expect(container.textContent).toContain("Invited user-haru to Han family.");
   });
@@ -1772,7 +1789,11 @@ describe("prototype auth ui", () => {
         }),
       },
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(window.location.pathname).toBe("/app/groups");
     expect(container.textContent).toContain("Joined Kim family moments.");
     expect(container.textContent).toContain("Kim family moments");
@@ -1897,7 +1918,11 @@ describe("prototype auth ui", () => {
         }),
       },
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace");
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/prototype/workspace", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(container.textContent).toContain("Declined invitation to Kim family moments.");
     expect(container.textContent).toContain("0 active");
   });
