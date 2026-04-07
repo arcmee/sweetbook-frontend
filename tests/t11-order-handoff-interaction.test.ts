@@ -186,6 +186,10 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Chosen cover: Cake table setup");
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
     expect(container.textContent).toContain("Estimated draft pages: 6");
+    expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
+    expect(container.textContent).toContain(
+      "Resolve the flagged draft pages before this SweetBook handoff can be submitted.",
+    );
     expect(container.textContent).toContain(
       "Story spreads: Cake table setup, Balloon arch, Family group shot",
     );
@@ -259,14 +263,102 @@ describe("order handoff interaction", () => {
 
     const buttons = Array.from(container.querySelectorAll("button"));
     const submitButton = buttons.find((button) => button.textContent === "Submit SweetBook order");
-    expect(submitButton?.textContent).toBe("Submit SweetBook order");
+    expect(submitButton).toBeUndefined();
+    expect(requestSubmit).toHaveBeenCalledTimes(0);
+  });
 
-    await act(async () => {
-      submitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  it("keeps submit available when every draft page is ready", async () => {
+    const requestEstimate = vi.fn().mockResolvedValue({
+      status: "ready_for_order",
+      bookUid: "bk_123",
+      uploadedPhotoFileName: "photo-1.jpg",
+      pageCount: 24,
+      contentInsertions: [],
+      estimate: {
+        totalAmount: 3100,
+        paidCreditAmount: 3100,
+        creditBalance: 5000,
+        creditSufficient: true,
+        currency: "KRW",
+      },
+    });
+    const requestSubmit = vi.fn().mockResolvedValue({
+      status: "submitted",
+      bookUid: "bk_123",
+      uploadedPhotoFileName: "photo-1.jpg",
+      pageCount: 24,
+      contentInsertions: [],
+      estimate: {
+        totalAmount: 3100,
+        paidCreditAmount: 3100,
+        creditBalance: 5000,
+        creditSufficient: true,
+        currency: "KRW",
+      },
+      order: {
+        orderUid: "ord_2",
+        orderStatus: 20,
+        orderStatusDisplay: "paid",
+      },
     });
 
-    expect(requestSubmit).toHaveBeenCalledTimes(1);
-    expect(container.textContent).toContain("SweetBook order submitted");
-    expect(container.textContent).toContain("Sandbox order ord_1 was submitted");
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        createElement(OrderHandoffScreen, {
+          workspace: getPrototypeWorkspaceViewModel(),
+          coverPhotoCaption: "Cake table setup",
+          estimatedPageCount: 6,
+          pageLayouts: {
+            cover: "Title-first cover",
+            "spread-1": "Balanced two-photo spread",
+          },
+          pageNotes: {
+            cover: "Open with the portrait and title lockup.",
+            "spread-1": "Use this spread to balance detail shots with group moments.",
+          },
+          selectedPhotoCount: 3,
+          selectedPhotoCaptions: [
+            "Cake table setup",
+            "Balloon arch",
+            "Family group shot",
+          ],
+          requestEstimate,
+          requestSubmit,
+        }),
+      );
+    });
+
+    const estimateButton = container.querySelector("button");
+    await act(async () => {
+      estimateButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain("Draft readiness: 3 ready, 0 need review.");
+    expect(container.textContent).toContain("All draft pages are ready for SweetBook handoff.");
+
+    await act(async () => {
+      setInputValue(
+        container.querySelector('input[name="paymentName"]') as HTMLInputElement | null,
+        "Demo Owner",
+      );
+      setInputValue(
+        container.querySelector('input[name="paymentCardLastFour"]') as HTMLInputElement | null,
+        "4242",
+      );
+      setInputValue(
+        container.querySelector('input[name="recipientName"]') as HTMLInputElement | null,
+        "Han Family",
+      );
+    });
+
+    const submitButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Submit SweetBook order",
+    );
+    expect(submitButton?.textContent).toBe("Submit SweetBook order");
   });
 });

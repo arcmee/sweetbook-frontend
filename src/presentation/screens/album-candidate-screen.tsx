@@ -67,6 +67,11 @@ export function AlbumCandidateScreen({
     selectedPhotos.length > 0
       ? buildPreviewPages(coverPhoto, layoutPhotos, pageLayouts, pageNotes)
       : activeReview.pagePreview;
+  const readyPageCount = previewPages.filter((page) => page.status === "Ready").length;
+  const reviewPageCount = previewPages.filter(
+    (page) => page.status === "Needs review",
+  ).length;
+  const canOpenOrder = selectedPhotos.length > 0 && reviewPageCount === 0;
 
   return (
     <>
@@ -78,10 +83,16 @@ export function AlbumCandidateScreen({
         <p>Current group: {activeGroupName ?? "No active group"}</p>
         <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
         <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
+        <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
+        {reviewPageCount > 0 ? (
+          <p>Resolve the flagged pages before opening the SweetBook order handoff.</p>
+        ) : (
+          <p>All pages are ready. You can continue to the SweetBook handoff.</p>
+        )}
         <PrimaryAction
           label="Continue to order setup"
           onClick={onOpenOrder}
-          disabled={selectedPhotos.length === 0}
+          disabled={!canOpenOrder}
         />
       </PageSection>
 
