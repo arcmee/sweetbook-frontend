@@ -47,8 +47,12 @@ describe("frontend group and event screens", () => {
     );
 
     expect(markup).toContain("Active family voting");
+    expect(markup).toContain("Workspace snapshot");
     expect(markup).toContain("What needs your attention");
-    expect(markup).toContain("No urgent actions are waiting right now.");
+    expect(markup).toContain("Review a group invitation");
+    expect(markup).toContain("Accept invite");
+    expect(markup).toContain("Priority groups");
+    expect(markup).toContain("Voting live");
     expect(markup).toContain("Open group page");
     expect(markup).toContain("Han family");
     expect(markup).toContain("First birthday album");
