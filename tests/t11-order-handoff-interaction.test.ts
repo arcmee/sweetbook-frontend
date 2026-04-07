@@ -203,12 +203,20 @@ describe("order handoff interaction", () => {
     );
     expect(container.textContent).toContain("Owner handoff checklist");
     expect(container.textContent).toContain("SweetBook handoff summary");
+    expect(container.textContent).toContain("SweetBook handoff timeline");
     expect(container.textContent).toContain(
       "Status: Blocked until remaining checks are resolved",
     );
     expect(container.textContent).toContain("Draft payload pages: 3");
     expect(container.textContent).toContain("Estimated checkout total: 3400 KRW");
     expect(container.textContent).toContain("Estimate state: Ready for submission");
+    expect(container.textContent).toContain("Needs review: Draft prepared");
+    expect(container.textContent).toContain("Pending: Owner approval");
+    expect(container.textContent).toContain("Done: Estimate check");
+    expect(container.textContent).toContain("Pending: Final confirmations");
+    expect(container.textContent).toContain("Pending: Order submitted");
+    expect(container.textContent).toContain("SweetBook completion summary");
+    expect(container.textContent).toContain("No order has been submitted yet.");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
       "Done: Keep at least 3 owner-approved photos",
@@ -456,6 +464,24 @@ describe("order handoff interaction", () => {
       "Status: Ready to submit to SweetBook",
     );
     expect(container.textContent).toContain("Estimated checkout total: 3400 KRW");
+    expect(container.textContent).toContain("Done: Draft prepared");
+    expect(container.textContent).toContain("Done: Owner approval");
+    expect(container.textContent).toContain("Done: Estimate check");
+    expect(container.textContent).toContain("Done: Final confirmations");
+    expect(container.textContent).toContain("Pending: Order submitted");
     expect(submitButton?.textContent).toBe("Submit SweetBook order");
+
+    await act(async () => {
+      submitButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(requestSubmit).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("SweetBook order submitted");
+    expect(container.textContent).toContain("Done: Order submitted");
+    expect(container.textContent).toContain("SweetBook order ord_2 is complete.");
+    expect(container.textContent).toContain(
+      "Book draft bk_123 was submitted successfully.",
+    );
+    expect(container.textContent).toContain("Order status: paid");
   });
 });

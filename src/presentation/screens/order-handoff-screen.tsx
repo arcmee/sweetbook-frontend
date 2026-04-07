@@ -165,6 +165,46 @@ export function OrderHandoffScreen({
       : estimateResult === null
         ? "Estimate required before handoff"
         : "Blocked until remaining checks are resolved";
+  const handoffTimeline = [
+    {
+      label: "Draft prepared",
+      status: reviewPageCount === 0 ? "Done" : "Needs review",
+    },
+    {
+      label: "Owner approval",
+      status: isOwnerApproved ? "Done" : "Pending",
+    },
+    {
+      label: "Estimate check",
+      status:
+        estimateResult === null
+          ? "Pending"
+          : estimateResult.status === "ready_for_order"
+            ? "Done"
+            : "Blocked",
+    },
+    {
+      label: "Final confirmations",
+      status:
+        confirmDraftPayload && confirmDeliveryDetails && confirmPaymentSummary
+          ? "Done"
+          : "Pending",
+    },
+    {
+      label: "Order submitted",
+      status: submitResult ? "Done" : "Pending",
+    },
+  ];
+  const completionSummary = submitResult
+    ? [
+        `SweetBook order ${submitResult.order.orderUid} is complete.`,
+        `Book draft ${submitResult.bookUid} was submitted successfully.`,
+        `Order status: ${submitResult.order.orderStatusDisplay}`,
+      ]
+    : [
+        "No order has been submitted yet.",
+        "Finish the estimate, confirmations, and final submit step to complete the handoff.",
+      ];
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -256,6 +296,16 @@ export function OrderHandoffScreen({
                 : "Blocked by credit top-up"
               : "Not started"}
           </p>
+        </div>
+        <div>
+          <h3>SweetBook handoff timeline</h3>
+          <ul>
+            {handoffTimeline.map((step) => (
+              <li key={step.label}>
+                {step.status}: {step.label}
+              </li>
+            ))}
+          </ul>
         </div>
         {reviewPageCount > 0 ? (
           <>
@@ -428,6 +478,17 @@ export function OrderHandoffScreen({
             description={`Sandbox order ${submitResult.order.orderUid} was submitted for ${submitResult.bookUid}.`}
           />
         ) : null}
+      </PageSection>
+      <PageSection
+        eyebrow="Completion"
+        title="SweetBook completion summary"
+        description="Use this summary to confirm what happened in the handoff and submission flow."
+      >
+        <ul>
+          {completionSummary.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </PageSection>
       <PageSection
         eyebrow="SweetBook handoff preview"
