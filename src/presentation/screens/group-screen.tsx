@@ -109,6 +109,10 @@ export function GroupScreen({
   const ownerReviewEvents = events.filter(
     (event) => event.status === "ready" && event.canOwnerSelectPhotos && !submittedOrdersByEvent[event.id],
   );
+  const blockedEvents = events.filter(
+    (event) => !submittedOrdersByEvent[event.id] && event.status !== "ready",
+  );
+  const completedEvents = events.filter((event) => submittedOrdersByEvent[event.id]);
 
   return (
     <>
@@ -126,9 +130,17 @@ export function GroupScreen({
         <p>{events.length} events and {members.length} members are currently linked to this group.</p>
         <p>
           {
-            events.filter((event) => submittedOrdersByEvent[event.id]).length
-          } SweetBook handoff{events.filter((event) => submittedOrdersByEvent[event.id]).length === 1 ? "" : "s"} completed in this group.
+            completedEvents.length
+          } SweetBook handoff{completedEvents.length === 1 ? "" : "s"} completed in this group.
         </p>
+        <div>
+          <h3>SweetBook operations</h3>
+          <ul>
+            <li>{ownerReviewEvents.length} waiting for owner review</li>
+            <li>{blockedEvents.length} still blocked by voting or setup</li>
+            <li>{completedEvents.length} completed</li>
+          </ul>
+        </div>
         {events.some((event) => submittedOrdersByEvent[event.id]) ? (
           <div>
             <h3>Completed handoffs</h3>
@@ -272,6 +284,7 @@ export function GroupScreen({
               <p>
                 Voting window: {formatVotingWindow(event.votingStartsAt, event.votingEndsAt)}
               </p>
+              <p>SweetBook flow: {getEventFlowStatus(event, Boolean(submittedOrdersByEvent[event.id]))}</p>
               <p>{getEventManagementHint(event)}</p>
               {submittedOrdersByEvent[event.id] ? (
                 <StatePanel
@@ -395,6 +408,25 @@ function getEventManagementHint(event: EventCardViewModel): string {
   }
 
   return "Voting is not open yet for this event.";
+}
+
+function getEventFlowStatus(
+  event: EventCardViewModel,
+  isCompleted: boolean,
+): string {
+  if (isCompleted) {
+    return "Completed and archived.";
+  }
+
+  if (event.canOwnerSelectPhotos) {
+    return "Waiting for owner review and SweetBook handoff.";
+  }
+
+  if (event.canVote) {
+    return "Still collecting votes before owner review can open.";
+  }
+
+  return "Still in setup before voting opens.";
 }
 
 function isVotingClosingSoon(value?: string): boolean {
