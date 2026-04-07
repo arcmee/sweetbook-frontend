@@ -513,5 +513,10 @@ describe("order handoff interaction", () => {
       "Book draft bk_123 was submitted successfully.",
     );
     expect(container.textContent).toContain("Order status: paid");
+    expect(container.textContent).toContain(
+      "Submitted cover payload: Cake table setup.",
+    );
+    expect(container.textContent).toContain("Submitted spread payloads: 1.");
+    expect(container.textContent).toContain("Submitted draft pages: 2.");
   });
 });
