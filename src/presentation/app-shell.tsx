@@ -827,12 +827,13 @@ export function AppShell({
   const selectedSpreadPhotos = selectedPhotos.filter(
     (photo) => photo.id !== selectedCoverPhoto?.id,
   );
+  const activeEventOperationStage = activeEvent ? getOperationStage(activeEvent) : undefined;
   const canOpenOwnerSelection =
     canManageActiveGroup &&
-    activeEvent?.status === "ready" &&
+    activeEventOperationStage === "owner_review" &&
     Boolean(activeEvent?.canOwnerSelectPhotos);
-  const selectionLockState = getSelectionLockState(activeEvent?.status, canManageActiveGroup);
-  const orderLockState = getOrderLockState(activeEvent?.status, canManageActiveGroup);
+  const selectionLockState = getSelectionLockState(activeEventOperationStage, canManageActiveGroup);
+  const orderLockState = getOrderLockState(activeEventOperationStage, canManageActiveGroup);
   const myGroups = workspace.groups;
   const voteNotifications: NotificationActionViewModel[] = workspace.events
     .filter((event) => getOperationStage(event) === "voting")
@@ -1387,7 +1388,7 @@ function resolveWorkspaceSlice<T>(
 }
 
 function getSelectionLockState(
-  eventStatus: PrototypeWorkspaceSnapshot["workspace"]["events"][number]["status"] | undefined,
+  operationStage: "setup" | "voting" | "owner_review" | undefined,
   canManageActiveGroup: boolean | undefined,
 ): {
   title: string;
@@ -1400,14 +1401,14 @@ function getSelectionLockState(
     };
   }
 
-  if (eventStatus === "draft") {
+  if (operationStage === "setup") {
     return {
       title: "Owner selection opens after voting starts and finishes",
       description: "This event is still in draft setup. Open voting first, collect reactions, and then finish voting before the owner selection page becomes available.",
     };
   }
 
-  if (eventStatus === "collecting") {
+  if (operationStage === "voting") {
     return {
       title: "Owner selection opens after voting ends",
       description: "Voting is still running for this event. Close or finish the voting window before the owner selection page becomes available.",
@@ -1421,7 +1422,7 @@ function getSelectionLockState(
 }
 
 function getOrderLockState(
-  eventStatus: PrototypeWorkspaceSnapshot["workspace"]["events"][number]["status"] | undefined,
+  operationStage: "setup" | "voting" | "owner_review" | undefined,
   canManageActiveGroup: boolean | undefined,
 ): {
   title: string;
@@ -1434,14 +1435,14 @@ function getOrderLockState(
     };
   }
 
-  if (eventStatus === "draft") {
+  if (operationStage === "setup") {
     return {
       title: "Order handoff stays locked until voting is complete",
       description: "This event is still in draft setup. Start voting, finish the collection window, and then complete owner selection before the SweetBook handoff opens.",
     };
   }
 
-  if (eventStatus === "collecting") {
+  if (operationStage === "voting") {
     return {
       title: "Order handoff is locked while voting is still open",
       description: "Finish voting and complete owner selection before the SweetBook order handoff becomes available.",
