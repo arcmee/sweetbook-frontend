@@ -107,10 +107,10 @@ export function GroupScreen({
     (event) => event.canVote && isVotingClosingSoon(event.votingEndsAt),
   );
   const ownerReviewEvents = events.filter(
-    (event) => event.status === "ready" && event.canOwnerSelectPhotos && !submittedOrdersByEvent[event.id],
+    (event) => event.operationSummary?.stage === "owner_review" && !submittedOrdersByEvent[event.id],
   );
   const blockedEvents = events.filter(
-    (event) => !submittedOrdersByEvent[event.id] && event.status !== "ready",
+    (event) => !submittedOrdersByEvent[event.id] && event.operationSummary?.stage !== "owner_review",
   );
   const completedEvents = events.filter((event) => submittedOrdersByEvent[event.id]);
 
