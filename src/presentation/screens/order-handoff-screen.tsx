@@ -67,6 +67,15 @@ export function OrderHandoffScreen({
         ? "Owner review can continue with a draft handoff summary."
         : "Add more liked photos before the SweetBook operation can continue.",
   };
+  const readinessSummary = activeOrderEntry.readinessSummary ?? {
+    minimumSelectedPhotoCount: 3,
+    selectedPhotoCount: activeOrderEntry.selectedCandidateCount,
+    meetsMinimumPhotoCount: activeOrderEntry.selectedCandidateCount >= 3,
+    nextSuggestedStep:
+      activeOrderEntry.selectedCandidateCount >= 3
+        ? "Review page-level draft checks and record owner approval."
+        : "Add at least 3 liked photos before moving into SweetBook handoff.",
+  };
   const [isRunningEstimate, setIsRunningEstimate] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [estimateResult, setEstimateResult] =
@@ -114,8 +123,8 @@ export function OrderHandoffScreen({
       done: Boolean(coverPhotoCaption),
     },
     {
-      label: "Keep at least 3 owner-approved photos",
-      done: shortlistedCount >= 3,
+      label: `Keep at least ${readinessSummary.minimumSelectedPhotoCount} owner-approved photos`,
+      done: shortlistedCount >= readinessSummary.minimumSelectedPhotoCount,
     },
     {
       label: "Resolve all draft page warnings",
@@ -155,8 +164,8 @@ export function OrderHandoffScreen({
   const nextBlocker =
     !coverPhotoCaption
       ? "Choose a cover photo in the album draft."
-      : shortlistedCount < 3
-        ? "Keep at least 3 owner-approved photos in the draft."
+      : shortlistedCount < readinessSummary.minimumSelectedPhotoCount
+        ? `Keep at least ${readinessSummary.minimumSelectedPhotoCount} owner-approved photos in the draft.`
         : reviewPageCount > 0
           ? pendingChecks[0] ?? "Resolve the flagged draft pages."
           : !isOwnerApproved
@@ -325,6 +334,7 @@ export function OrderHandoffScreen({
           <h3>SweetBook handoff summary</h3>
           <p>Status: {handoffStatus}</p>
           <p>Operation detail: {operationSummary.detail}</p>
+          <p>Suggested next step: {readinessSummary.nextSuggestedStep}</p>
           <p>Draft payload pages: {pagePlan.length}</p>
           <p>Estimated checkout total: {totalDue} KRW</p>
           <p>
