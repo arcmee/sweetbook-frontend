@@ -143,7 +143,7 @@ export function GroupScreen({
         </div>
         {events.some((event) => submittedOrdersByEvent[event.id]) ? (
           <div>
-            <h3>Completed handoffs</h3>
+            <h3>Completed SweetBook operations</h3>
             <p>Use this archive to revisit events that already finished the SweetBook submission flow.</p>
             <ul>
               {events
@@ -157,7 +157,7 @@ export function GroupScreen({
                     <p>
                       Final status: {submittedOrdersByEvent[event.id]?.orderStatusDisplay ?? "Submitted"}
                     </p>
-                    <PrimaryAction label="Open completed event" onClick={() => onOpenEvent?.(event.id)} />
+                    <PrimaryAction label="Open completed operation" onClick={() => onOpenEvent?.(event.id)} />
                   </li>
                 ))}
             </ul>
@@ -292,7 +292,7 @@ export function GroupScreen({
               {submittedOrdersByEvent[event.id] ? (
                 <StatePanel
                   tone="success"
-                  title="SweetBook order completed"
+                  title="SweetBook operation completed"
                   description={`Order ${submittedOrdersByEvent[event.id]?.orderUid} was submitted for book ${submittedOrdersByEvent[event.id]?.bookUid}${submittedOrdersByEvent[event.id]?.orderStatusDisplay ? ` (${submittedOrdersByEvent[event.id]?.orderStatusDisplay})` : ""}.`}
                 />
               ) : null}
