@@ -183,7 +183,10 @@ export function DashboardScreen({
               <li key={event.id}>
                 <strong>{event.name}</strong>
                 <p>{event.groupName} is ready for final photo selection and SweetBook handoff.</p>
-                <PrimaryAction label="Open owner review" onClick={() => onOpenOwnerReview?.(event.id)} />
+                <PrimaryAction
+                  label="Open SweetBook operation"
+                  onClick={() => onOpenOwnerReview?.(event.id)}
+                />
               </li>
             ))}
           </ul>

@@ -282,7 +282,7 @@ describe("prototype auth ui", () => {
     expect(container.textContent).toContain("Voting closing soon");
     expect(container.textContent).toContain("Open urgent vote");
     expect(container.textContent).toContain("Owner review queue");
-    expect(container.textContent).toContain("Open owner review");
+    expect(container.textContent).toContain("Open SweetBook operation");
   });
 
   it("routes owner review notifications straight into the album review flow", async () => {
@@ -405,7 +405,7 @@ describe("prototype auth ui", () => {
     });
 
     const ownerReviewButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Open owner review",
+      (button) => button.textContent === "Open SweetBook operation",
     );
 
     await act(async () => {
