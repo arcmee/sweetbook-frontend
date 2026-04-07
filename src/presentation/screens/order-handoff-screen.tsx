@@ -235,6 +235,9 @@ export function OrderHandoffScreen({
         `SweetBook order ${submitResult.order.orderUid} is complete.`,
         `Book draft ${submitResult.bookUid} was submitted successfully.`,
         `Order status: ${submitResult.order.orderStatusDisplay}`,
+        `Submitted cover payload: ${activeOrderEntry.handoffSummary.coverCaption ?? coverPhotoCaption ?? "No cover recorded"}.`,
+        `Submitted spread payloads: ${activeOrderEntry.handoffSummary.spreadCount || Math.max(0, handoffPagePlan.length - 1)}.`,
+        `Submitted draft pages: ${activeOrderEntry.handoffSummary.draftPayloadPageCount || handoffPagePlan.length}.`,
       ]
     : [
         "No order has been submitted yet.",
