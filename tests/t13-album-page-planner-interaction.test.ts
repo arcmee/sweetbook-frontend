@@ -242,6 +242,12 @@ describe("album page planner interaction", () => {
       "Done: Approve at least 3 photos for the draft",
     );
     expect(container.textContent).toContain(
+      "Pending: Record owner approval for the draft",
+    );
+    expect(container.textContent).toContain(
+      "The group owner still needs to approve this draft before handoff.",
+    );
+    expect(container.textContent).toContain(
       "Pending: Resolve all draft page warnings",
     );
     expect(container.textContent).toContain(
@@ -306,20 +312,97 @@ describe("album page planner interaction", () => {
 
     expect(container.textContent).toContain("Draft readiness: 2 ready, 0 need review.");
     expect(container.textContent).toContain(
-      "Next blocker: No blockers remain. The draft can move to SweetBook handoff.",
+      "Next blocker: Record owner approval for the draft.",
     );
-    expect(container.textContent).toContain("Status: Ready for SweetBook handoff");
+    expect(container.textContent).toContain("Status: Blocked");
     expect(container.textContent).toContain("Draft page payload count: 2");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
       "Done: Approve at least 3 photos for the draft",
     );
     expect(container.textContent).toContain(
-      "Done: Resolve all draft page warnings",
+      "Pending: Record owner approval for the draft",
+    );
+    expect(container.textContent).toContain(
+      "All pages are ready. Record owner approval to continue to SweetBook handoff.",
+    );
+    const continueButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Continue to order setup",
+    ) as HTMLButtonElement | undefined;
+    expect(continueButton?.disabled).toBe(true);
+  });
+
+  it("opens order handoff once the owner has approved the draft", async () => {
+    const workspace = getPrototypeWorkspaceViewModel();
+    const toggleOwnerApproval = vi.fn();
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        createElement(AlbumCandidateScreen, {
+          workspace,
+          activeGroupName: "Han family",
+          activeEventName: "First birthday album",
+          workflow: {
+            activeEventId: "evt-demo",
+            activeEventName: "First birthday album",
+            canVote: false,
+            photoCountLabel: "3 uploaded",
+            photos: [
+              {
+                id: "photo-1",
+                caption: "Cake table setup",
+                likeCount: 12,
+                likedByViewer: false,
+                uploadedBy: "Ari",
+              },
+              {
+                id: "photo-2",
+                caption: "Balloon arch",
+                likeCount: 9,
+                likedByViewer: false,
+                uploadedBy: "Jules",
+              },
+              {
+                id: "photo-3",
+                caption: "Family group shot",
+                likeCount: 8,
+                likedByViewer: false,
+                uploadedBy: "Ari",
+              },
+            ],
+          },
+          selectedPhotoIds: ["photo-1", "photo-2", "photo-3"],
+          coverPhotoId: "photo-1",
+          isOwnerApproved: true,
+          onToggleOwnerApproval: toggleOwnerApproval,
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain(
+      "Next blocker: No blockers remain. The draft can move to SweetBook handoff.",
+    );
+    expect(container.textContent).toContain(
+      "Done: Record owner approval for the draft",
+    );
+    expect(container.textContent).toContain(
+      "Owner approval recorded. This draft can move into SweetBook order setup.",
     );
     expect(container.textContent).toContain(
       "All pages are ready. You can continue to the SweetBook handoff.",
     );
+    const approvalButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Withdraw owner approval",
+    );
+    expect(approvalButton).toBeDefined();
+    await act(async () => {
+      approvalButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(toggleOwnerApproval).toHaveBeenCalledTimes(1);
     const continueButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Continue to order setup",
     ) as HTMLButtonElement | undefined;

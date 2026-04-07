@@ -98,6 +98,9 @@ export function AppShell({
   const [pageNotesByEvent, setPageNotesByEvent] = useState<
     Record<string, Record<string, string>>
   >({});
+  const [ownerApprovalByEvent, setOwnerApprovalByEvent] = useState<Record<string, boolean>>(
+    {},
+  );
   const [createGroupName, setCreateGroupName] = useState("");
   const [createEventTitle, setCreateEventTitle] = useState("");
   const [createEventDescription, setCreateEventDescription] = useState("");
@@ -238,6 +241,7 @@ export function AppShell({
       setCoverPhotoIdByEvent({});
       setPageLayoutByEvent({});
       setPageNotesByEvent({});
+      setOwnerApprovalByEvent({});
       setCreateEventDescription("");
       setCreateEventVotingStartsAt(getDefaultVotingStartInput());
       setCreateEventVotingEndsAt(getDefaultVotingEndInput());
@@ -716,6 +720,23 @@ export function AppShell({
     setWorkspaceSuccess("Updated draft page note.");
   }
 
+  function handleToggleOwnerApproval(): void {
+    if (!activeEventId) {
+      return;
+    }
+
+    const isApproved = ownerApprovalByEvent[activeEventId] ?? false;
+    setOwnerApprovalByEvent((current) => ({
+      ...current,
+      [activeEventId]: !isApproved,
+    }));
+    setWorkspaceSuccess(
+      isApproved
+        ? "Removed owner approval from the draft."
+        : "Recorded owner approval for the draft.",
+    );
+  }
+
   function moveSelectedPhoto(photoId: string, direction: -1 | 1): void {
     if (!activeEventId) {
       return;
@@ -1094,11 +1115,13 @@ export function AppShell({
             activeGroupName={activeGroup?.name}
             activeEventName={activeEvent?.name}
             coverPhotoId={selectedCoverPhoto?.id}
+            isOwnerApproved={ownerApprovalByEvent[activeEventId] ?? false}
             pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
             pageNotes={pageNotesByEvent[activeEventId] ?? {}}
             onMovePhotoEarlier={(photoId) => moveSelectedPhoto(photoId, -1)}
             onMovePhotoLater={(photoId) => moveSelectedPhoto(photoId, 1)}
             selectedPhotoIds={selectedPhotoIds}
+            onToggleOwnerApproval={handleToggleOwnerApproval}
             onSetPageLayout={handleSetPageLayout}
             onSetPageNote={handleSetPageNote}
             onSetCoverPhoto={handleSetCoverPhoto}
@@ -1123,6 +1146,7 @@ export function AppShell({
             activeEventName={activeEvent?.name}
             coverPhotoCaption={selectedCoverPhoto?.caption}
             estimatedPageCount={review?.pagePreview.length}
+            isOwnerApproved={ownerApprovalByEvent[activeEventId] ?? false}
             pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
             pageNotes={pageNotesByEvent[activeEventId] ?? {}}
             selectedPhotoCount={selectedPhotos.length}
