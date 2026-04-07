@@ -157,10 +157,11 @@ describe("prototype auth ui", () => {
       await Promise.resolve();
     });
 
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
-      "/api/prototype/auth/session?token=ptok_saved",
-    );
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/prototype/auth/session", {
+      headers: {
+        Authorization: "Bearer ptok_saved",
+      },
+    });
     expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/prototype/workspace");
     expect(container.textContent).toContain("Database group");
     expect(container.textContent).toContain("Notification center");

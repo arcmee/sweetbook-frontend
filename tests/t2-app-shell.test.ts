@@ -14,8 +14,10 @@ import { StatePanel } from "../src/presentation/ui/state-panel";
 
 describe("frontend app shell foundation", () => {
   it("defines the baseline route map for prototype navigation", () => {
-    expect(defaultRouteKey).toBe("login");
+    expect(defaultRouteKey).toBe("landing");
     expect(appRoutes.map((route) => route.key)).toEqual([
+      "landing",
+      "signup",
       "login",
       "dashboard",
       "groups",
@@ -24,6 +26,8 @@ describe("frontend app shell foundation", () => {
       "orders",
     ]);
     expect(appRoutes.map((route) => route.path)).toEqual([
+      "/",
+      "/signup",
       "/login",
       "/app",
       "/app/groups",
@@ -52,6 +56,7 @@ describe("frontend app shell foundation", () => {
     expect(markup).toContain("SweetBook");
     expect(markup).toContain("Prototype workspace");
     expect(markup).toContain("Login");
+    expect(markup).toContain("Start");
     expect(markup).toContain("Group");
     expect(markup).toContain("Events in this group");
     expect(markup).toContain("Group members");
@@ -65,9 +70,23 @@ describe("frontend app shell foundation", () => {
   });
 
   it("resolves browser paths back to the matching route", () => {
+    expect(getRouteByPath("/").key).toBe("landing");
+    expect(getRouteByPath("/signup").key).toBe("signup");
     expect(getRouteByPath("/app/orders").key).toBe("orders");
     expect(getRouteByPath("/app/orders/").key).toBe("orders");
-    expect(getRouteByPath("/unknown").key).toBe("login");
+    expect(getRouteByPath("/unknown").key).toBe("landing");
+  });
+
+  it("renders the public landing and sign-up entry routes", () => {
+    const landingMarkup = renderToStaticMarkup(buildAppShell({ currentRouteKey: "landing" }));
+    const signupMarkup = renderToStaticMarkup(buildAppShell({ currentRouteKey: "signup" }));
+
+    expect(landingMarkup).toContain("groupictures");
+    expect(landingMarkup).toContain("시작하기");
+    expect(landingMarkup).toContain("로그인");
+    expect(signupMarkup).toContain("groupictures signup");
+    expect(signupMarkup).toContain("회원가입");
+    expect(signupMarkup).toContain("로그인으로 이동");
   });
 
   it("exports shared UI primitives for later feature screens", () => {

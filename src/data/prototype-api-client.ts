@@ -85,9 +85,9 @@ export async function fetchPrototypeAuthSession(
   token: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PrototypeAuthSession> {
-  const response = await fetchImpl(
-    resolveApiUrl(`/api/prototype/auth/session?token=${encodeURIComponent(token)}`),
-  );
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/auth/session"), {
+    headers: buildPrototypeAuthHeaders(token),
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to load prototype auth session: ${response.status}`);
@@ -102,10 +102,7 @@ export async function requestPrototypeAuthLogout(
 ): Promise<void> {
   const response = await fetchImpl(resolveApiUrl("/api/prototype/auth/logout"), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token }),
+    headers: buildPrototypeAuthHeaders(token),
   });
 
   if (!response.ok && response.status !== 204) {
@@ -568,4 +565,10 @@ export async function requestPrototypePhotoLike(
 function resolveApiUrl(path: string): string {
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
   return apiBaseUrl ? `${apiBaseUrl}${path}` : path;
+}
+
+function buildPrototypeAuthHeaders(token: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 }

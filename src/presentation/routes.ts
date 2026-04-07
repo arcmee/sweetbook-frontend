@@ -1,4 +1,6 @@
 export type AppRouteKey =
+  | "landing"
+  | "signup"
   | "login"
   | "dashboard"
   | "groups"
@@ -17,6 +19,24 @@ export type AppRoute = {
 };
 
 export const appRoutes: AppRoute[] = [
+  {
+    key: "landing",
+    path: "/",
+    label: "Home",
+    title: "groupictures landing",
+    description: "Start with sign up or move to the login page if you already have an account.",
+    requiresAuth: false,
+    showInNavigation: true,
+  },
+  {
+    key: "signup",
+    path: "/signup",
+    label: "Start",
+    title: "Create a groupictures account",
+    description: "Create a prototype account before joining groups and events.",
+    requiresAuth: false,
+    showInNavigation: true,
+  },
   {
     key: "login",
     path: "/login",
@@ -73,7 +93,7 @@ export const appRoutes: AppRoute[] = [
   },
 ];
 
-export const defaultRouteKey: AppRouteKey = "login";
+export const defaultRouteKey: AppRouteKey = "landing";
 
 export function getRouteByKey(routeKey: AppRouteKey): AppRoute {
   const route = appRoutes.find((item) => item.key === routeKey);
