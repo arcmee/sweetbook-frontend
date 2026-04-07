@@ -95,6 +95,9 @@ describe("dashboard and group completion summaries", () => {
     );
 
     expect(markup).toContain("SweetBook order already completed");
+    expect(markup).toContain("SweetBook operation");
+    expect(markup).toContain("SweetBook handoff completed for this event.");
+    expect(markup).toContain("Order ord_789 is already archived for this event.");
     expect(markup).toContain("Completed handoff archive");
     expect(markup).toContain("Book draft: bk_789");
     expect(markup).toContain("Order reference: ord_789");
