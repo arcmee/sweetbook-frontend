@@ -67,11 +67,25 @@ export function EventScreen({
         description="Members upload event photos here and vote during the active collection window."
       >
         {submittedOrder ? (
-          <StatePanel
-            tone="success"
-            title="SweetBook order already completed"
-            description={`Order ${submittedOrder.orderUid} was submitted for book ${submittedOrder.bookUid}${submittedOrder.orderStatusDisplay ? ` (${submittedOrder.orderStatusDisplay})` : ""}.`}
-          />
+          <>
+            <StatePanel
+              tone="success"
+              title="SweetBook order already completed"
+              description={`Order ${submittedOrder.orderUid} was submitted for book ${submittedOrder.bookUid}${submittedOrder.orderStatusDisplay ? ` (${submittedOrder.orderStatusDisplay})` : ""}.`}
+            />
+            <div>
+              <h3>Completed handoff archive</h3>
+              <p>Book draft: {submittedOrder.bookUid}</p>
+              <p>Order reference: {submittedOrder.orderUid}</p>
+              <p>
+                Final order state: {submittedOrder.orderStatusDisplay ?? "Submitted"}
+              </p>
+              <p>
+                This event has already completed its SweetBook handoff. You can reopen the event to
+                review the final voting context and uploaded photos.
+              </p>
+            </div>
+          </>
         ) : null}
           <p>Active group</p>
           <p>{selectedGroupName ?? "No active group"}</p>
