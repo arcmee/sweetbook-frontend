@@ -130,6 +130,12 @@ export function OrderHandoffScreen({
                   paymentCardLastFour.trim().length !== 4
                 ? "Enter the payer name and card digits."
                 : null;
+  const handoffStatus =
+    nextBlocker === null
+      ? "Ready to submit to SweetBook"
+      : estimateResult === null
+        ? "Estimate required before handoff"
+        : "Blocked until remaining checks are resolved";
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -203,6 +209,20 @@ export function OrderHandoffScreen({
               </li>
             ))}
           </ul>
+        </div>
+        <div>
+          <h3>SweetBook handoff summary</h3>
+          <p>Status: {handoffStatus}</p>
+          <p>Draft payload pages: {pagePlan.length}</p>
+          <p>Estimated checkout total: {totalDue} KRW</p>
+          <p>
+            Estimate state:{" "}
+            {estimateResult
+              ? estimateResult.status === "ready_for_order"
+                ? "Ready for submission"
+                : "Blocked by credit top-up"
+              : "Not started"}
+          </p>
         </div>
         {reviewPageCount > 0 ? (
           <>

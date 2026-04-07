@@ -95,6 +95,7 @@ export function AlbumCandidateScreen({
       done: reviewPageCount === 0,
     },
   ];
+  const handoffStatus = canOpenOrder ? "Ready for SweetBook handoff" : "Blocked";
 
   return (
     <>
@@ -120,6 +121,13 @@ export function AlbumCandidateScreen({
               </li>
             ))}
           </ul>
+        </div>
+        <div>
+          <h3>SweetBook handoff summary</h3>
+          <p>Status: {handoffStatus}</p>
+          <p>Cover payload: {coverPhoto?.caption ?? "No cover selected yet."}</p>
+          <p>Spread payload count: {layoutPhotos.length}</p>
+          <p>Draft page payload count: {previewPages.length}</p>
         </div>
         {reviewPageCount > 0 ? (
           <>
