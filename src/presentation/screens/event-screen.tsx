@@ -48,6 +48,7 @@ export function EventScreen({
   const photoWorkflow =
     workflow ?? getPrototypePhotoWorkflowViewModel(activeEvent?.id ?? "");
   const votingPresentation = getVotingPresentation(activeEvent);
+  const lifecycleSummary = getLifecycleSummary(activeEvent);
 
   return (
     <>
@@ -59,6 +60,9 @@ export function EventScreen({
           <p>Active group</p>
           <p>{selectedGroupName ?? "No active group"}</p>
           <p>{activeEvent?.description ?? "No event description yet."}</p>
+          <p>Lifecycle phase</p>
+          <p>{lifecycleSummary.phaseLabel}</p>
+          <p>{lifecycleSummary.nextStep}</p>
           <p>{votingPresentation.headline}</p>
           <p>Voting status badge</p>
           <p>{votingPresentation.badgeLabel}</p>
@@ -207,4 +211,37 @@ function getTimeLeftLabel(value?: string): string | null {
 
   const totalDays = Math.ceil(totalHours / 24);
   return `${totalDays} day${totalDays === 1 ? "" : "s"} left`;
+}
+
+function getLifecycleSummary(
+  activeEvent: PrototypeWorkspaceViewModel["events"][number] | undefined,
+): {
+  phaseLabel: string;
+  nextStep: string;
+} {
+  if (!activeEvent) {
+    return {
+      phaseLabel: "No lifecycle available",
+      nextStep: "Choose an event to review its current stage.",
+    };
+  }
+
+  if (activeEvent.status === "draft") {
+    return {
+      phaseLabel: "Setup",
+      nextStep: "Open the voting window so members can start uploading and reacting.",
+    };
+  }
+
+  if (activeEvent.status === "collecting") {
+    return {
+      phaseLabel: "Voting live",
+      nextStep: "Collect likes until the deadline, then move into owner selection.",
+    };
+  }
+
+  return {
+    phaseLabel: "Owner review",
+    nextStep: "The owner can now finalize the photo set and continue to SweetBook handoff.",
+  };
 }

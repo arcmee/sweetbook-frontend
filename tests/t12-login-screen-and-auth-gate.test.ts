@@ -1810,6 +1810,167 @@ describe("prototype auth ui", () => {
     expect(container.textContent).toContain("Chosen cover: Family portrait");
     expect(container.textContent).toContain("Story spreads: Gift opening moment");
   });
+
+  it("unlocks selection and order routes for a ready event owned by the viewer", async () => {
+    window.history.replaceState({}, "", "/app/albums");
+    window.localStorage.setItem("sweetbook.prototype.token", "ptok_saved");
+
+    const readySnapshot = {
+      workspace: {
+        groupSummary: { totalGroups: 1, totalMembers: 2 },
+        groups: [
+          {
+            id: "group-han",
+            name: "Han family",
+            memberCount: 2,
+            role: "Owner",
+            eventCount: 1,
+          },
+        ],
+        events: [
+          {
+            id: "event-birthday",
+            name: "First birthday album",
+            groupName: "Han family",
+            status: "ready",
+            description: "Owner can now finish the album draft.",
+            canVote: false,
+            canOwnerSelectPhotos: true,
+            photoCount: 3,
+          },
+        ],
+      },
+      photoWorkflows: [
+        {
+          activeEventId: "event-birthday",
+          activeEventName: "First birthday album",
+          uploadState: {
+            pendingCount: 0,
+            uploadedCount: 3,
+            helperText: "Loaded from backend",
+          },
+          photos: [
+            {
+              id: "photo-cake",
+              caption: "Cake table setup",
+              uploadedBy: "Mina",
+              likeCount: 12,
+              likedByViewer: true,
+            },
+            {
+              id: "photo-family",
+              caption: "Family portrait",
+              uploadedBy: "Joon",
+              likeCount: 9,
+              likedByViewer: false,
+            },
+            {
+              id: "photo-gift",
+              caption: "Gift opening moment",
+              uploadedBy: "Ara",
+              likeCount: 7,
+              likedByViewer: true,
+            },
+          ],
+        },
+      ],
+      candidateReviews: [
+        {
+          activeEventId: "event-birthday",
+          activeEventName: "First birthday album",
+          candidates: [
+            {
+              photoId: "photo-cake",
+              caption: "Cake table setup",
+              rank: 1,
+              likeCount: 12,
+              whySelected: "Leading liked moment.",
+            },
+            {
+              photoId: "photo-family",
+              caption: "Family portrait",
+              rank: 2,
+              likeCount: 9,
+              whySelected: "Strong family coverage.",
+            },
+            {
+              photoId: "photo-gift",
+              caption: "Gift opening moment",
+              rank: 3,
+              likeCount: 7,
+              whySelected: "Adds emotional variety.",
+            },
+          ],
+          pagePreview: [
+            {
+              pageNumber: 1,
+              title: "Cover preview",
+              photoCaptions: ["Cake table setup"],
+            },
+          ],
+        },
+      ],
+      orderEntries: [
+        {
+          activeEventId: "event-birthday",
+          activeEventName: "First birthday album",
+          selectedCandidateCount: 3,
+          handoffSummary: {
+            bookFormat: "Hardcover square",
+            payloadSections: ["selected photos", "page preview", "event title"],
+            note: "Review before handoff.",
+          },
+        },
+      ],
+    };
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          token: "ptok_saved",
+          user: {
+            userId: "user-demo",
+            username: "demo",
+            displayName: "SweetBook Demo User",
+            role: "owner",
+          },
+        }),
+      })
+      .mockResolvedValue({
+        ok: true,
+        json: async () => readySnapshot,
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(AppShell));
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain("Build the album draft");
+    expect(container.textContent).not.toContain("Owner selection opens after voting ends");
+
+    const ordersLink = Array.from(container.querySelectorAll("a")).find(
+      (link) => link.textContent === "Order",
+    );
+
+    await act(async () => {
+      ordersLink?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+
+    expect(container.textContent).toContain("Checkout setup");
+    expect(container.textContent).not.toContain("Order handoff is locked");
+  });
 });
 
 function setInputValue(input: HTMLInputElement, value: string): void {
