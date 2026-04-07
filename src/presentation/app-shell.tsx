@@ -45,8 +45,10 @@ import { AlbumCandidateScreen } from "./screens/album-candidate-screen";
 import { DashboardScreen } from "./screens/dashboard-screen";
 import { EventScreen } from "./screens/event-screen";
 import { GroupScreen } from "./screens/group-screen";
+import { LandingScreen } from "./screens/landing-screen";
 import { LoginScreen } from "./screens/login-screen";
 import { OrderHandoffScreen } from "./screens/order-handoff-screen";
+import { SignupScreen } from "./screens/signup-screen";
 import { PageSection } from "./ui/page-section";
 import { PrimaryAction } from "./ui/primary-action";
 import { StatePanel } from "./ui/state-panel";
@@ -162,16 +164,6 @@ export function AppShell({
       return;
     }
 
-    if (window.location.pathname === "/") {
-      window.history.replaceState({}, "", getRouteByKey(activeRouteKey).path);
-    }
-  }, [activeRouteKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     const token = window.localStorage.getItem(prototypeTokenStorageKey);
     if (!token) {
       setSession(null);
@@ -192,6 +184,20 @@ export function AppShell({
         setAuthPending(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    if (
+      activeRouteKey === "landing" ||
+      activeRouteKey === "signup" ||
+      activeRouteKey === "login"
+    ) {
+      navigateTo("dashboard");
+    }
+  }, [activeRouteKey, session]);
 
   const currentRoute = getRouteByKey(activeRouteKey);
   const workspace = getPrototypeWorkspaceViewModel(workspaceSnapshot);
@@ -1011,6 +1017,43 @@ export function AppShell({
     );
   }
 
+  if (!session && (currentRoute.key === "landing" || currentRoute.key === "signup" || currentRoute.key === "login")) {
+    return (
+      <main>
+        <nav aria-label="Public navigation">
+          <ul>
+            {appRoutes
+              .filter((route) => !route.requiresAuth)
+              .map((route) => (
+                <li key={route.key}>
+                  <a
+                    href={route.path}
+                    aria-current={currentRoute.key === route.key ? "page" : undefined}
+                    onClick={(event) => handleNavigation(event, route.key)}
+                  >
+                    {route.label}
+                  </a>
+                </li>
+              ))}
+          </ul>
+        </nav>
+
+        {currentRoute.key === "landing" ? (
+          <LandingScreen
+            onOpenLogin={() => navigateTo("login")}
+            onOpenSignup={() => navigateTo("signup")}
+          />
+        ) : null}
+        {currentRoute.key === "signup" ? (
+          <SignupScreen onOpenLogin={() => navigateTo("login")} />
+        ) : null}
+        {currentRoute.key === "login" ? (
+          <LoginScreen onLogin={handleLogin} />
+        ) : null}
+      </main>
+    );
+  }
+
   return (
     <main>
       <header>
@@ -1133,10 +1176,6 @@ export function AppShell({
           title="Workspace updated"
           description={workspaceSuccess}
         />
-      ) : null}
-
-      {currentRoute.key === "login" ? (
-        <LoginScreen onLogin={handleLogin} />
       ) : null}
 
       {currentRoute.key === "dashboard" ? (

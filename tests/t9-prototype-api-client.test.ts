@@ -117,9 +117,11 @@ describe("prototype api client", () => {
       fetchImpl as typeof fetch,
     );
 
-    expect(fetchImpl).toHaveBeenCalledWith(
-      "/api/prototype/auth/session?token=ptok_123",
-    );
+    expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/auth/session", {
+      headers: {
+        Authorization: "Bearer ptok_123",
+      },
+    });
     expect(session.token).toBe("ptok_123");
   });
 
@@ -134,11 +136,8 @@ describe("prototype api client", () => {
     expect(fetchImpl).toHaveBeenCalledWith("/api/prototype/auth/logout", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        Authorization: "Bearer ptok_123",
       },
-      body: JSON.stringify({
-        token: "ptok_123",
-      }),
     });
   });
 
