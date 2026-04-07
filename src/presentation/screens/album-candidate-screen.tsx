@@ -276,8 +276,8 @@ export function AlbumCandidateScreen({
                     <label>
                       Edit note
                       <input
-                        value={page.editNote}
-                        onChange={(event) => onSetPageNote?.(page.pageId, event.target.value)}
+                        defaultValue={page.editNote}
+                        onBlur={(event) => onSetPageNote?.(page.pageId, event.target.value)}
                       />
                     </label>
                     {"recommendedLayout" in page && page.recommendedLayout !== page.layout ? (

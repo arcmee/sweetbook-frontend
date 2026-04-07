@@ -377,6 +377,112 @@ export async function requestPrototypeEventOwnerApproval(
   }
 }
 
+export async function requestPrototypePagePlanSelection(
+  input: {
+    eventId: string;
+    selectedPhotoIds: string[];
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/events/${encodeURIComponent(input.eventId)}/page-plan/selection`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        selectedPhotoIds: input.selectedPhotoIds,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to update prototype page plan selection: ${response.status}`);
+  }
+}
+
+export async function requestPrototypePagePlanCover(
+  input: {
+    eventId: string;
+    coverPhotoId: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/events/${encodeURIComponent(input.eventId)}/page-plan/cover`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        coverPhotoId: input.coverPhotoId,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to update prototype page plan cover: ${response.status}`);
+  }
+}
+
+export async function requestPrototypePagePlanLayout(
+  input: {
+    eventId: string;
+    pageId: string;
+    layout: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(
+      `/api/prototype/events/${encodeURIComponent(input.eventId)}/page-plan/pages/${encodeURIComponent(input.pageId)}/layout`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        layout: input.layout,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to update prototype page layout: ${response.status}`);
+  }
+}
+
+export async function requestPrototypePagePlanNote(
+  input: {
+    eventId: string;
+    pageId: string;
+    note: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(
+      `/api/prototype/events/${encodeURIComponent(input.eventId)}/page-plan/pages/${encodeURIComponent(input.pageId)}/note`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        note: input.note,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to update prototype page note: ${response.status}`);
+  }
+}
+
 export async function requestPrototypePhotoCreate(
   input: {
     eventId: string;

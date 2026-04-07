@@ -2019,6 +2019,134 @@ describe("prototype auth ui", () => {
               activeEventId: "event-birthday",
               activeEventName: "First birthday album",
               selectedCandidateCount: 3,
+              pagePlanner: {
+                selectedPhotoIds: ["photo-cake", "photo-family", "photo-gift"],
+                coverPhotoId: "photo-cake",
+                pageLayouts: {},
+                pageNotes: {},
+              },
+              handoffSummary: {
+                bookFormat: "Hardcover square",
+                payloadSections: ["selected photos", "page preview", "event title"],
+                note: "Review this summary before backend submission is wired.",
+              },
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          workspace: {
+            groupSummary: { totalGroups: 1, totalMembers: 2 },
+            groups: [
+              {
+                id: "group-han",
+                name: "Han family",
+                memberCount: 2,
+                role: "Owner",
+                eventCount: 1,
+              },
+            ],
+            events: [
+              {
+                id: "event-birthday",
+                name: "First birthday album",
+                groupName: "Han family",
+                status: "ready",
+                canVote: false,
+                canOwnerSelectPhotos: true,
+                photoCount: 124,
+              },
+            ],
+          },
+          photoWorkflows: [
+            {
+              activeEventId: "event-birthday",
+              activeEventName: "First birthday album",
+              uploadState: {
+                pendingCount: 3,
+                uploadedCount: 124,
+                helperText: "Upload queue is local-only until backend adapters land.",
+              },
+              photos: [
+                {
+                  id: "photo-cake",
+                  caption: "Cake table setup",
+                  uploadedBy: "Mina",
+                  likeCount: 12,
+                  likedByViewer: true,
+                },
+                {
+                  id: "photo-family",
+                  caption: "Family portrait",
+                  uploadedBy: "Joon",
+                  likeCount: 9,
+                  likedByViewer: false,
+                },
+                {
+                  id: "photo-gift",
+                  caption: "Gift opening moment",
+                  uploadedBy: "Ara",
+                  likeCount: 7,
+                  likedByViewer: true,
+                },
+              ],
+            },
+          ],
+          candidateReviews: [
+            {
+              activeEventId: "event-birthday",
+              activeEventName: "First birthday album",
+              candidates: [
+                {
+                  photoId: "photo-cake",
+                  caption: "Cake table setup",
+                  rank: 1,
+                  likeCount: 12,
+                  whySelected: "Selected because Cake table setup is leading with 12 likes.",
+                },
+                {
+                  photoId: "photo-family",
+                  caption: "Family portrait",
+                  rank: 2,
+                  likeCount: 9,
+                  whySelected:
+                    "Selected because Family portrait remains one of the strongest liked moments in this event.",
+                },
+                {
+                  photoId: "photo-gift",
+                  caption: "Gift opening moment",
+                  rank: 3,
+                  likeCount: 7,
+                  whySelected:
+                    "Selected because Gift opening moment has strong engagement and includes your like.",
+                },
+              ],
+              pagePreview: [
+                {
+                  pageNumber: 1,
+                  title: "Cover preview",
+                  photoCaptions: ["Family portrait"],
+                },
+              ],
+            },
+          ],
+          orderEntries: [
+            {
+              activeEventId: "event-birthday",
+              activeEventName: "First birthday album",
+              selectedCandidateCount: 2,
+              pagePlanner: {
+                selectedPhotoIds: ["photo-family", "photo-gift"],
+                coverPhotoId: "photo-family",
+                pageLayouts: {},
+                pageNotes: {},
+              },
               handoffSummary: {
                 bookFormat: "Hardcover square",
                 payloadSections: ["selected photos", "page preview", "event title"],
