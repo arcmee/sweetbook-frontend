@@ -22,7 +22,9 @@ type OrderHandoffScreenProps = {
   activeGroupName?: string;
   activeEventName?: string;
   estimatedPageCount?: number;
+  initialSubmitResult?: PrototypeSweetBookSubmitResult | null;
   isOwnerApproved?: boolean;
+  onSubmitSuccess?: (result: PrototypeSweetBookSubmitResult) => void;
   pageLayouts?: Record<string, string>;
   pageNotes?: Record<string, string>;
   selectedPhotoCount?: number;
@@ -38,7 +40,9 @@ export function OrderHandoffScreen({
   activeGroupName,
   activeEventName,
   estimatedPageCount,
+  initialSubmitResult = null,
   isOwnerApproved = false,
+  onSubmitSuccess,
   pageLayouts = {},
   pageNotes = {},
   selectedPhotoCount,
@@ -56,7 +60,7 @@ export function OrderHandoffScreen({
   const [estimateResult, setEstimateResult] =
     useState<PrototypeSweetBookEstimate | null>(null);
   const [submitResult, setSubmitResult] =
-    useState<PrototypeSweetBookSubmitResult | null>(null);
+    useState<PrototypeSweetBookSubmitResult | null>(initialSubmitResult);
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [bookQuantity, setBookQuantity] = useState("1");
@@ -230,6 +234,7 @@ export function OrderHandoffScreen({
     try {
       const result = await requestSubmit();
       setSubmitResult(result);
+      onSubmitSuccess?.(result);
     } catch (error: unknown) {
       setSubmitError(error instanceof Error ? error.message : String(error));
       setSubmitResult(null);

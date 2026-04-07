@@ -8,6 +8,14 @@ import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
 
+type DashboardSubmittedOrderSummary = {
+  bookUid: string;
+  groupId: string;
+  groupName: string;
+  orderStatusDisplay?: string | null;
+  orderUid: string;
+};
+
 type DashboardActionViewModel = {
   id: string;
   title: string;
@@ -26,6 +34,7 @@ type DashboardScreenProps = {
   onOpenGroup?: (groupId: string) => void;
   onOpenEvent?: (eventId: string) => void;
   recentlyJoinedGroupName?: string | null;
+  submittedOrdersByEvent?: Record<string, DashboardSubmittedOrderSummary>;
   workspace: PrototypeWorkspaceViewModel;
 };
 
@@ -39,8 +48,11 @@ export function DashboardScreen({
   onOpenGroup,
   onOpenEvent,
   recentlyJoinedGroupName = null,
+  submittedOrdersByEvent = {},
   workspace,
 }: DashboardScreenProps): ReactElement {
+  const completedOrders = Object.entries(submittedOrdersByEvent);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     void onCreateGroup?.();
@@ -85,6 +97,7 @@ export function DashboardScreen({
           are active in the prototype workspace.
         </p>
         <p>{countActiveVotingEvents(groupedEvents)} active voting events are running right now.</p>
+        <p>{completedOrders.length} SweetBook handoff{completedOrders.length === 1 ? "" : "s"} completed in this session.</p>
       </PageSection>
       <PageSection
         eyebrow="Next actions"
@@ -126,6 +139,26 @@ export function DashboardScreen({
           })}
         </ul>
       </PageSection>
+      {completedOrders.length > 0 ? (
+        <PageSection
+          eyebrow="Completed orders"
+          title="Recent SweetBook completions"
+          description="Track recently submitted books and jump back into the matching group."
+        >
+          <ul>
+            {completedOrders.map(([eventId, order]) => (
+              <li key={eventId}>
+                <strong>{order.groupName}</strong>
+                <p>
+                  Order {order.orderUid} for book {order.bookUid}
+                  {order.orderStatusDisplay ? ` (${order.orderStatusDisplay})` : ""}.
+                </p>
+                <PrimaryAction label="Open group page" onClick={() => onOpenGroup?.(order.groupId)} />
+              </li>
+            ))}
+          </ul>
+        </PageSection>
+      ) : null}
       {groupedEvents.map((group) => (
         <PageSection
           key={group.groupId}
@@ -141,6 +174,11 @@ export function DashboardScreen({
                   <strong>{event.eventName}</strong>
                 </button>
                 <span> {getDashboardEventLabel(event.status)}</span>
+                {submittedOrdersByEvent[event.eventId] ? (
+                  <p>
+                    SweetBook order {submittedOrdersByEvent[event.eventId]?.orderUid} submitted.
+                  </p>
+                ) : null}
                 <div>
                   {event.previewPhotos.length > 0 ? (
                     <ul>
