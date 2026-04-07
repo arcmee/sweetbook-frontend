@@ -28,6 +28,10 @@ describe("dashboard and group completion summaries", () => {
     expect(markup).toContain("Recent SweetBook completions");
     expect(markup).toContain("Completed groups to revisit");
     expect(markup).toContain("Groups still in progress");
+    expect(markup).toContain("SweetBook handoff queue");
+    expect(markup).toContain("0 owner review ready");
+    expect(markup).toContain("0 blocked by voting or setup");
+    expect(markup).toContain("1 submitted");
     expect(markup).toContain("No active group work remains right now.");
     expect(markup).toContain("Order ord_123 for book bk_123");
     expect(markup).toContain("Review completed group");
@@ -146,6 +150,10 @@ describe("dashboard and group completion summaries", () => {
     expect(dashboardMarkup).toContain("Vote in this event");
     expect(dashboardMarkup).toContain("Ready for owner selection");
     expect(dashboardMarkup).toContain("Open owner review");
+    expect(dashboardMarkup).toContain("SweetBook handoff queue");
+    expect(dashboardMarkup).toContain("1 owner review ready");
+    expect(dashboardMarkup).toContain("1 blocked by voting or setup");
+    expect(dashboardMarkup).toContain("0 submitted");
 
     expect(groupMarkup).toContain("Attention needed");
     expect(groupMarkup).toContain("Open urgent vote");

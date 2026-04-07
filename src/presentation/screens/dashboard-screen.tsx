@@ -72,6 +72,11 @@ export function DashboardScreen({
       event.canOwnerSelectPhotos &&
       !submittedOrdersByEvent[event.id],
   );
+  const blockedHandoffEvents = workspace.events.filter(
+    (event) =>
+      event.status !== "ready" &&
+      !submittedOrdersByEvent[event.id],
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -118,6 +123,14 @@ export function DashboardScreen({
         </p>
         <p>{countActiveVotingEvents(groupedEvents)} active voting events are running right now.</p>
         <p>{completedOrders.length} SweetBook handoff{completedOrders.length === 1 ? "" : "s"} completed in this session.</p>
+        <div>
+          <h3>SweetBook handoff queue</h3>
+          <ul>
+            <li>{ownerReviewEvents.length} owner review ready</li>
+            <li>{blockedHandoffEvents.length} blocked by voting or setup</li>
+            <li>{completedOrders.length} submitted</li>
+          </ul>
+        </div>
       </PageSection>
       <PageSection
         eyebrow="Next actions"
