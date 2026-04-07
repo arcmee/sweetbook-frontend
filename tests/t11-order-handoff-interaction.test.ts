@@ -187,6 +187,23 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
     expect(container.textContent).toContain("Estimated draft pages: 6");
     expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
+    expect(container.textContent).toContain("Owner handoff checklist");
+    expect(container.textContent).toContain("Done: Choose a cover photo");
+    expect(container.textContent).toContain(
+      "Done: Keep at least 3 owner-approved photos",
+    );
+    expect(container.textContent).toContain(
+      "Done: Run the SweetBook estimate",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Resolve all draft page warnings",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Fill in recipient details",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Enter payer name and card digits",
+    );
     expect(container.textContent).toContain(
       "Resolve the flagged draft pages before this SweetBook handoff can be submitted.",
     );
@@ -361,6 +378,18 @@ describe("order handoff interaction", () => {
 
     const submitButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Submit SweetBook order",
+    );
+    expect(container.textContent).toContain(
+      "Done: Resolve all draft page warnings",
+    );
+    expect(container.textContent).toContain(
+      "Done: Run the SweetBook estimate",
+    );
+    expect(container.textContent).toContain(
+      "Done: Fill in recipient details",
+    );
+    expect(container.textContent).toContain(
+      "Done: Enter payer name and card digits",
     );
     expect(submitButton?.textContent).toBe("Submit SweetBook order");
   });
