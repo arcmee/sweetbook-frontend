@@ -11,6 +11,7 @@ export type EventCardSnapshot = {
   name: string;
   groupName: string;
   status: "draft" | "collecting" | "ready";
+  ownerApproved?: boolean;
   operationSummary: {
     stage: "setup" | "voting" | "owner_review";
     label: string;

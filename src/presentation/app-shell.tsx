@@ -15,6 +15,7 @@ import {
   fetchPrototypeAuthSession,
   fetchPrototypeWorkspaceSnapshot,
   requestPrototypeEventCreate,
+  requestPrototypeEventOwnerApproval,
   requestPrototypeEventVotingClose,
   requestPrototypeEventVotingExtend,
   requestPrototypeAuthLogout,
@@ -108,9 +109,6 @@ export function AppShell({
   const [pageNotesByEvent, setPageNotesByEvent] = useState<
     Record<string, Record<string, string>>
   >({});
-  const [ownerApprovalByEvent, setOwnerApprovalByEvent] = useState<Record<string, boolean>>(
-    {},
-  );
   const [submittedOrdersByEvent, setSubmittedOrdersByEvent] = useState<
     Record<string, SubmittedOrderViewModel>
   >({});
@@ -255,7 +253,6 @@ export function AppShell({
       setCoverPhotoIdByEvent({});
       setPageLayoutByEvent({});
       setPageNotesByEvent({});
-      setOwnerApprovalByEvent({});
       setSubmittedOrdersByEvent({});
       setCreateEventDescription("");
       setCreateEventVotingStartsAt(getDefaultVotingStartInput());
@@ -735,21 +732,27 @@ export function AppShell({
     setWorkspaceSuccess("Updated draft page note.");
   }
 
-  function handleToggleOwnerApproval(): void {
+  async function handleToggleOwnerApproval(): Promise<void> {
     if (!activeEventId) {
       return;
     }
 
-    const isApproved = ownerApprovalByEvent[activeEventId] ?? false;
-    setOwnerApprovalByEvent((current) => ({
-      ...current,
-      [activeEventId]: !isApproved,
-    }));
-    setWorkspaceSuccess(
-      isApproved
-        ? "Removed owner approval from the draft."
-        : "Recorded owner approval for the draft.",
-    );
+    try {
+      const isApproved = activeEvent?.ownerApproved ?? false;
+      setWorkspaceSuccess(null);
+      await requestPrototypeEventOwnerApproval({
+        eventId: activeEventId,
+        ownerApproved: !isApproved,
+      });
+      await refreshWorkspace();
+      setWorkspaceSuccess(
+        isApproved
+          ? "Removed owner approval from the draft."
+          : "Recorded owner approval for the draft.",
+      );
+    } catch (error: unknown) {
+      setWorkspaceError(error instanceof Error ? error.message : String(error));
+    }
   }
 
   function moveSelectedPhoto(photoId: string, direction: -1 | 1): void {
@@ -827,6 +830,7 @@ export function AppShell({
   const selectedSpreadPhotos = selectedPhotos.filter(
     (photo) => photo.id !== selectedCoverPhoto?.id,
   );
+  const isOwnerApproved = activeEvent?.ownerApproved ?? false;
   const activeEventOperationStage = activeEvent ? getOperationStage(activeEvent) : undefined;
   const canOpenOwnerSelection =
     canManageActiveGroup &&
@@ -1271,7 +1275,7 @@ export function AppShell({
             activeEventName={activeEvent?.name}
             openedFromOwnerReview={ownerReviewEntryEventId === activeEventId}
             coverPhotoId={selectedCoverPhoto?.id}
-            isOwnerApproved={ownerApprovalByEvent[activeEventId] ?? false}
+            isOwnerApproved={isOwnerApproved}
             pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
             pageNotes={pageNotesByEvent[activeEventId] ?? {}}
             onMovePhotoEarlier={(photoId) => moveSelectedPhoto(photoId, -1)}
@@ -1303,7 +1307,7 @@ export function AppShell({
             coverPhotoCaption={selectedCoverPhoto?.caption}
             estimatedPageCount={review?.pagePreview.length}
             initialSubmitResult={submittedOrdersByEvent[activeEventId] ?? null}
-            isOwnerApproved={ownerApprovalByEvent[activeEventId] ?? false}
+            isOwnerApproved={isOwnerApproved}
             onSubmitSuccess={handleSubmitSuccess}
             pageLayouts={pageLayoutByEvent[activeEventId] ?? {}}
             pageNotes={pageNotesByEvent[activeEventId] ?? {}}
