@@ -97,6 +97,9 @@ export function OrderHandoffScreen({
   const subtotal = unitPrice * quantity;
   const platformFee = quantity * 300;
   const totalDue = subtotal + platformFee;
+  const backendReviewSummary = activeOrderEntry.reviewSummary;
+  const ownerApprovalMissing =
+    !isOwnerApproved && (backendReviewSummary?.ownerApprovalRequired ?? true);
   const fallbackSelectedPhotoCount =
     selectedPhotoCaptions.length > 0
       ? selectedPhotoCaptions.length
@@ -105,7 +108,10 @@ export function OrderHandoffScreen({
     selectedPhotoCount && selectedPhotoCount > 0
       ? selectedPhotoCount
       : fallbackSelectedPhotoCount;
-  const draftPageCount = estimatedPageCount ?? activeOrderEntry.selectedCandidateCount * 2;
+  const draftPageCount =
+    backendReviewSummary?.draftPageCount ??
+    estimatedPageCount ??
+    activeOrderEntry.selectedCandidateCount * 2;
   const pagePlan = buildOrderPagePlan(
     coverPhotoCaption,
     selectedPhotoCaptions,
@@ -168,9 +174,9 @@ export function OrderHandoffScreen({
         ? `Keep at least ${readinessSummary.minimumSelectedPhotoCount} owner-approved photos in the draft.`
         : reviewPageCount > 0
           ? pendingChecks[0] ?? "Resolve the flagged draft pages."
-          : !isOwnerApproved
+          : ownerApprovalMissing
             ? "Record owner approval in the album draft."
-          : estimateResult === null
+            : estimateResult === null
             ? "Run the SweetBook estimate."
             : recipientName.trim().length === 0
               ? "Fill in the recipient name."
@@ -336,6 +342,10 @@ export function OrderHandoffScreen({
           <p>Operation detail: {operationSummary.detail}</p>
           <p>Suggested next step: {readinessSummary.nextSuggestedStep}</p>
           <p>Draft payload pages: {pagePlan.length}</p>
+          <p>
+            Backend draft review summary: {draftPageCount} pages,{" "}
+            {backendReviewSummary?.flaggedDraftPageCount ?? 0} flagged.
+          </p>
           <p>Estimated checkout total: {totalDue} KRW</p>
           <p>
             Estimate state:{" "}

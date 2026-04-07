@@ -205,7 +205,7 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Pending: SweetBook order submitted");
     expect(container.textContent).toContain("Chosen cover: Cake table setup");
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
-    expect(container.textContent).toContain("Estimated draft pages: 6");
+    expect(container.textContent).toContain("Estimated draft pages: 2");
     expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
     expect(container.textContent).toContain(
       "Next blocker: Spread 1: Single-photo spotlight works best with one photo.",
@@ -287,7 +287,7 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Delivery details");
     expect(container.textContent).toContain("Checkout summary");
     expect(container.textContent).toContain("Owner-approved selection count: 3");
-    expect(container.textContent).toContain("SweetBook draft pages queued: 6");
+    expect(container.textContent).toContain("SweetBook draft pages queued: 2");
     expect(container.textContent).toContain("SweetBook unit price: 3100 KRW");
     expect(container.textContent).toContain("Total due today: 3400 KRW");
 
