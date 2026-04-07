@@ -89,7 +89,12 @@ export function EventScreen({
         ) : null}
           <p>Active group</p>
           <p>{selectedGroupName ?? "No active group"}</p>
-          <p>{activeEvent?.description ?? "No event description yet."}</p>
+        <p>{activeEvent?.description ?? "No event description yet."}</p>
+        <div>
+          <h3>SweetBook operation</h3>
+          <p>{getSweetBookOperationHeadline(activeEvent, submittedOrder)}</p>
+          <p>{getSweetBookOperationHint(activeEvent, submittedOrder)}</p>
+        </div>
           <p>Lifecycle phase</p>
           <p>{lifecycleSummary.phaseLabel}</p>
           <p>{lifecycleSummary.nextStep}</p>
@@ -274,4 +279,50 @@ function getLifecycleSummary(
     phaseLabel: "Owner review",
     nextStep: "The owner can now finalize the photo set and continue to SweetBook handoff.",
   };
+}
+
+function getSweetBookOperationHeadline(
+  activeEvent: PrototypeWorkspaceViewModel["events"][number] | undefined,
+  submittedOrder: EventSubmittedOrderSummary | undefined,
+): string {
+  if (submittedOrder) {
+    return "SweetBook handoff completed for this event.";
+  }
+
+  if (!activeEvent) {
+    return "Choose an event to inspect its SweetBook flow.";
+  }
+
+  if (activeEvent.canOwnerSelectPhotos) {
+    return "This event is waiting for owner review and SweetBook handoff.";
+  }
+
+  if (activeEvent.canVote) {
+    return "This event is still collecting votes before owner review opens.";
+  }
+
+  return "This event is still in setup before SweetBook planning can begin.";
+}
+
+function getSweetBookOperationHint(
+  activeEvent: PrototypeWorkspaceViewModel["events"][number] | undefined,
+  submittedOrder: EventSubmittedOrderSummary | undefined,
+): string {
+  if (submittedOrder) {
+    return `Order ${submittedOrder.orderUid} is already archived for this event.`;
+  }
+
+  if (!activeEvent) {
+    return "Select an event to see its current flow into owner review and SweetBook handoff.";
+  }
+
+  if (activeEvent.canOwnerSelectPhotos) {
+    return "Open the owner review flow to finalize the draft and continue into SweetBook handoff.";
+  }
+
+  if (activeEvent.canVote) {
+    return "Keep collecting uploads and likes until the voting window closes.";
+  }
+
+  return "Open voting first, then collect reactions before SweetBook handoff can move forward.";
 }
