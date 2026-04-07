@@ -42,6 +42,7 @@ type GroupScreenProps = {
   onInviteQueryChange?: (value: string) => void;
   onLeaveGroup?: () => void | Promise<void>;
   onOpenEvent?: (eventId: string) => void;
+  onOpenOwnerReview?: (eventId: string) => void;
   onSearchInviteCandidates?: () => void | Promise<void>;
   onToggleInviteOpen?: () => void;
   onTransferOwner?: (userId: string) => void | Promise<void>;
@@ -77,6 +78,7 @@ export function GroupScreen({
   onInviteQueryChange,
   onLeaveGroup,
   onOpenEvent,
+  onOpenOwnerReview,
   onSearchInviteCandidates,
   onToggleInviteOpen,
   onTransferOwner,
@@ -197,7 +199,7 @@ export function GroupScreen({
                   <li key={`review-${event.id}`}>
                     <strong>{event.name}</strong>
                     <p>This event is ready for owner photo selection and SweetBook handoff.</p>
-                    <PrimaryAction label="Open owner review" onClick={() => onOpenEvent?.(event.id)} />
+                    <PrimaryAction label="Open owner review" onClick={() => onOpenOwnerReview?.(event.id)} />
                   </li>
                 ))}
               </ul>
