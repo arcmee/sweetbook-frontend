@@ -191,6 +191,9 @@ describe("order handoff interaction", () => {
       "Resolve the flagged draft pages before this SweetBook handoff can be submitted.",
     );
     expect(container.textContent).toContain(
+      "Spread 1: Single-photo spotlight works best with one photo.",
+    );
+    expect(container.textContent).toContain(
       "Story spreads: Cake table setup, Balloon arch, Family group shot",
     );
     expect(container.textContent).toContain("Cover handoff: Title-first cover");
