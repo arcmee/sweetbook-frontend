@@ -194,6 +194,15 @@ describe("order handoff interaction", () => {
 
     expect(container.textContent).toContain("SweetBook estimate is ready");
     expect(container.textContent).toContain("available for submission");
+    expect(container.textContent).toContain("Owner handoff status");
+    expect(container.textContent).toContain(
+      "Owner approval is still required before SweetBook handoff can finish.",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Draft approved by the group owner",
+    );
+    expect(container.textContent).toContain("In progress: Handoff checks cleared");
+    expect(container.textContent).toContain("Pending: SweetBook order submitted");
     expect(container.textContent).toContain("Chosen cover: Cake table setup");
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
     expect(container.textContent).toContain("Estimated draft pages: 6");
@@ -402,6 +411,10 @@ describe("order handoff interaction", () => {
 
     expect(container.textContent).toContain("Draft readiness: 3 ready, 0 need review.");
     expect(container.textContent).toContain("All draft pages are ready for SweetBook handoff.");
+    expect(container.textContent).toContain(
+      "Owner approval is locked. Finish the remaining handoff checks.",
+    );
+    expect(container.textContent).toContain("Done: Draft approved by the group owner");
 
     await act(async () => {
       setInputValue(
@@ -477,6 +490,10 @@ describe("order handoff interaction", () => {
 
     expect(requestSubmit).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain("SweetBook order submitted");
+    expect(container.textContent).toContain(
+      "SweetBook handoff completed for this draft.",
+    );
+    expect(container.textContent).toContain("Done: SweetBook order submitted");
     expect(container.textContent).toContain("Done: Order submitted");
     expect(container.textContent).toContain("SweetBook order ord_2 is complete.");
     expect(container.textContent).toContain(
