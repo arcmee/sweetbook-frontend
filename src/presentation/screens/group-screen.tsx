@@ -124,6 +124,7 @@ export function GroupScreen({
         {events.some((event) => submittedOrdersByEvent[event.id]) ? (
           <div>
             <h3>Completed handoffs</h3>
+            <p>Use this archive to revisit events that already finished the SweetBook submission flow.</p>
             <ul>
               {events
                 .filter((event) => submittedOrdersByEvent[event.id])
@@ -132,6 +133,9 @@ export function GroupScreen({
                     <strong>{event.name}</strong>
                     <p>
                       Order {submittedOrdersByEvent[event.id]?.orderUid} is complete and ready for later review.
+                    </p>
+                    <p>
+                      Final status: {submittedOrdersByEvent[event.id]?.orderStatusDisplay ?? "Submitted"}
                     </p>
                     <PrimaryAction label="Open completed event" onClick={() => onOpenEvent?.(event.id)} />
                   </li>

@@ -62,7 +62,11 @@ describe("dashboard and group completion summaries", () => {
 
     expect(markup).toContain("1 SweetBook handoff completed in this group.");
     expect(markup).toContain("Completed handoffs");
+    expect(markup).toContain(
+      "Use this archive to revisit events that already finished the SweetBook submission flow.",
+    );
     expect(markup).toContain("Open completed event");
+    expect(markup).toContain("Final status: paid");
     expect(markup).toContain("SweetBook order completed");
     expect(markup).toContain("Order ord_456 was submitted for book bk_456");
   });
@@ -83,6 +87,10 @@ describe("dashboard and group completion summaries", () => {
     );
 
     expect(markup).toContain("SweetBook order already completed");
+    expect(markup).toContain("Completed handoff archive");
+    expect(markup).toContain("Book draft: bk_789");
+    expect(markup).toContain("Order reference: ord_789");
+    expect(markup).toContain("Final order state: paid");
     expect(markup).toContain("Order ord_789 was submitted for book bk_789");
   });
 });
