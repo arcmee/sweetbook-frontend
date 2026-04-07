@@ -68,6 +68,9 @@ describe("frontend group and event screens", () => {
     expect(markup).toContain("First birthday album");
     expect(markup).toContain("Collect the best first birthday moments before the family vote closes.");
     expect(markup).toContain("Members upload event photos here and vote during the active collection window.");
+    expect(markup).toContain("Lifecycle phase");
+    expect(markup).toContain("Voting live");
+    expect(markup).toContain("Collect likes until the deadline, then move into owner selection.");
     expect(markup).toContain("Voting status badge");
     expect(markup).toContain("Voting in progress");
     expect(markup).toContain("Voting is currently open for this event");
