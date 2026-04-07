@@ -212,6 +212,11 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         meetsMinimumPhotoCount: true,
         nextSuggestedStep: "Review page-level draft checks and record owner approval.",
       },
+      reviewSummary: {
+        draftPageCount: 2,
+        flaggedDraftPageCount: 0,
+        ownerApprovalRequired: true,
+      },
       handoffSummary: {
         bookFormat: "Hardcover square",
         payloadSections: ["selected photos", "page preview", "event title"],

@@ -64,6 +64,10 @@ export function AlbumCandidateScreen({
   const activeOrderEntry = orderEntry;
   const minimumSelectedPhotoCount =
     activeOrderEntry?.readinessSummary?.minimumSelectedPhotoCount ?? 3;
+  const backendDraftPageCount = activeOrderEntry?.reviewSummary?.draftPageCount;
+  const ownerApprovalMissing =
+    !isOwnerApproved &&
+    (activeOrderEntry?.reviewSummary?.ownerApprovalRequired ?? true);
   const availablePhotos = workflow?.photos ?? [];
   const effectiveSelectedPhotoIds =
     selectedPhotoIds.length > 0
@@ -95,7 +99,7 @@ export function AlbumCandidateScreen({
         ? `Approve at least ${minimumSelectedPhotoCount} photos for the draft.`
         : reviewPageCount > 0
           ? pendingChecks[0] ?? "Resolve the flagged draft pages."
-          : !isOwnerApproved
+          : ownerApprovalMissing
             ? "Record owner approval for the draft."
             : null;
   const handoffChecklist = [
@@ -181,7 +185,7 @@ export function AlbumCandidateScreen({
           <p>Status: {sweetBookOperationStatus}</p>
           <p>Cover payload: {coverPhoto?.caption ?? "No cover selected yet."}</p>
           <p>Spread payload count: {layoutPhotos.length}</p>
-          <p>Draft page payload count: {previewPages.length}</p>
+          <p>Draft page payload count: {backendDraftPageCount ?? previewPages.length}</p>
         </div>
         {reviewPageCount > 0 ? (
           <>
@@ -194,7 +198,7 @@ export function AlbumCandidateScreen({
           </>
         ) : (
           <p>
-            {isOwnerApproved
+            {!ownerApprovalMissing
               ? "All pages are ready. You can continue to the SweetBook handoff."
               : "All pages are ready. Record owner approval to continue to SweetBook handoff."}
           </p>

@@ -93,6 +93,11 @@ export type OrderEntrySnapshot = {
     meetsMinimumPhotoCount: boolean;
     nextSuggestedStep: string;
   };
+  reviewSummary: {
+    draftPageCount: number;
+    flaggedDraftPageCount: number;
+    ownerApprovalRequired: boolean;
+  };
   handoffSummary: {
     bookFormat: string;
     payloadSections: string[];
