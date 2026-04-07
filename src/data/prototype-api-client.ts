@@ -18,10 +18,17 @@ export async function fetchPrototypeWorkspaceSnapshot(
 }
 
 export async function requestPrototypeSweetBookEstimate(
+  input: {
+    eventId: string;
+  },
   fetchImpl: typeof fetch = fetch,
 ): Promise<PrototypeSweetBookEstimate> {
   const response = await fetchImpl(resolveApiUrl("/api/prototype/sweetbook/estimate"), {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
   });
 
   if (!response.ok) {
@@ -32,10 +39,17 @@ export async function requestPrototypeSweetBookEstimate(
 }
 
 export async function requestPrototypeSweetBookSubmit(
+  input: {
+    eventId: string;
+  },
   fetchImpl: typeof fetch = fetch,
 ): Promise<PrototypeSweetBookSubmitResult> {
   const response = await fetchImpl(resolveApiUrl("/api/prototype/sweetbook/submit"), {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
   });
 
   if (!response.ok) {

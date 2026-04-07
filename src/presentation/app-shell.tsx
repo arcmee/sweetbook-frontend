@@ -1253,6 +1253,7 @@ export function AppShell({
       {currentRoute.key === "orders" ? (
         canOpenOwnerSelection ? (
           <OrderHandoffScreen
+            activeEventId={activeEventId}
             workspace={workspace}
             orderEntry={orderEntry}
             activeGroupName={activeGroup?.name}

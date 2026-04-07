@@ -26,6 +26,9 @@ describe("prototype SweetBook estimate client", () => {
     });
 
     const result = await requestPrototypeSweetBookEstimate(
+      {
+        eventId: "event-birthday",
+      },
       fetchImpl as typeof fetch,
     );
 
@@ -33,6 +36,12 @@ describe("prototype SweetBook estimate client", () => {
       "/api/prototype/sweetbook/estimate",
       {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: "event-birthday",
+        }),
       },
     );
     expect(result.status).toBe("blocked_insufficient_credit");
@@ -46,7 +55,12 @@ describe("prototype SweetBook estimate client", () => {
     });
 
     await expect(
-      requestPrototypeSweetBookEstimate(fetchImpl as typeof fetch),
+      requestPrototypeSweetBookEstimate(
+        {
+          eventId: "event-birthday",
+        },
+        fetchImpl as typeof fetch,
+      ),
     ).rejects.toThrow("Failed to run prototype SweetBook estimate: 503");
   });
 
@@ -75,6 +89,9 @@ describe("prototype SweetBook estimate client", () => {
     });
 
     const result = await requestPrototypeSweetBookSubmit(
+      {
+        eventId: "event-birthday",
+      },
       fetchImpl as typeof fetch,
     );
 
@@ -82,6 +99,12 @@ describe("prototype SweetBook estimate client", () => {
       "/api/prototype/sweetbook/submit",
       {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: "event-birthday",
+        }),
       },
     );
     expect(result.order.orderUid).toBe("ord_1");
