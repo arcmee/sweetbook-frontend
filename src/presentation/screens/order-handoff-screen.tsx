@@ -84,6 +84,9 @@ export function OrderHandoffScreen({
   );
   const readyPageCount = pagePlan.filter((page) => page.status === "Ready").length;
   const reviewPageCount = pagePlan.filter((page) => page.status === "Needs review").length;
+  const pendingChecks = pagePlan
+    .filter((page) => page.warning)
+    .map((page) => `${page.title}: ${page.warning}`);
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -145,7 +148,14 @@ export function OrderHandoffScreen({
         ) : null}
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
         {reviewPageCount > 0 ? (
-          <p>Resolve the flagged draft pages before this SweetBook handoff can be submitted.</p>
+          <>
+            <p>Resolve the flagged draft pages before this SweetBook handoff can be submitted.</p>
+            <ul>
+              {pendingChecks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </>
         ) : (
           <p>All draft pages are ready for SweetBook handoff.</p>
         )}

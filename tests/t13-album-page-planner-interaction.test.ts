@@ -231,6 +231,9 @@ describe("album page planner interaction", () => {
     expect(container.textContent).toContain(
       "Resolve the flagged pages before opening the SweetBook order handoff.",
     );
+    expect(container.textContent).toContain(
+      "Spread 1: Add an edit note before sending this page to SweetBook.",
+    );
     const continueButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent === "Continue to order setup",
     ) as HTMLButtonElement | undefined;

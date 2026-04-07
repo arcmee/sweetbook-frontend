@@ -72,6 +72,9 @@ export function AlbumCandidateScreen({
     (page) => page.status === "Needs review",
   ).length;
   const canOpenOrder = selectedPhotos.length > 0 && reviewPageCount === 0;
+  const pendingChecks = previewPages
+    .filter((page) => page.warning)
+    .map((page) => `${page.title}: ${page.warning}`);
 
   return (
     <>
@@ -85,7 +88,14 @@ export function AlbumCandidateScreen({
         <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
         {reviewPageCount > 0 ? (
-          <p>Resolve the flagged pages before opening the SweetBook order handoff.</p>
+          <>
+            <p>Resolve the flagged pages before opening the SweetBook order handoff.</p>
+            <ul>
+              {pendingChecks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </>
         ) : (
           <p>All pages are ready. You can continue to the SweetBook handoff.</p>
         )}
