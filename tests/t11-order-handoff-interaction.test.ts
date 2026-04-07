@@ -187,6 +187,9 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
     expect(container.textContent).toContain("Estimated draft pages: 6");
     expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
+    expect(container.textContent).toContain(
+      "Next blocker: Spread 1: Single-photo spotlight works best with one photo.",
+    );
     expect(container.textContent).toContain("Owner handoff checklist");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
@@ -390,6 +393,9 @@ describe("order handoff interaction", () => {
     );
     expect(container.textContent).toContain(
       "Done: Enter payer name and card digits",
+    );
+    expect(container.textContent).toContain(
+      "Next blocker: No blockers remain. This draft is ready for SweetBook submission.",
     );
     expect(submitButton?.textContent).toBe("Submit SweetBook order");
   });
