@@ -844,6 +844,13 @@ export function AppShell({
     },
   ];
   const dashboardActions = [
+    ...invitationNotifications.map((notification) => ({
+      id: `dashboard-${notification.id}`,
+      title: "Review a group invitation",
+      description: notification.message,
+      ctaLabel: notification.primaryActionLabel,
+      onCta: () => void notification.onPrimaryAction(),
+    })),
     ...voteNotifications.map((notification) => ({
       id: `dashboard-${notification.id}`,
       title: "Vote in an active event",

@@ -57,6 +57,7 @@ export function DashboardScreen({
         title="Active family voting"
         description="Track current voting events by group and jump into the event that still needs action."
       >
+        <h3>Workspace snapshot</h3>
         {recentlyJoinedGroupName ? (
           <StatePanel
             tone="success"
@@ -83,6 +84,7 @@ export function DashboardScreen({
           {workspace.groupSummary.totalGroups} groups and {workspace.groupSummary.totalMembers} members
           are active in the prototype workspace.
         </p>
+        <p>{countActiveVotingEvents(groupedEvents)} active voting events are running right now.</p>
       </PageSection>
       <PageSection
         eyebrow="Next actions"
@@ -103,6 +105,27 @@ export function DashboardScreen({
           <p>No urgent actions are waiting right now.</p>
         )}
       </PageSection>
+      <PageSection
+        eyebrow="Priority groups"
+        title="Groups with live voting"
+        description="Use this list to spot which family groups currently have active voting momentum."
+      >
+        <ul>
+          {groupedEvents.map((group) => {
+            const liveEvents = group.events.filter((event) => event.status === "collecting");
+            return (
+              <li key={group.groupId}>
+                <strong>{group.groupName}</strong>
+                <p>
+                  {liveEvents.length > 0
+                    ? `${liveEvents.length} live voting event${liveEvents.length === 1 ? "" : "s"} right now.`
+                    : "No live voting is active right now."}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </PageSection>
       {groupedEvents.map((group) => (
         <PageSection
           key={group.groupId}
@@ -117,7 +140,7 @@ export function DashboardScreen({
                 <button type="button" onClick={() => onOpenEvent?.(event.eventId)}>
                   <strong>{event.eventName}</strong>
                 </button>
-                <span> {event.status}</span>
+                <span> {getDashboardEventLabel(event.status)}</span>
                 <div>
                   {event.previewPhotos.length > 0 ? (
                     <ul>
@@ -139,4 +162,24 @@ export function DashboardScreen({
       ))}
     </>
   );
+}
+
+function countActiveVotingEvents(groups: PrototypeDashboardGroupViewModel[]): number {
+  return groups.reduce(
+    (count, group) =>
+      count + group.events.filter((event) => event.status === "collecting").length,
+    0,
+  );
+}
+
+function getDashboardEventLabel(status: PrototypeDashboardGroupViewModel["events"][number]["status"]): string {
+  if (status === "collecting") {
+    return "Voting live";
+  }
+
+  if (status === "draft") {
+    return "Voting opens later";
+  }
+
+  return "Ready for owner review";
 }
