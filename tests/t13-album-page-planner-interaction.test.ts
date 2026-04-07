@@ -408,4 +408,60 @@ describe("album page planner interaction", () => {
     ) as HTMLButtonElement | undefined;
     expect(continueButton?.disabled).toBe(false);
   });
+
+  it("shows owner review goals when the draft opens from the owner review queue", async () => {
+    const workspace = getPrototypeWorkspaceViewModel();
+    const container = document.createElement("div");
+    containers.push(container);
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        createElement(AlbumCandidateScreen, {
+          workspace,
+          activeGroupName: "Han family",
+          activeEventName: "First birthday album",
+          openedFromOwnerReview: true,
+          workflow: {
+            activeEventId: "evt-demo",
+            activeEventName: "First birthday album",
+            canVote: false,
+            photoCountLabel: "3 uploaded",
+            photos: [
+              {
+                id: "photo-1",
+                caption: "Cake table setup",
+                likeCount: 12,
+                likedByViewer: false,
+                uploadedBy: "Ari",
+              },
+              {
+                id: "photo-2",
+                caption: "Balloon arch",
+                likeCount: 9,
+                likedByViewer: false,
+                uploadedBy: "Jules",
+              },
+              {
+                id: "photo-3",
+                caption: "Family group shot",
+                likeCount: 8,
+                likedByViewer: false,
+                uploadedBy: "Ari",
+              },
+            ],
+          },
+          selectedPhotoIds: ["photo-1", "photo-2", "photo-3"],
+          coverPhotoId: "photo-1",
+        }),
+      );
+    });
+
+    expect(container.textContent).toContain("Owner review goals");
+    expect(container.textContent).toContain("Done: Lock a cover image for this event.");
+    expect(container.textContent).toContain(
+      "Pending: Record the final owner approval for SweetBook.",
+    );
+  });
 });
