@@ -170,6 +170,7 @@ describe("order handoff interaction", () => {
             "Balloon arch",
             "Family group shot",
           ],
+          isOwnerApproved: false,
           requestEstimate,
           requestSubmit,
         }),
@@ -213,6 +214,9 @@ describe("order handoff interaction", () => {
     );
     expect(container.textContent).toContain(
       "Pending: Enter payer name and card digits",
+    );
+    expect(container.textContent).toContain(
+      "Pending: Keep owner approval active for handoff",
     );
     expect(container.textContent).toContain(
       "Resolve the flagged draft pages before this SweetBook handoff can be submitted.",
@@ -357,6 +361,7 @@ describe("order handoff interaction", () => {
             "Balloon arch",
             "Family group shot",
           ],
+          isOwnerApproved: true,
           requestEstimate,
           requestSubmit,
         }),
@@ -400,6 +405,9 @@ describe("order handoff interaction", () => {
     );
     expect(container.textContent).toContain(
       "Done: Enter payer name and card digits",
+    );
+    expect(container.textContent).toContain(
+      "Done: Keep owner approval active for handoff",
     );
     expect(container.textContent).toContain(
       "Next blocker: No blockers remain. This draft is ready for SweetBook submission.",

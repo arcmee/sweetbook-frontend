@@ -22,6 +22,7 @@ type OrderHandoffScreenProps = {
   activeGroupName?: string;
   activeEventName?: string;
   estimatedPageCount?: number;
+  isOwnerApproved?: boolean;
   pageLayouts?: Record<string, string>;
   pageNotes?: Record<string, string>;
   selectedPhotoCount?: number;
@@ -37,6 +38,7 @@ export function OrderHandoffScreen({
   activeGroupName,
   activeEventName,
   estimatedPageCount,
+  isOwnerApproved = false,
   pageLayouts = {},
   pageNotes = {},
   selectedPhotoCount,
@@ -114,6 +116,10 @@ export function OrderHandoffScreen({
         paymentName.trim().length > 0 &&
         paymentCardLastFour.trim().length === 4,
     },
+    {
+      label: "Keep owner approval active for handoff",
+      done: isOwnerApproved,
+    },
   ];
   const nextBlocker =
     !coverPhotoCaption
@@ -122,6 +128,8 @@ export function OrderHandoffScreen({
         ? "Keep at least 3 owner-approved photos in the draft."
         : reviewPageCount > 0
           ? pendingChecks[0] ?? "Resolve the flagged draft pages."
+          : !isOwnerApproved
+            ? "Record owner approval in the album draft."
           : estimateResult === null
             ? "Run the SweetBook estimate."
             : recipientName.trim().length === 0
@@ -172,6 +180,7 @@ export function OrderHandoffScreen({
   const canSubmitOrder =
     estimateResult?.status === "ready_for_order" &&
     reviewPageCount === 0 &&
+    isOwnerApproved &&
     paymentName.trim().length > 0 &&
     paymentCardLastFour.trim().length === 4 &&
     recipientName.trim().length > 0;
@@ -234,7 +243,11 @@ export function OrderHandoffScreen({
             </ul>
           </>
         ) : (
-          <p>All draft pages are ready for SweetBook handoff.</p>
+          <p>
+            {isOwnerApproved
+              ? "All draft pages are ready for SweetBook handoff."
+              : "All draft pages are ready, but owner approval is still required before submission."}
+          </p>
         )}
         <div>
           <h3>Checkout setup</h3>

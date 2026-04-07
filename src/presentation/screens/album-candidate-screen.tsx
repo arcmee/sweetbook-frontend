@@ -12,9 +12,11 @@ type AlbumCandidateScreenProps = {
   activeGroupName?: string;
   activeEventName?: string;
   coverPhotoId?: string;
+  isOwnerApproved?: boolean;
   onMovePhotoEarlier?: (photoId: string) => void;
   onMovePhotoLater?: (photoId: string) => void;
   onOpenOrder?: () => void;
+  onToggleOwnerApproval?: () => void;
   onSetPageLayout?: (pageId: string, layout: string) => void;
   onSetPageNote?: (pageId: string, note: string) => void;
   onSetCoverPhoto?: (photoId: string) => void;
@@ -31,9 +33,11 @@ export function AlbumCandidateScreen({
   activeGroupName,
   activeEventName,
   coverPhotoId,
+  isOwnerApproved = false,
   onMovePhotoEarlier,
   onMovePhotoLater,
   onOpenOrder,
+  onToggleOwnerApproval,
   onSetPageLayout,
   onSetPageNote,
   onSetCoverPhoto,
@@ -71,7 +75,8 @@ export function AlbumCandidateScreen({
   const reviewPageCount = previewPages.filter(
     (page) => page.status === "Needs review",
   ).length;
-  const canOpenOrder = selectedPhotos.length > 0 && reviewPageCount === 0;
+  const canOpenOrder =
+    selectedPhotos.length > 0 && reviewPageCount === 0 && isOwnerApproved;
   const pendingChecks = previewPages
     .filter((page) => page.warning)
     .map((page) => `${page.title}: ${page.warning}`);
@@ -80,7 +85,11 @@ export function AlbumCandidateScreen({
       ? "Choose a cover photo before handoff."
       : selectedPhotos.length < 3
         ? "Approve at least 3 photos for the draft."
-        : pendingChecks[0] ?? null;
+        : reviewPageCount > 0
+          ? pendingChecks[0] ?? "Resolve the flagged draft pages."
+          : !isOwnerApproved
+            ? "Record owner approval for the draft."
+            : null;
   const handoffChecklist = [
     {
       label: "Choose a cover photo",
@@ -93,6 +102,10 @@ export function AlbumCandidateScreen({
     {
       label: "Resolve all draft page warnings",
       done: reviewPageCount === 0,
+    },
+    {
+      label: "Record owner approval for the draft",
+      done: isOwnerApproved,
     },
   ];
   const handoffStatus = canOpenOrder ? "Ready for SweetBook handoff" : "Blocked";
@@ -123,6 +136,18 @@ export function AlbumCandidateScreen({
           </ul>
         </div>
         <div>
+          <h3>Owner approval</h3>
+          <p>
+            {isOwnerApproved
+              ? "Owner approval recorded. This draft can move into SweetBook order setup."
+              : "The group owner still needs to approve this draft before handoff."}
+          </p>
+          <PrimaryAction
+            label={isOwnerApproved ? "Withdraw owner approval" : "Approve this draft"}
+            onClick={onToggleOwnerApproval}
+          />
+        </div>
+        <div>
           <h3>SweetBook handoff summary</h3>
           <p>Status: {handoffStatus}</p>
           <p>Cover payload: {coverPhoto?.caption ?? "No cover selected yet."}</p>
@@ -139,7 +164,11 @@ export function AlbumCandidateScreen({
             </ul>
           </>
         ) : (
-          <p>All pages are ready. You can continue to the SweetBook handoff.</p>
+          <p>
+            {isOwnerApproved
+              ? "All pages are ready. You can continue to the SweetBook handoff."
+              : "All pages are ready. Record owner approval to continue to SweetBook handoff."}
+          </p>
         )}
         <PrimaryAction
           label="Continue to order setup"
