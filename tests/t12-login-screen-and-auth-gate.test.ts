@@ -1194,8 +1194,10 @@ describe("prototype auth ui", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer ptok_saved",
       },
       body: JSON.stringify({
+        token: "ptok_saved",
         currentPassword: "sweetbook123!",
         nextPassword: "sweetbook456!",
       }),

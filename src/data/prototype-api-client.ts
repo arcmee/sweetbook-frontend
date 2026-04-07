@@ -81,6 +81,29 @@ export async function requestPrototypeAuthLogin(
   return (await response.json()) as PrototypeAuthSession;
 }
 
+export async function requestPrototypeAuthSignup(
+  input: {
+    displayName: string;
+    username: string;
+    password: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<PrototypeAuthSession> {
+  const response = await fetchImpl(resolveApiUrl("/api/prototype/auth/signup"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok && response.status !== 201) {
+    throw new Error(`Failed to sign up for prototype auth: ${response.status}`);
+  }
+
+  return (await response.json()) as PrototypeAuthSession;
+}
+
 export async function fetchPrototypeAuthSession(
   token: string,
   fetchImpl: typeof fetch = fetch,
@@ -156,6 +179,7 @@ export async function requestPrototypePasswordChange(
   input: {
     currentPassword: string;
     nextPassword: string;
+    token: string;
   },
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
@@ -163,6 +187,7 @@ export async function requestPrototypePasswordChange(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...buildPrototypeAuthHeaders(input.token),
     },
     body: JSON.stringify(input),
   });
