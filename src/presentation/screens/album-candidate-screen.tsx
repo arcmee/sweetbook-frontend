@@ -65,6 +65,8 @@ export function AlbumCandidateScreen({
   const minimumSelectedPhotoCount =
     activeOrderEntry?.readinessSummary?.minimumSelectedPhotoCount ?? 3;
   const backendDraftPageCount = activeOrderEntry?.reviewSummary?.draftPageCount;
+  const backendFlaggedDraftPageCount =
+    activeOrderEntry?.reviewSummary?.flaggedDraftPageCount ?? 0;
   const ownerApprovalMissing =
     !isOwnerApproved &&
     (activeOrderEntry?.reviewSummary?.ownerApprovalRequired ?? true);
@@ -186,6 +188,7 @@ export function AlbumCandidateScreen({
           <p>Cover payload: {coverPhoto?.caption ?? "No cover selected yet."}</p>
           <p>Spread payload count: {layoutPhotos.length}</p>
           <p>Draft page payload count: {backendDraftPageCount ?? previewPages.length}</p>
+          <p>Backend draft review summary: {backendFlaggedDraftPageCount} flagged pages.</p>
         </div>
         {reviewPageCount > 0 ? (
           <>
