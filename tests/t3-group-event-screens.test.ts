@@ -63,7 +63,9 @@ describe("frontend group and event screens", () => {
     expect(markup).toContain("Members upload event photos here and vote during the active collection window.");
     expect(markup).toContain("Voting status badge");
     expect(markup).toContain("Voting in progress");
+    expect(markup).toContain("Voting is currently open for this event");
     expect(markup).toContain("Time left to vote:");
     expect(markup).toContain("Owner voting controls");
+    expect(markup).toContain("Owner controls are active while voting is still running.");
   });
 });
