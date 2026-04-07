@@ -75,6 +75,12 @@ export function AlbumCandidateScreen({
   const pendingChecks = previewPages
     .filter((page) => page.warning)
     .map((page) => `${page.title}: ${page.warning}`);
+  const nextBlocker =
+    !coverPhoto
+      ? "Choose a cover photo before handoff."
+      : selectedPhotos.length < 3
+        ? "Approve at least 3 photos for the draft."
+        : pendingChecks[0] ?? null;
   const handoffChecklist = [
     {
       label: "Choose a cover photo",
@@ -101,6 +107,10 @@ export function AlbumCandidateScreen({
         <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
         <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
+        <p>
+          Next blocker:{" "}
+          {nextBlocker ?? "No blockers remain. The draft can move to SweetBook handoff."}
+        </p>
         <div>
           <h3>Owner handoff checklist</h3>
           <ul>

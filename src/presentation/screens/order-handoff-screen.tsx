@@ -115,6 +115,21 @@ export function OrderHandoffScreen({
         paymentCardLastFour.trim().length === 4,
     },
   ];
+  const nextBlocker =
+    !coverPhotoCaption
+      ? "Choose a cover photo in the album draft."
+      : shortlistedCount < 3
+        ? "Keep at least 3 owner-approved photos in the draft."
+        : reviewPageCount > 0
+          ? pendingChecks[0] ?? "Resolve the flagged draft pages."
+          : estimateResult === null
+            ? "Run the SweetBook estimate."
+            : recipientName.trim().length === 0
+              ? "Fill in the recipient name."
+              : paymentName.trim().length === 0 ||
+                  paymentCardLastFour.trim().length !== 4
+                ? "Enter the payer name and card digits."
+                : null;
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -175,6 +190,10 @@ export function OrderHandoffScreen({
           <p>Story spreads: {selectedPhotoCaptions.join(", ")}</p>
         ) : null}
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
+        <p>
+          Next blocker:{" "}
+          {nextBlocker ?? "No blockers remain. This draft is ready for SweetBook submission."}
+        </p>
         <div>
           <h3>Owner handoff checklist</h3>
           <ul>
