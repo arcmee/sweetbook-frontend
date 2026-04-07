@@ -122,7 +122,7 @@ export function DashboardScreen({
           are active in the prototype workspace.
         </p>
         <p>{countActiveVotingEvents(groupedEvents)} active voting events are running right now.</p>
-        <p>{completedOrders.length} SweetBook handoff{completedOrders.length === 1 ? "" : "s"} completed in this session.</p>
+        <p>{completedOrders.length} SweetBook operation{completedOrders.length === 1 ? "" : "s"} completed in this session.</p>
         <div>
           <h3>SweetBook handoff queue</h3>
           <ul>

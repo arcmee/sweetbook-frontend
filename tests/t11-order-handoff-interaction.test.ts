@@ -491,7 +491,7 @@ describe("order handoff interaction", () => {
     expect(requestSubmit).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain("SweetBook order submitted");
     expect(container.textContent).toContain(
-      "SweetBook handoff completed for this draft.",
+      "SweetBook operation completed for this draft.",
     );
     expect(container.textContent).toContain("Done: SweetBook order submitted");
     expect(container.textContent).toContain("Done: Order submitted");

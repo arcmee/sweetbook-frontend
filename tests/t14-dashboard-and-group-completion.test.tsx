@@ -64,14 +64,14 @@ describe("dashboard and group completion summaries", () => {
       />,
     );
 
-    expect(markup).toContain("1 SweetBook handoff completed in this group.");
+    expect(markup).toContain("1 SweetBook operation completed in this group.");
     expect(markup).toContain("SweetBook operations");
     expect(markup).toContain("0 waiting for owner review");
     expect(markup).toContain("0 still blocked by voting or setup");
     expect(markup).toContain("1 completed");
     expect(markup).toContain("Completed SweetBook operations");
     expect(markup).toContain(
-      "Use this archive to revisit events that already finished the SweetBook submission flow.",
+      "Use this archive to revisit events that already finished the SweetBook operation flow.",
     );
     expect(markup).toContain("Open completed operation");
     expect(markup).toContain("Final status: paid");
@@ -103,6 +103,7 @@ describe("dashboard and group completion summaries", () => {
     expect(markup).toContain("Order reference: ord_789");
     expect(markup).toContain("Final order state: paid");
     expect(markup).toContain("Order ord_789 was submitted for book bk_789");
+    expect(markup).toContain("This event has already completed its SweetBook operation.");
   });
 
   it("highlights urgent voting and owner review queues", () => {

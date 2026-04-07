@@ -81,7 +81,7 @@ export function EventScreen({
                 Final order state: {submittedOrder.orderStatusDisplay ?? "Submitted"}
               </p>
               <p>
-                This event has already completed its SweetBook handoff. You can reopen the event to
+                This event has already completed its SweetBook operation. You can reopen the event to
                 review the final voting context and uploaded photos.
               </p>
             </div>
