@@ -82,6 +82,8 @@ export function OrderHandoffScreen({
     pageLayouts,
     pageNotes,
   );
+  const readyPageCount = pagePlan.filter((page) => page.status === "Ready").length;
+  const reviewPageCount = pagePlan.filter((page) => page.status === "Needs review").length;
 
   async function handleEstimateRequest(): Promise<void> {
     setIsRunningEstimate(true);
@@ -117,6 +119,7 @@ export function OrderHandoffScreen({
 
   const canSubmitOrder =
     estimateResult?.status === "ready_for_order" &&
+    reviewPageCount === 0 &&
     paymentName.trim().length > 0 &&
     paymentCardLastFour.trim().length === 4 &&
     recipientName.trim().length > 0;
@@ -140,6 +143,12 @@ export function OrderHandoffScreen({
         {selectedPhotoCaptions.length > 0 ? (
           <p>Story spreads: {selectedPhotoCaptions.join(", ")}</p>
         ) : null}
+        <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
+        {reviewPageCount > 0 ? (
+          <p>Resolve the flagged draft pages before this SweetBook handoff can be submitted.</p>
+        ) : (
+          <p>All draft pages are ready for SweetBook handoff.</p>
+        )}
         <div>
           <h3>Checkout setup</h3>
           <p>Prepare the final SweetBook handoff before the owner sends the order.</p>
