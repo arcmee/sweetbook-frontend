@@ -267,7 +267,7 @@ export function OrderHandoffScreen({
           onClick={handleEstimateRequest}
         />
         <div>
-          <h3>Owner handoff status</h3>
+          <h3>SweetBook operation</h3>
           <p>
             {submitResult
               ? "SweetBook handoff completed for this draft."
