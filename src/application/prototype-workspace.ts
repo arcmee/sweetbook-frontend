@@ -65,6 +65,7 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         name: "First birthday album",
         groupName: "Han family",
         status: "collecting",
+        ownerApproved: false,
         operationSummary: {
           stage: "voting",
           label: "Voting in progress",
@@ -83,6 +84,7 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         name: "Winter holiday trip",
         groupName: "Park cousins",
         status: "draft",
+        ownerApproved: false,
         operationSummary: {
           stage: "setup",
           label: "Setup in progress",

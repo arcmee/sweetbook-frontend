@@ -352,6 +352,31 @@ export async function requestPrototypeEventVotingExtend(
   }
 }
 
+export async function requestPrototypeEventOwnerApproval(
+  input: {
+    eventId: string;
+    ownerApproved: boolean;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(
+    resolveApiUrl(`/api/prototype/events/${encodeURIComponent(input.eventId)}/owner-approval`),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ownerApproved: input.ownerApproved,
+      }),
+    },
+  );
+
+  if (!response.ok && response.status !== 200) {
+    throw new Error(`Failed to update prototype owner approval: ${response.status}`);
+  }
+}
+
 export async function requestPrototypePhotoCreate(
   input: {
     eventId: string;
