@@ -101,6 +101,12 @@ export function GroupScreen({
   const canManageMembers = activeMembership?.role === "Owner";
   const canLeaveGroup = activeMembership?.role !== "Owner";
   const votableEvents = events.filter((event) => event.canVote);
+  const closingSoonEvents = events.filter(
+    (event) => event.canVote && isVotingClosingSoon(event.votingEndsAt),
+  );
+  const ownerReviewEvents = events.filter(
+    (event) => event.status === "ready" && event.canOwnerSelectPhotos && !submittedOrdersByEvent[event.id],
+  );
 
   return (
     <>
@@ -170,6 +176,33 @@ export function GroupScreen({
               )}
             </div>
           </>
+        ) : null}
+        {closingSoonEvents.length > 0 || ownerReviewEvents.length > 0 ? (
+          <div>
+            <h3>Attention needed</h3>
+            {closingSoonEvents.length > 0 ? (
+              <ul>
+                {closingSoonEvents.map((event) => (
+                  <li key={`closing-${event.id}`}>
+                    <strong>{event.name}</strong>
+                    <p>Voting closes soon on {formatVotingDate(event.votingEndsAt)}.</p>
+                    <PrimaryAction label="Open urgent vote" onClick={() => onOpenEvent?.(event.id)} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {ownerReviewEvents.length > 0 ? (
+              <ul>
+                {ownerReviewEvents.map((event) => (
+                  <li key={`review-${event.id}`}>
+                    <strong>{event.name}</strong>
+                    <p>This event is ready for owner photo selection and SweetBook handoff.</p>
+                    <PrimaryAction label="Open owner review" onClick={() => onOpenEvent?.(event.id)} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         ) : null}
       </PageSection>
       <PageSection
@@ -360,4 +393,20 @@ function getEventManagementHint(event: EventCardViewModel): string {
   }
 
   return "Voting is not open yet for this event.";
+}
+
+function isVotingClosingSoon(value?: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const endsAt = new Date(value);
+  if (Number.isNaN(endsAt.valueOf())) {
+    return false;
+  }
+
+  const diffMs = endsAt.valueOf() - Date.now();
+  const fortyEightHours = 1000 * 60 * 60 * 48;
+
+  return diffMs > 0 && diffMs <= fortyEightHours;
 }

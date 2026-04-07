@@ -58,6 +58,18 @@ export function DashboardScreen({
       events: group.events.filter((event) => !submittedOrdersByEvent[event.eventId]),
     }))
     .filter((group) => group.events.length > 0);
+  const urgentVotingEvents = workspace.events.filter(
+    (event) =>
+      event.status === "collecting" &&
+      isVotingClosingSoon(event.votingEndsAt) &&
+      !submittedOrdersByEvent[event.id],
+  );
+  const ownerReviewEvents = workspace.events.filter(
+    (event) =>
+      event.status === "ready" &&
+      event.canOwnerSelectPhotos &&
+      !submittedOrdersByEvent[event.id],
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -122,6 +134,46 @@ export function DashboardScreen({
           </ul>
         ) : (
           <p>No urgent actions are waiting right now.</p>
+        )}
+      </PageSection>
+      <PageSection
+        eyebrow="Urgent events"
+        title="Voting closing soon"
+        description="These events need reactions before the voting window closes."
+      >
+        {urgentVotingEvents.length > 0 ? (
+          <ul>
+            {urgentVotingEvents.map((event) => (
+              <li key={event.id}>
+                <strong>{event.name}</strong>
+                <p>
+                  {event.groupName} closes on {formatVotingDate(event.votingEndsAt)}.
+                </p>
+                <PrimaryAction label="Vote in this event" onClick={() => onOpenEvent?.(event.id)} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No live voting windows are close to deadline right now.</p>
+        )}
+      </PageSection>
+      <PageSection
+        eyebrow="Owner review"
+        title="Ready for owner selection"
+        description="These events finished voting and are waiting on the group owner."
+      >
+        {ownerReviewEvents.length > 0 ? (
+          <ul>
+            {ownerReviewEvents.map((event) => (
+              <li key={event.id}>
+                <strong>{event.name}</strong>
+                <p>{event.groupName} is ready for final photo selection and SweetBook handoff.</p>
+                <PrimaryAction label="Open owner review" onClick={() => onOpenEvent?.(event.id)} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No events are waiting for owner review right now.</p>
         )}
       </PageSection>
       <PageSection
@@ -249,4 +301,38 @@ function getDashboardEventLabel(status: PrototypeDashboardGroupViewModel["events
   }
 
   return "Ready for owner review";
+}
+
+function isVotingClosingSoon(value?: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const endsAt = new Date(value);
+  if (Number.isNaN(endsAt.valueOf())) {
+    return false;
+  }
+
+  const diffMs = endsAt.valueOf() - Date.now();
+  const fortyEightHours = 1000 * 60 * 60 * 48;
+
+  return diffMs > 0 && diffMs <= fortyEightHours;
+}
+
+function formatVotingDate(value?: string): string {
+  if (!value) {
+    return "the scheduled deadline";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
 }
