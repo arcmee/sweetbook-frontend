@@ -55,12 +55,13 @@ export function EventScreen({
         eyebrow="Event page"
         title={activeEvent?.name ?? "Event workspace"}
         description="Members upload event photos here and vote during the active collection window."
-      >
-        <p>Active group</p>
-        <p>{selectedGroupName ?? "No active group"}</p>
-        <p>{activeEvent?.description ?? "No event description yet."}</p>
-        <p>Voting status badge</p>
-        <p>{votingPresentation.badgeLabel}</p>
+        >
+          <p>Active group</p>
+          <p>{selectedGroupName ?? "No active group"}</p>
+          <p>{activeEvent?.description ?? "No event description yet."}</p>
+          <p>{votingPresentation.headline}</p>
+          <p>Voting status badge</p>
+          <p>{votingPresentation.badgeLabel}</p>
         <p>
           Voting window:{" "}
           {activeEvent
@@ -79,6 +80,7 @@ export function EventScreen({
         {canManageVoting ? (
           <>
             <h3>Owner voting controls</h3>
+            <p>{votingPresentation.ownerActionState}</p>
             <p>{votingPresentation.ownerHint}</p>
             <button type="button" onClick={() => void onExtendVoting?.()}>
               Extend voting by 3 days
@@ -131,22 +133,28 @@ function getVotingPresentation(
   activeEvent: PrototypeWorkspaceViewModel["events"][number] | undefined,
 ): {
   badgeLabel: string;
+  headline: string;
   supportingText: string;
   ownerHint: string;
+  ownerActionState: string;
 } {
   if (!activeEvent) {
     return {
       badgeLabel: "No event selected",
+      headline: "Choose an event to manage voting",
       supportingText: "Choose an event to view its voting window.",
       ownerHint: "Owner actions appear once an event is selected.",
+      ownerActionState: "No owner actions are available until an event is selected.",
     };
   }
 
   if (activeEvent.canOwnerSelectPhotos) {
     return {
       badgeLabel: "Voting closed",
+      headline: "Selection unlocked for the group owner",
       supportingText: "Owner photo selection is now unlocked for this event.",
       ownerHint: "You can reopen planning by extending the voting window if the group needs more time.",
+      ownerActionState: "Voting has ended. You can move into owner selection or reopen the deadline.",
     };
   }
 
@@ -154,19 +162,26 @@ function getVotingPresentation(
     const timeLeft = getTimeLeftLabel(activeEvent.votingEndsAt);
     return {
       badgeLabel: timeLeft === "Less than 1 hour left" ? "Voting closing soon" : "Voting in progress",
+      headline:
+        timeLeft === "Less than 1 hour left"
+          ? "Voting closes soon for this event"
+          : "Voting is currently open for this event",
       supportingText: timeLeft
         ? `Time left to vote: ${timeLeft}.`
         : "Voting is currently active for group members.",
       ownerHint: "You can extend the deadline or close voting once the group is ready for owner selection.",
+      ownerActionState: "Owner controls are active while voting is still running.",
     };
   }
 
   return {
     badgeLabel: "Voting not open",
+    headline: "Voting opens soon for this event",
     supportingText: activeEvent.votingStartsAt
       ? `Voting opens on ${formatVotingDate(activeEvent.votingStartsAt)}.`
       : "Set the voting window before members start reacting.",
     ownerHint: "When voting opens, this area will expose the owner deadline controls.",
+    ownerActionState: "Owner controls are waiting for the voting window to open.",
   };
 }
 
