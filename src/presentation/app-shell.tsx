@@ -869,7 +869,7 @@ export function AppShell({
     .map((event) => ({
       id: `owner-review-${event.id}`,
       message: `${event.name} is ready for owner photo selection and SweetBook handoff.`,
-      primaryActionLabel: "Open owner review",
+      primaryActionLabel: "Open SweetBook operation",
       onPrimaryAction: () => handleOpenOwnerReview(event.id),
     }));
   const invitationNotifications: NotificationActionViewModel[] = (

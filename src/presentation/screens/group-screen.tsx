@@ -211,7 +211,10 @@ export function GroupScreen({
                   <li key={`review-${event.id}`}>
                     <strong>{event.name}</strong>
                     <p>This event is ready for owner photo selection and SweetBook handoff.</p>
-                    <PrimaryAction label="Open owner review" onClick={() => onOpenOwnerReview?.(event.id)} />
+                    <PrimaryAction
+                      label="Open SweetBook operation"
+                      onClick={() => onOpenOwnerReview?.(event.id)}
+                    />
                   </li>
                 ))}
               </ul>

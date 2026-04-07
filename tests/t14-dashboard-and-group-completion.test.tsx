@@ -156,7 +156,7 @@ describe("dashboard and group completion summaries", () => {
     expect(dashboardMarkup).toContain("Voting closing soon");
     expect(dashboardMarkup).toContain("Vote in this event");
     expect(dashboardMarkup).toContain("Ready for owner selection");
-    expect(dashboardMarkup).toContain("Open owner review");
+    expect(dashboardMarkup).toContain("Open SweetBook operation");
     expect(dashboardMarkup).toContain("SweetBook handoff queue");
     expect(dashboardMarkup).toContain("1 owner review ready");
     expect(dashboardMarkup).toContain("1 blocked by voting or setup");
