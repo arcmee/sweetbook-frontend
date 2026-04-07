@@ -120,6 +120,8 @@ export function OrderHandoffScreen({
     pageLayouts,
     pageNotes,
   );
+  const plannerPages = activeOrderEntry.handoffSummary.plannerPages ?? [];
+  const handoffPagePlan = plannerPages.length > 0 ? plannerPages : pagePlan;
   const readyPageCount = pagePlan.filter((page) => page.status === "Ready").length;
   const reviewPageCount = pagePlan.filter((page) => page.status === "Needs review").length;
   const pendingChecks = pagePlan
@@ -359,7 +361,9 @@ export function OrderHandoffScreen({
           <p>Status: {handoffStatus}</p>
           <p>Operation detail: {operationSummary.detail}</p>
           <p>Suggested next step: {readinessSummary.nextSuggestedStep}</p>
-          <p>Draft payload pages: {pagePlan.length}</p>
+          <p>Draft payload pages: {activeOrderEntry.handoffSummary.draftPayloadPageCount || handoffPagePlan.length}</p>
+          <p>Selected payload photos: {activeOrderEntry.handoffSummary.selectedPhotoCount || shortlistedCount}</p>
+          <p>Spread payload count: {activeOrderEntry.handoffSummary.spreadCount || Math.max(0, handoffPagePlan.length - 1)}</p>
           <p>
             Backend draft review summary: {draftPageCount} pages,{" "}
             {backendReviewSummary?.flaggedDraftPageCount ?? 0} flagged.
@@ -573,15 +577,18 @@ export function OrderHandoffScreen({
         description={activeOrderEntry.handoffSummary.note}
       >
         <p>{activeOrderEntry.handoffSummary.bookFormat}</p>
+        {(activeOrderEntry.handoffSummary.coverCaption || coverPhotoCaption) ? (
+          <p>Backend cover payload: {activeOrderEntry.handoffSummary.coverCaption ?? coverPhotoCaption}</p>
+        ) : null}
         <p>This draft now includes quantity selection, recipient details, and a simple payment card before submission.</p>
         <ul>
-          {selectedPhotoCaptions.length > 0 ? (
-            <li>{selectedPhotoCaptions.length} owner-approved photos</li>
+          {(activeOrderEntry.handoffSummary.selectedPhotoCount || shortlistedCount) > 0 ? (
+            <li>{activeOrderEntry.handoffSummary.selectedPhotoCount || shortlistedCount} owner-approved photos</li>
           ) : null}
-          {pagePlan.map((page) => (
+          {handoffPagePlan.map((page) => (
             <li key={page.pageId}>
               <strong>{page.title}</strong>: {page.layout}
-              <p>Status: {page.status}</p>
+              <p>Status: {"status" in page ? page.status : page.warning ? "Needs review" : "Ready"}</p>
               {page.note ? ` - ${page.note}` : ""}
               {page.warning ? <p>Warning: {page.warning}</p> : null}
               <p>{page.photoCount} photo slot{page.photoCount === 1 ? "" : "s"} planned</p>

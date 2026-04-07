@@ -108,6 +108,19 @@ export type OrderEntrySnapshot = {
     bookFormat: string;
     payloadSections: string[];
     note: string;
+    coverCaption?: string;
+    selectedPhotoCount: number;
+    spreadCount: number;
+    draftPayloadPageCount: number;
+    plannerPages: Array<{
+      pageId: string;
+      title: string;
+      layout: string;
+      note: string;
+      photoCount: number;
+      photoCaptions: string[];
+      warning: string | null;
+    }>;
   };
 };
 
