@@ -204,6 +204,12 @@ const defaultPrototypeWorkspaceSnapshot: PrototypeWorkspaceSnapshot = {
         label: "Ready for handoff prep",
         detail: "Owner review can continue with a draft handoff summary.",
       },
+      readinessSummary: {
+        minimumSelectedPhotoCount: 3,
+        selectedPhotoCount: 3,
+        meetsMinimumPhotoCount: true,
+        nextSuggestedStep: "Review page-level draft checks and record owner approval.",
+      },
       handoffSummary: {
         bookFormat: "Hardcover square",
         payloadSections: ["selected photos", "page preview", "event title"],

@@ -1265,6 +1265,7 @@ export function AppShell({
           <AlbumCandidateScreen
             workspace={workspace}
             review={review}
+            orderEntry={orderEntry}
             workflow={workflow}
             activeGroupName={activeGroup?.name}
             activeEventName={activeEvent?.name}

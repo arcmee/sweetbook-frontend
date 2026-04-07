@@ -86,6 +86,12 @@ export type OrderEntrySnapshot = {
     label: string;
     detail: string;
   };
+  readinessSummary: {
+    minimumSelectedPhotoCount: number;
+    selectedPhotoCount: number;
+    meetsMinimumPhotoCount: boolean;
+    nextSuggestedStep: string;
+  };
   handoffSummary: {
     bookFormat: string;
     payloadSections: string[];

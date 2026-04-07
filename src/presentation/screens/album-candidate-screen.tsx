@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 
 import type {
   PrototypeCandidateReviewViewModel,
+  PrototypeOrderEntryViewModel,
   PrototypePhotoWorkflowViewModel,
   PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
@@ -21,6 +22,7 @@ type AlbumCandidateScreenProps = {
   onSetPageLayout?: (pageId: string, layout: string) => void;
   onSetPageNote?: (pageId: string, note: string) => void;
   onSetCoverPhoto?: (photoId: string) => void;
+  orderEntry?: PrototypeOrderEntryViewModel;
   pageLayouts?: Record<string, string>;
   pageNotes?: Record<string, string>;
   selectedPhotoIds?: string[];
@@ -43,6 +45,7 @@ export function AlbumCandidateScreen({
   onSetPageLayout,
   onSetPageNote,
   onSetCoverPhoto,
+  orderEntry,
   pageLayouts = {},
   pageNotes = {},
   selectedPhotoIds = [],
@@ -58,6 +61,9 @@ export function AlbumCandidateScreen({
     candidates: [],
     pagePreview: [],
   };
+  const activeOrderEntry = orderEntry;
+  const minimumSelectedPhotoCount =
+    activeOrderEntry?.readinessSummary?.minimumSelectedPhotoCount ?? 3;
   const availablePhotos = workflow?.photos ?? [];
   const effectiveSelectedPhotoIds =
     selectedPhotoIds.length > 0
@@ -85,8 +91,8 @@ export function AlbumCandidateScreen({
   const nextBlocker =
     !coverPhoto
       ? "Choose a cover photo before handoff."
-      : selectedPhotos.length < 3
-        ? "Approve at least 3 photos for the draft."
+      : selectedPhotos.length < minimumSelectedPhotoCount
+        ? `Approve at least ${minimumSelectedPhotoCount} photos for the draft.`
         : reviewPageCount > 0
           ? pendingChecks[0] ?? "Resolve the flagged draft pages."
           : !isOwnerApproved
@@ -98,8 +104,8 @@ export function AlbumCandidateScreen({
       done: Boolean(coverPhoto),
     },
     {
-      label: "Approve at least 3 photos for the draft",
-      done: selectedPhotos.length >= 3,
+      label: `Approve at least ${minimumSelectedPhotoCount} photos for the draft`,
+      done: selectedPhotos.length >= minimumSelectedPhotoCount,
     },
     {
       label: "Resolve all draft page warnings",
@@ -142,6 +148,7 @@ export function AlbumCandidateScreen({
           </div>
         ) : null}
         <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
+        <p>{activeOrderEntry?.readinessSummary?.nextSuggestedStep ?? "Review the draft before handoff."}</p>
         <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
         <p>
           Next blocker:{" "}
