@@ -69,6 +69,7 @@ describe("order handoff interaction", () => {
     await act(async () => {
       root.render(
         createElement(OrderHandoffScreen, {
+          activeEventId: "event-birthday",
           workspace: getPrototypeWorkspaceViewModel(),
           requestEstimate,
         }),
@@ -83,6 +84,9 @@ describe("order handoff interaction", () => {
     });
 
     expect(requestEstimate).toHaveBeenCalledTimes(1);
+    expect(requestEstimate).toHaveBeenCalledWith({
+      eventId: "event-birthday",
+    });
     expect(container.textContent).toContain("SweetBook credits need a top-up");
     expect(container.textContent).toContain("Need 3410 KRW, current balance 2590 KRW.");
   });
@@ -100,6 +104,7 @@ describe("order handoff interaction", () => {
     await act(async () => {
       root.render(
         createElement(OrderHandoffScreen, {
+          activeEventId: "event-birthday",
           workspace: getPrototypeWorkspaceViewModel(),
           requestEstimate,
         }),
@@ -161,6 +166,7 @@ describe("order handoff interaction", () => {
     await act(async () => {
       root.render(
         createElement(OrderHandoffScreen, {
+          activeEventId: "event-birthday",
           workspace: getPrototypeWorkspaceViewModel(),
           coverPhotoCaption: "Cake table setup",
           estimatedPageCount: 6,
@@ -380,6 +386,7 @@ describe("order handoff interaction", () => {
     await act(async () => {
       root.render(
         createElement(OrderHandoffScreen, {
+          activeEventId: "event-birthday",
           workspace: getPrototypeWorkspaceViewModel(),
           coverPhotoCaption: "Cake table setup",
           estimatedPageCount: 6,
@@ -490,6 +497,12 @@ describe("order handoff interaction", () => {
     });
 
     expect(requestSubmit).toHaveBeenCalledTimes(1);
+    expect(requestEstimate).toHaveBeenCalledWith({
+      eventId: "event-birthday",
+    });
+    expect(requestSubmit).toHaveBeenCalledWith({
+      eventId: "event-birthday",
+    });
     expect(container.textContent).toContain("SweetBook order submitted");
     expect(container.textContent).toContain(
       "SweetBook operation completed for this draft.",

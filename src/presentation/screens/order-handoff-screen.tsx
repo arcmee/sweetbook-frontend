@@ -18,6 +18,7 @@ import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
 
 type OrderHandoffScreenProps = {
+  activeEventId?: string;
   coverPhotoCaption?: string;
   activeGroupName?: string;
   activeEventName?: string;
@@ -31,11 +32,12 @@ type OrderHandoffScreenProps = {
   selectedPhotoCaptions?: string[];
   workspace: PrototypeWorkspaceViewModel;
   orderEntry?: PrototypeOrderEntryViewModel;
-  requestEstimate?: () => Promise<PrototypeSweetBookEstimate>;
-  requestSubmit?: () => Promise<PrototypeSweetBookSubmitResult>;
+  requestEstimate?: (input: { eventId: string }) => Promise<PrototypeSweetBookEstimate>;
+  requestSubmit?: (input: { eventId: string }) => Promise<PrototypeSweetBookSubmitResult>;
 };
 
 export function OrderHandoffScreen({
+  activeEventId,
   coverPhotoCaption,
   activeGroupName,
   activeEventName,
@@ -238,13 +240,21 @@ export function OrderHandoffScreen({
       ];
 
   async function handleEstimateRequest(): Promise<void> {
+    const targetEventId = activeEventId ?? activeOrderEntry.activeEventId;
+    if (!targetEventId) {
+      setEstimateError("No active event is available for this SweetBook estimate.");
+      return;
+    }
+
     setIsRunningEstimate(true);
     setEstimateError(null);
     setSubmitError(null);
     setSubmitResult(null);
 
     try {
-      const result = await requestEstimate();
+      const result = await requestEstimate({
+        eventId: targetEventId,
+      });
       setEstimateResult(result);
     } catch (error: unknown) {
       setEstimateError(error instanceof Error ? error.message : String(error));
@@ -255,11 +265,19 @@ export function OrderHandoffScreen({
   }
 
   async function handleSubmitRequest(): Promise<void> {
+    const targetEventId = activeEventId ?? activeOrderEntry.activeEventId;
+    if (!targetEventId) {
+      setSubmitError("No active event is available for this SweetBook handoff.");
+      return;
+    }
+
     setIsSubmittingOrder(true);
     setSubmitError(null);
 
     try {
-      const result = await requestSubmit();
+      const result = await requestSubmit({
+        eventId: targetEventId,
+      });
       setSubmitResult(result);
       onSubmitSuccess?.(result);
     } catch (error: unknown) {
