@@ -121,6 +121,24 @@ export function GroupScreen({
             events.filter((event) => submittedOrdersByEvent[event.id]).length
           } SweetBook handoff{events.filter((event) => submittedOrdersByEvent[event.id]).length === 1 ? "" : "s"} completed in this group.
         </p>
+        {events.some((event) => submittedOrdersByEvent[event.id]) ? (
+          <div>
+            <h3>Completed handoffs</h3>
+            <ul>
+              {events
+                .filter((event) => submittedOrdersByEvent[event.id])
+                .map((event) => (
+                  <li key={event.id}>
+                    <strong>{event.name}</strong>
+                    <p>
+                      Order {submittedOrdersByEvent[event.id]?.orderUid} is complete and ready for later review.
+                    </p>
+                    <PrimaryAction label="Open completed event" onClick={() => onOpenEvent?.(event.id)} />
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ) : null}
         {justJoinedByInvitation ? (
           <>
             <StatePanel

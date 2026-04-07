@@ -6,7 +6,14 @@ import {
   type PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
 import { PageSection } from "../ui/page-section";
+import { StatePanel } from "../ui/state-panel";
 import { PhotoWorkflowSection } from "./photo-workflow-section";
+
+type EventSubmittedOrderSummary = {
+  bookUid: string;
+  orderStatusDisplay?: string | null;
+  orderUid: string;
+};
 
 type EventScreenProps = {
   canManageVoting?: boolean;
@@ -23,6 +30,7 @@ type EventScreenProps = {
   onLikePhoto?: (photoId: string) => void | Promise<void>;
   selectedEventId?: string;
   selectedGroupName?: string;
+  submittedOrder?: EventSubmittedOrderSummary;
   workflow?: PrototypePhotoWorkflowViewModel;
 };
 
@@ -41,6 +49,7 @@ export function EventScreen({
   onLikePhoto,
   selectedEventId,
   selectedGroupName,
+  submittedOrder,
   workflow,
 }: EventScreenProps): ReactElement {
   const activeEvent =
@@ -56,7 +65,14 @@ export function EventScreen({
         eyebrow="Event page"
         title={activeEvent?.name ?? "Event workspace"}
         description="Members upload event photos here and vote during the active collection window."
-        >
+      >
+        {submittedOrder ? (
+          <StatePanel
+            tone="success"
+            title="SweetBook order already completed"
+            description={`Order ${submittedOrder.orderUid} was submitted for book ${submittedOrder.bookUid}${submittedOrder.orderStatusDisplay ? ` (${submittedOrder.orderStatusDisplay})` : ""}.`}
+          />
+        ) : null}
           <p>Active group</p>
           <p>{selectedGroupName ?? "No active group"}</p>
           <p>{activeEvent?.description ?? "No event description yet."}</p>

@@ -1181,6 +1181,7 @@ export function AppShell({
           onCreatePhotoFileChange={setCreatePhotoFile}
           onExtendVoting={handleExtendVoting}
           onLikePhoto={handleLikePhoto}
+          submittedOrder={submittedOrdersByEvent[activeEventId]}
         />
       ) : null}
 

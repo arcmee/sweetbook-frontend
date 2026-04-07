@@ -141,6 +141,25 @@ export function DashboardScreen({
       </PageSection>
       {completedOrders.length > 0 ? (
         <PageSection
+          eyebrow="Follow-up"
+          title="Completed groups to revisit"
+          description="These groups already reached SweetBook submission and are ready for post-order review."
+        >
+          <ul>
+            {completedOrders.map(([eventId, order]) => (
+              <li key={`completed-group-${eventId}`}>
+                <strong>{order.groupName}</strong>
+                <p>
+                  Submitted order {order.orderUid} is complete. Reopen the group to review the finished event.
+                </p>
+                <PrimaryAction label="Review completed group" onClick={() => onOpenGroup?.(order.groupId)} />
+              </li>
+            ))}
+          </ul>
+        </PageSection>
+      ) : null}
+      {completedOrders.length > 0 ? (
+        <PageSection
           eyebrow="Completed orders"
           title="Recent SweetBook completions"
           description="Track recently submitted books and jump back into the matching group."
@@ -153,7 +172,7 @@ export function DashboardScreen({
                   Order {order.orderUid} for book {order.bookUid}
                   {order.orderStatusDisplay ? ` (${order.orderStatusDisplay})` : ""}.
                 </p>
-                <PrimaryAction label="Open group page" onClick={() => onOpenGroup?.(order.groupId)} />
+                <PrimaryAction label="Open completed group page" onClick={() => onOpenGroup?.(order.groupId)} />
               </li>
             ))}
           </ul>
