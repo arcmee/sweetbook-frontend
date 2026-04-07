@@ -803,6 +803,16 @@ export function AppShell({
     navigateTo("events");
   }
 
+  function handleOpenOwnerReview(eventId: string): void {
+    setSelectedEventId(eventId);
+    const nextEvent = workspace.events.find((event) => event.id === eventId);
+    const nextGroup = workspace.groups.find((group) => group.name === nextEvent?.groupName);
+    if (nextGroup) {
+      setSelectedGroupId(nextGroup.id);
+    }
+    navigateTo("albums");
+  }
+
   const selectedPhotoIds = selectedPhotoIdsByEvent[activeEventId] ?? [];
   const selectedPhotos =
     workflow?.photos.filter((photo) => selectedPhotoIds.includes(photo.id)) ?? [];
@@ -847,13 +857,15 @@ export function AppShell({
       (event) =>
         event.status === "ready" &&
         event.canOwnerSelectPhotos &&
-        activeGroup?.role === "Owner",
+        workspace.groups.some(
+          (group) => group.name === event.groupName && group.role === "Owner",
+        ),
     )
     .map((event) => ({
       id: `owner-review-${event.id}`,
       message: `${event.name} is ready for owner photo selection and SweetBook handoff.`,
       primaryActionLabel: "Open owner review",
-      onPrimaryAction: () => handleSelectEvent(event.id),
+      onPrimaryAction: () => handleOpenOwnerReview(event.id),
     }));
   const invitationNotifications: NotificationActionViewModel[] = (
     workspaceSnapshot.pendingInvitations ?? []
@@ -1156,6 +1168,7 @@ export function AppShell({
           onCreateGroupNameChange={setCreateGroupName}
           onOpenGroup={handleSelectGroup}
           onOpenEvent={handleSelectEvent}
+          onOpenOwnerReview={handleOpenOwnerReview}
           recentlyJoinedGroupName={
             workspace.groups.find((group) => group.id === recentlyJoinedGroupId)?.name ?? null
           }
@@ -1191,6 +1204,7 @@ export function AppShell({
           onInviteQueryChange={setInviteQuery}
           onLeaveGroup={handleLeaveGroup}
           onOpenEvent={handleSelectEvent}
+          onOpenOwnerReview={handleOpenOwnerReview}
           onSearchInviteCandidates={handleSearchUsers}
           onToggleInviteOpen={() => setIsInviteOpen((current) => !current)}
           onTransferOwner={handleTransferOwner}

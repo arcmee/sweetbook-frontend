@@ -33,6 +33,7 @@ type DashboardScreenProps = {
   onCreateGroupNameChange?: (value: string) => void;
   onOpenGroup?: (groupId: string) => void;
   onOpenEvent?: (eventId: string) => void;
+  onOpenOwnerReview?: (eventId: string) => void;
   recentlyJoinedGroupName?: string | null;
   submittedOrdersByEvent?: Record<string, DashboardSubmittedOrderSummary>;
   workspace: PrototypeWorkspaceViewModel;
@@ -47,6 +48,7 @@ export function DashboardScreen({
   onCreateGroupNameChange,
   onOpenGroup,
   onOpenEvent,
+  onOpenOwnerReview,
   recentlyJoinedGroupName = null,
   submittedOrdersByEvent = {},
   workspace,
@@ -168,7 +170,7 @@ export function DashboardScreen({
               <li key={event.id}>
                 <strong>{event.name}</strong>
                 <p>{event.groupName} is ready for final photo selection and SweetBook handoff.</p>
-                <PrimaryAction label="Open owner review" onClick={() => onOpenEvent?.(event.id)} />
+                <PrimaryAction label="Open owner review" onClick={() => onOpenOwnerReview?.(event.id)} />
               </li>
             ))}
           </ul>
