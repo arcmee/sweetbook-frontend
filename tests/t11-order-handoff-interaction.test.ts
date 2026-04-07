@@ -191,6 +191,13 @@ describe("order handoff interaction", () => {
       "Next blocker: Spread 1: Single-photo spotlight works best with one photo.",
     );
     expect(container.textContent).toContain("Owner handoff checklist");
+    expect(container.textContent).toContain("SweetBook handoff summary");
+    expect(container.textContent).toContain(
+      "Status: Blocked until remaining checks are resolved",
+    );
+    expect(container.textContent).toContain("Draft payload pages: 3");
+    expect(container.textContent).toContain("Estimated checkout total: 3400 KRW");
+    expect(container.textContent).toContain("Estimate state: Ready for submission");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
       "Done: Keep at least 3 owner-approved photos",
@@ -397,6 +404,10 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain(
       "Next blocker: No blockers remain. This draft is ready for SweetBook submission.",
     );
+    expect(container.textContent).toContain(
+      "Status: Ready to submit to SweetBook",
+    );
+    expect(container.textContent).toContain("Estimated checkout total: 3400 KRW");
     expect(submitButton?.textContent).toBe("Submit SweetBook order");
   });
 });

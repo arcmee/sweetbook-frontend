@@ -232,6 +232,11 @@ describe("album page planner interaction", () => {
       "Next blocker: Spread 1: Add an edit note before sending this page to SweetBook.",
     );
     expect(container.textContent).toContain("Owner handoff checklist");
+    expect(container.textContent).toContain("SweetBook handoff summary");
+    expect(container.textContent).toContain("Status: Blocked");
+    expect(container.textContent).toContain("Cover payload: Cake table setup");
+    expect(container.textContent).toContain("Spread payload count: 2");
+    expect(container.textContent).toContain("Draft page payload count: 2");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
       "Done: Approve at least 3 photos for the draft",
@@ -303,6 +308,8 @@ describe("album page planner interaction", () => {
     expect(container.textContent).toContain(
       "Next blocker: No blockers remain. The draft can move to SweetBook handoff.",
     );
+    expect(container.textContent).toContain("Status: Ready for SweetBook handoff");
+    expect(container.textContent).toContain("Draft page payload count: 2");
     expect(container.textContent).toContain("Done: Choose a cover photo");
     expect(container.textContent).toContain(
       "Done: Approve at least 3 photos for the draft",
