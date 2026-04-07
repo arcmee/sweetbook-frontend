@@ -834,6 +834,27 @@ export function AppShell({
       primaryActionLabel: "Open event",
       onPrimaryAction: () => handleSelectEvent(event.id),
     }));
+  const urgentVoteNotifications: NotificationActionViewModel[] = workspace.events
+    .filter((event) => event.canVote && isVotingClosingSoon(event.votingEndsAt))
+    .map((event) => ({
+      id: `urgent-vote-${event.id}`,
+      message: `${event.name} is closing soon. Cast your vote before ${formatNotificationDate(event.votingEndsAt)}.`,
+      primaryActionLabel: "Open urgent vote",
+      onPrimaryAction: () => handleSelectEvent(event.id),
+    }));
+  const ownerReviewNotifications: NotificationActionViewModel[] = workspace.events
+    .filter(
+      (event) =>
+        event.status === "ready" &&
+        event.canOwnerSelectPhotos &&
+        activeGroup?.role === "Owner",
+    )
+    .map((event) => ({
+      id: `owner-review-${event.id}`,
+      message: `${event.name} is ready for owner photo selection and SweetBook handoff.`,
+      primaryActionLabel: "Open owner review",
+      onPrimaryAction: () => handleSelectEvent(event.id),
+    }));
   const invitationNotifications: NotificationActionViewModel[] = (
     workspaceSnapshot.pendingInvitations ?? []
   ).map(
@@ -848,12 +869,27 @@ export function AppShell({
         handleDeclineInvitation(invitation.invitationId, invitation.groupName),
     }),
   );
-  const notifications = [...invitationNotifications, ...voteNotifications];
+  const notifications = [
+    ...invitationNotifications,
+    ...urgentVoteNotifications,
+    ...ownerReviewNotifications,
+    ...voteNotifications,
+  ];
   const notificationGroups = [
     {
       title: "Group invitations",
       emptyMessage: "No pending invitations right now.",
       items: invitationNotifications,
+    },
+    {
+      title: "Voting closing soon",
+      emptyMessage: "No voting deadlines are approaching right now.",
+      items: urgentVoteNotifications,
+    },
+    {
+      title: "Owner review queue",
+      emptyMessage: "No events are waiting for owner review right now.",
+      items: ownerReviewNotifications,
     },
     {
       title: "Voting reminders",
@@ -1377,4 +1413,38 @@ function getOrderLockState(
     title: "Order handoff is waiting on the event state",
     description: "This event is not yet ready for the SweetBook handoff stage.",
   };
+}
+
+function isVotingClosingSoon(value?: string): boolean {
+  if (!value) {
+    return false;
+  }
+
+  const endsAt = new Date(value);
+  if (Number.isNaN(endsAt.valueOf())) {
+    return false;
+  }
+
+  const diffMs = endsAt.valueOf() - Date.now();
+  const fortyEightHours = 1000 * 60 * 60 * 48;
+
+  return diffMs > 0 && diffMs <= fortyEightHours;
+}
+
+function formatNotificationDate(value?: string): string {
+  if (!value) {
+    return "the deadline";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsed);
 }
