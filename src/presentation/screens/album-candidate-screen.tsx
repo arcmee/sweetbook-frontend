@@ -85,13 +85,18 @@ export function AlbumCandidateScreen({
     selectedPhotos.length > 0
       ? buildPreviewPages(coverPhoto, layoutPhotos, pageLayouts, pageNotes)
       : activeReview.pagePreview;
-  const readyPageCount = previewPages.filter((page) => page.status === "Ready").length;
-  const reviewPageCount = previewPages.filter(
-    (page) => page.status === "Needs review",
+  const backendPlannerPages = activeOrderEntry?.handoffSummary?.plannerPages ?? [];
+  const plannerPages =
+    backendPlannerPages.length > 0 ? backendPlannerPages : previewPages;
+  const readyPageCount = plannerPages.filter(
+    (page) => ("status" in page ? page.status === "Ready" : !page.warning),
+  ).length;
+  const reviewPageCount = plannerPages.filter(
+    (page) => ("status" in page ? page.status === "Needs review" : Boolean(page.warning)),
   ).length;
   const canOpenOrder =
     selectedPhotos.length > 0 && reviewPageCount === 0 && isOwnerApproved;
-  const pendingChecks = previewPages
+  const pendingChecks = plannerPages
     .filter((page) => page.warning)
     .map((page) => `${page.title}: ${page.warning}`);
   const nextBlocker =
@@ -185,9 +190,22 @@ export function AlbumCandidateScreen({
         <div>
           <h3>SweetBook operation</h3>
           <p>Status: {sweetBookOperationStatus}</p>
-          <p>Cover payload: {coverPhoto?.caption ?? "No cover selected yet."}</p>
-          <p>Spread payload count: {layoutPhotos.length}</p>
-          <p>Draft page payload count: {backendDraftPageCount ?? previewPages.length}</p>
+          <p>
+            Cover payload:{" "}
+            {activeOrderEntry?.handoffSummary?.coverCaption ??
+              coverPhoto?.caption ??
+              "No cover selected yet."}
+          </p>
+          <p>
+            Spread payload count:{" "}
+            {activeOrderEntry?.handoffSummary?.spreadCount ?? Math.max(0, plannerPages.length - 1)}
+          </p>
+          <p>
+            Draft page payload count:{" "}
+            {activeOrderEntry?.handoffSummary?.draftPayloadPageCount ??
+              backendDraftPageCount ??
+              plannerPages.length}
+          </p>
           <p>Backend draft review summary: {backendFlaggedDraftPageCount} flagged pages.</p>
         </div>
         {reviewPageCount > 0 ? (
@@ -250,13 +268,18 @@ export function AlbumCandidateScreen({
         <div>
           <h3>Prototype page preview</h3>
           <ul>
-            {previewPages.map((page) => (
+            {plannerPages.map((page) => (
               <li key={"pageId" in page ? page.pageId : page.pageNumber}>
-                {"status" in page ? <p>Status: {page.status}</p> : null}
+                {"status" in page ? (
+                  <p>Status: {page.status}</p>
+                ) : (
+                  <p>Status: {page.warning ? "Needs review" : "Ready"}</p>
+                )}
                 <strong>{page.title}</strong>
-                <span> Page {page.pageNumber}</span>
+                {"pageNumber" in page ? <span> Page {page.pageNumber}</span> : null}
                 {"layout" in page ? <p>Layout: {page.layout}</p> : null}
                 {"editNote" in page ? <p>{page.editNote}</p> : null}
+                {"note" in page && !("editNote" in page) ? <p>{page.note}</p> : null}
                 {"warning" in page && page.warning ? <p>Warning: {page.warning}</p> : null}
                 {"pageId" in page ? (
                   <div>
