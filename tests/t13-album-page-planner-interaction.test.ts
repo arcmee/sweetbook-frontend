@@ -227,7 +227,7 @@ describe("album page planner interaction", () => {
       );
     });
 
-    expect(container.textContent).toContain("Draft readiness: 1 ready, 1 need review.");
+    expect(container.textContent).toContain("초안 준비 상태: 준비 완료 1개, 검토 필요 1개");
     expect(container.textContent).toContain(
       "Next blocker: Spread 1: Add an edit note before sending this page to SweetBook.",
     );
@@ -257,7 +257,7 @@ describe("album page planner interaction", () => {
       "Spread 1: Add an edit note before sending this page to SweetBook.",
     );
     const continueButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Continue to order setup",
+      (button) => button.textContent === "주문 설정으로 계속",
     ) as HTMLButtonElement | undefined;
     expect(continueButton?.disabled).toBe(true);
   });
@@ -310,7 +310,7 @@ describe("album page planner interaction", () => {
       );
     });
 
-    expect(container.textContent).toContain("Draft readiness: 2 ready, 0 need review.");
+    expect(container.textContent).toContain("초안 준비 상태: 준비 완료 2개, 검토 필요 0개");
     expect(container.textContent).toContain(
       "Next blocker: Record owner approval for the draft.",
     );
@@ -327,7 +327,7 @@ describe("album page planner interaction", () => {
       "All pages are ready. Record owner approval to continue to SweetBook handoff.",
     );
     const continueButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Continue to order setup",
+      (button) => button.textContent === "주문 설정으로 계속",
     ) as HTMLButtonElement | undefined;
     expect(continueButton?.disabled).toBe(true);
   });
@@ -404,7 +404,7 @@ describe("album page planner interaction", () => {
     });
     expect(toggleOwnerApproval).toHaveBeenCalledTimes(1);
     const continueButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Continue to order setup",
+      (button) => button.textContent === "주문 설정으로 계속",
     ) as HTMLButtonElement | undefined;
     expect(continueButton?.disabled).toBe(false);
   });
@@ -458,7 +458,7 @@ describe("album page planner interaction", () => {
       );
     });
 
-    expect(container.textContent).toContain("Owner review goals");
+    expect(container.textContent).toContain("오너 검토 목표");
     expect(container.textContent).toContain("Done: Lock a cover image for this event.");
     expect(container.textContent).toContain(
       "Pending: Record the final owner approval for SweetBook.",

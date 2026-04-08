@@ -54,18 +54,17 @@ describe("frontend app shell foundation", () => {
     );
 
     expect(markup).toContain("SweetBook");
-    expect(markup).toContain("Prototype workspace");
-    expect(markup).toContain("Login");
-    expect(markup).toContain("Start");
-    expect(markup).toContain("Group");
-    expect(markup).toContain("Events in this group");
-    expect(markup).toContain("Group members");
-    expect(markup).toContain("Account");
-    expect(markup).toContain("My groups");
-    expect(markup).toContain("Notification center");
-    expect(markup).toContain("Group invitations");
-    expect(markup).toContain("Voting reminders");
-    expect(markup).toContain("Accept invite");
+    expect(markup).toContain("프로토타입 워크스페이스");
+    expect(markup).toContain("로그인");
+    expect(markup).toContain("회원가입");
+    expect(markup).toContain("그룹");
+    expect(markup).toContain("이 그룹의 이벤트");
+    expect(markup).toContain("그룹 구성원");
+    expect(markup).toContain("계정");
+    expect(markup).toContain("내 그룹");
+    expect(markup).toContain("알림 센터");
+    expect(markup).toContain("그룹 초대");
+    expect(markup).toContain("초대 수락");
     expect(markup).toContain("Decline");
   });
 
@@ -84,7 +83,7 @@ describe("frontend app shell foundation", () => {
     expect(landingMarkup).toContain("groupictures");
     expect(landingMarkup).toContain("시작하기");
     expect(landingMarkup).toContain("로그인");
-    expect(signupMarkup).toContain("groupictures signup");
+    expect(signupMarkup).toContain("groupictures 회원가입");
     expect(signupMarkup).toContain("회원가입");
     expect(signupMarkup).toContain("로그인으로 이동");
   });
@@ -113,5 +112,6 @@ describe("frontend app shell foundation", () => {
     expect(sectionMarkup).toContain("Continue");
     expect(stateMarkup).toContain("No content yet");
     expect(stateMarkup).toContain("Feature tasks will populate this view.");
+    expect(stateMarkup).toContain("안내");
   });
 });

@@ -77,7 +77,7 @@ describe("prototype auth ui", () => {
       root.render(createElement(AppShell));
     });
 
-    expect(container.textContent).toContain("Sign in to SweetBook");
+    expect(container.textContent).toContain("groupictures 로그인");
     expect(container.textContent).not.toContain("Order handoff");
   });
 
@@ -168,7 +168,7 @@ describe("prototype auth ui", () => {
       },
     });
     expect(container.textContent).toContain("Database group");
-    expect(container.textContent).toContain("Notification center");
+    expect(container.textContent).toContain("알림 센터");
     expect(container.textContent).toContain("Group invitations");
     expect(container.textContent).toContain("Voting closing soon");
     expect(container.textContent).toContain("Owner review queue");
@@ -285,9 +285,9 @@ describe("prototype auth ui", () => {
     });
 
     expect(container.textContent).toContain("Voting closing soon");
-    expect(container.textContent).toContain("Open urgent vote");
+    expect(container.textContent).toContain("긴급 투표 열기");
     expect(container.textContent).toContain("Owner review queue");
-    expect(container.textContent).toContain("Open SweetBook operation");
+    expect(container.textContent).toContain("SweetBook 작업 열기");
   });
 
   it("routes owner review notifications straight into the album review flow", async () => {
@@ -410,7 +410,7 @@ describe("prototype auth ui", () => {
     });
 
     const ownerReviewButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Open SweetBook operation",
+      (button) => button.textContent === "SweetBook 작업 열기",
     );
 
     await act(async () => {
@@ -418,8 +418,8 @@ describe("prototype auth ui", () => {
     });
 
     expect(window.location.pathname).toBe("/app/albums");
-    expect(container.textContent).toContain("Build the album draft");
-    expect(container.textContent).toContain("Owner review goals");
+    expect(container.textContent).toContain("앨범 초안 만들기");
+    expect(container.textContent).toContain("오너 검토 목표");
     expect(container.textContent).toContain("Opened from the owner review queue.");
     expect(container.textContent).toContain(
       "Voting is finished. Finalize the draft here before opening the SweetBook handoff.",
@@ -523,7 +523,7 @@ describe("prototype auth ui", () => {
     });
 
     const createButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Create a family group",
+      (button) => button.textContent === "가족 그룹 만들기",
     );
     const groupNameInput = container.querySelector(
       'input[name="groupName"]',
@@ -557,8 +557,7 @@ describe("prototype auth ui", () => {
       },
     });
     expect(container.textContent).toContain("Cho family");
-    expect(container.textContent).toContain("Workspace updated");
-    expect(container.textContent).toContain("Created group Cho family.");
+    expect(container.textContent).toContain("그룹 Cho family을(를) 만들었습니다.");
   });
 
   it("switches the active group and event context when the user selects a different item", async () => {
@@ -852,7 +851,7 @@ describe("prototype auth ui", () => {
       'input[name="eventVotingEndsAt"]',
     ) as HTMLInputElement | null;
     const createButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Create event in this group",
+      (button) => button.textContent === "이 그룹에 이벤트 만들기",
     );
 
     await act(async () => {
@@ -1189,7 +1188,7 @@ describe("prototype auth ui", () => {
       'input[name="nextPassword"]',
     ) as HTMLInputElement | null;
     const changePasswordButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Change password",
+      (button) => button.textContent === "비밀번호 변경",
     );
 
     await act(async () => {
@@ -1355,7 +1354,7 @@ describe("prototype auth ui", () => {
       'input[name="photoFile"]',
     ) as HTMLInputElement | null;
     const createPhotoButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Upload event photo",
+      (button) => button.textContent === "이벤트 사진 업로드",
     );
     const photoFile = new File(["demo-image"], "balloon-arch.jpg", {
       type: "image/jpeg",
@@ -1383,8 +1382,8 @@ describe("prototype auth ui", () => {
     expect((uploadCall[1].body as FormData).get("eventId")).toBe("event-birthday");
     expect((uploadCall[1].body as FormData).get("caption")).toBe("Balloon arch");
     expect((uploadCall[1].body as FormData).get("file")).toBe(photoFile);
-    expect(container.textContent).toContain("Uploaded photo Balloon arch.");
-    expect(container.textContent).toContain("125 already in the event");
+    expect(container.textContent).toContain("사진 Balloon arch을(를) 업로드했습니다.");
+    expect(container.textContent).toContain("이미 이벤트에 있는 사진 125장");
   });
 
   it("likes a photo and refreshes the workflow snapshot", async () => {
@@ -1520,7 +1519,7 @@ describe("prototype auth ui", () => {
     });
 
     const likeButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Like photo",
+      (button) => button.textContent === "좋아요",
     );
 
     await act(async () => {
@@ -1544,7 +1543,7 @@ describe("prototype auth ui", () => {
     );
     expect(container.textContent).toContain("Saved photo like.");
     expect(container.textContent).toContain("10 likes");
-    expect(container.textContent).toContain("Liked by you");
+    expect(container.textContent).toContain("내가 좋아요함");
   });
 
   it("opens the event page directly from an unvoted notification", async () => {
@@ -1643,7 +1642,7 @@ describe("prototype auth ui", () => {
     });
 
     expect(window.location.pathname).toBe("/app/events");
-    expect(container.textContent).toContain("Event page");
+    expect(container.textContent).toContain("이벤트 페이지");
     expect(container.textContent).toContain("First birthday album");
     expect(container.textContent).toContain("Family portrait");
   });
@@ -2219,9 +2218,9 @@ describe("prototype auth ui", () => {
       ordersLink?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     });
 
-    expect(container.textContent).toContain("2 shortlisted photos ready");
-    expect(container.textContent).toContain("Chosen cover: Family portrait");
-    expect(container.textContent).toContain("Story spreads: Gift opening moment");
+    expect(container.textContent).toContain("2 owner-approved photos are queued for this book draft.");
+    expect(container.textContent).toContain("Cover payload: Family portrait");
+    expect(container.textContent).toContain("Gift opening moment");
   });
 
   it("unlocks selection and order routes for a ready event owned by the viewer", async () => {
@@ -2370,7 +2369,7 @@ describe("prototype auth ui", () => {
       await Promise.resolve();
     });
 
-    expect(container.textContent).toContain("Build the album draft");
+    expect(container.textContent).toContain("앨범 초안 만들기");
     expect(container.textContent).not.toContain("Owner selection opens after voting ends");
 
     const ordersLink = Array.from(container.querySelectorAll("a")).find(
@@ -2381,7 +2380,7 @@ describe("prototype auth ui", () => {
       ordersLink?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     });
 
-    expect(container.textContent).toContain("Checkout setup");
+    expect(container.textContent).toContain("주문 설정으로 계속");
     expect(container.textContent).not.toContain("Order handoff is locked");
   });
 });

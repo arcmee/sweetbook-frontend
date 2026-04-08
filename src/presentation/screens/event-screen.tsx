@@ -6,6 +6,7 @@ import {
   type PrototypeWorkspaceViewModel,
 } from "../../application/prototype-workspace";
 import { PageSection } from "../ui/page-section";
+import { PrimaryAction } from "../ui/primary-action";
 import { StatePanel } from "../ui/state-panel";
 import { PhotoWorkflowSection } from "./photo-workflow-section";
 
@@ -20,6 +21,7 @@ type EventScreenProps = {
   workspace: PrototypeWorkspaceViewModel;
   createPhotoCaption?: string;
   createPhotoFileName?: string;
+  createPhotoPreviewUrl?: string;
   isCreatingPhoto?: boolean;
   isLikingPhoto?: boolean;
   onCloseVoting?: () => void | Promise<void>;
@@ -39,6 +41,7 @@ export function EventScreen({
   workspace,
   createPhotoCaption = "",
   createPhotoFileName,
+  createPhotoPreviewUrl,
   isCreatingPhoto = false,
   isLikingPhoto = false,
   onCloseVoting,
@@ -54,91 +57,102 @@ export function EventScreen({
 }: EventScreenProps): ReactElement {
   const activeEvent =
     workspace.events.find((event) => event.id === selectedEventId) ?? workspace.events[0];
-  const photoWorkflow =
-    workflow ?? getPrototypePhotoWorkflowViewModel(activeEvent?.id ?? "");
+
+  if (!activeEvent) {
+    return (
+      <PageSection
+        eyebrow="이벤트"
+        title="이벤트가 없습니다"
+        description="먼저 그룹 페이지에서 이벤트를 만들어야 사진 업로드와 투표를 시작할 수 있습니다."
+      >
+        <StatePanel
+          tone="empty"
+          title="선택된 이벤트가 없습니다"
+          description="그룹 페이지에서 이벤트를 만들거나 다른 이벤트를 선택한 뒤 다시 들어와 주세요."
+        />
+      </PageSection>
+    );
+  }
+
+  const photoWorkflow = workflow ?? getPrototypePhotoWorkflowViewModel(activeEvent.id);
   const votingPresentation = getVotingPresentation(activeEvent);
   const lifecycleSummary = getLifecycleSummary(activeEvent);
 
   return (
-    <>
+    <div className="grid gap-6">
       <PageSection
-        eyebrow="Event page"
-        title={activeEvent?.name ?? "Event workspace"}
-        description="Members upload event photos here and vote during the active collection window."
+        eyebrow="이벤트"
+        title={activeEvent.name}
+        description="구성원들이 사진을 올리고 좋아요를 남기며, 투표가 끝나면 오너가 최종 구성을 검토하는 이벤트 화면입니다."
       >
         {submittedOrder ? (
-          <>
-            <StatePanel
-              tone="success"
-              title="SweetBook operation already completed"
-              description={`Order ${submittedOrder.orderUid} was submitted for book ${submittedOrder.bookUid}${submittedOrder.orderStatusDisplay ? ` (${submittedOrder.orderStatusDisplay})` : ""}.`}
-            />
+          <StatePanel
+            tone="success"
+            title="SweetBook 작업이 이미 완료되었습니다"
+            description={`주문 ${submittedOrder.orderUid}가 책 ${submittedOrder.bookUid}로 제출되었습니다${submittedOrder.orderStatusDisplay ? ` (${submittedOrder.orderStatusDisplay})` : ""}.`}
+          />
+        ) : null}
+
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-600">
+              현재 그룹: {selectedGroupName ?? "선택된 그룹이 없습니다"}
+            </p>
+            <p className="text-base leading-7 text-slate-700">
+              {activeEvent.description ?? "이 이벤트 설명은 아직 입력되지 않았습니다."}
+            </p>
+            <div className="grid gap-1 text-sm text-slate-700">
+              <p>현재 단계: {lifecycleSummary.phaseLabel}</p>
+              <p>{lifecycleSummary.nextStep}</p>
+              <p>SweetBook 작업: {getSweetBookOperationHeadline(activeEvent, submittedOrder)}</p>
+              <p>{getSweetBookOperationHint(activeEvent, submittedOrder)}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <h3 className="text-lg font-semibold text-slate-950">투표 상태</h3>
+            <p className="text-sm font-semibold text-teal-700">{votingPresentation.badgeLabel}</p>
+            <p className="text-base font-medium text-slate-900">{votingPresentation.headline}</p>
+            <p className="text-sm leading-6 text-slate-600">{votingPresentation.supportingText}</p>
+            <p className="text-sm text-slate-600">
+              투표 기간: {formatVotingDate(activeEvent.votingStartsAt)} ~{" "}
+              {formatVotingDate(activeEvent.votingEndsAt)}
+            </p>
+            <p className="text-sm text-slate-600">
+              현재 이 이벤트에 연결된 사진은 {activeEvent.photoCount}장입니다.
+            </p>
+          </div>
+        </div>
+
+        {canManageVoting ? (
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
             <div>
-              <h3>Completed SweetBook operation</h3>
-              <p>Book draft: {submittedOrder.bookUid}</p>
-              <p>Order reference: {submittedOrder.orderUid}</p>
-              <p>
-                Final order state: {submittedOrder.orderStatusDisplay ?? "Submitted"}
+              <h3 className="text-lg font-semibold text-slate-950">오너용 투표 제어</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {votingPresentation.ownerActionState}
               </p>
-              <p>
-                This event has already completed its SweetBook operation. You can reopen the event to
-                review the final voting context and uploaded photos.
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {votingPresentation.ownerHint}
               </p>
             </div>
-          </>
-        ) : null}
-          <p>Active group</p>
-          <p>{selectedGroupName ?? "No active group"}</p>
-        <p>{activeEvent?.description ?? "No event description yet."}</p>
-        <div>
-          <h3>SweetBook operation</h3>
-          <p>{getSweetBookOperationHeadline(activeEvent, submittedOrder)}</p>
-          <p>{getSweetBookOperationHint(activeEvent, submittedOrder)}</p>
-        </div>
-          <p>Lifecycle phase</p>
-          <p>{lifecycleSummary.phaseLabel}</p>
-          <p>{lifecycleSummary.nextStep}</p>
-          <p>{votingPresentation.headline}</p>
-          <p>Voting status badge</p>
-          <p>{votingPresentation.badgeLabel}</p>
-        <p>
-          Voting window:{" "}
-          {activeEvent
-            ? `${formatVotingDate(activeEvent.votingStartsAt)} -> ${formatVotingDate(
-                activeEvent.votingEndsAt,
-              )}`
-            : "Not scheduled"}
-        </p>
-        <p>{votingPresentation.supportingText}</p>
-        <p>
-          {activeEvent?.canVote
-            ? "Members can still upload and vote in this event."
-            : "Voting is not open for this event right now."}
-        </p>
-        <p>{activeEvent?.photoCount ?? 0} photos currently belong to this event.</p>
-        {canManageVoting ? (
-          <>
-            <h3>Owner voting controls</h3>
-            <p>{votingPresentation.ownerActionState}</p>
-            <p>{votingPresentation.ownerHint}</p>
-            <button type="button" onClick={() => void onExtendVoting?.()}>
-              Extend voting by 3 days
-            </button>
-            <button
-              type="button"
-              onClick={() => void onCloseVoting?.()}
-              disabled={activeEvent?.canOwnerSelectPhotos}
-            >
-              Close voting now
-            </button>
-          </>
+            <div className="flex flex-wrap gap-3">
+              <PrimaryAction label="투표 3일 연장" onClick={() => void onExtendVoting?.()} />
+              <PrimaryAction
+                label="지금 투표 종료"
+                onClick={() => void onCloseVoting?.()}
+                disabled={activeEvent.canOwnerSelectPhotos}
+              />
+            </div>
+          </div>
         ) : null}
       </PageSection>
+
       <PhotoWorkflowSection
-        canVote={activeEvent?.canVote ?? false}
+        canVote={activeEvent.canVote}
         workflow={photoWorkflow}
         createPhotoCaption={createPhotoCaption}
         createPhotoFileName={createPhotoFileName}
+        createPhotoPreviewUrl={createPhotoPreviewUrl}
         isCreatingPhoto={isCreatingPhoto}
         isLikingPhoto={isLikingPhoto}
         onCreatePhoto={onCreatePhoto}
@@ -146,13 +160,13 @@ export function EventScreen({
         onCreatePhotoFileChange={onCreatePhotoFileChange}
         onLikePhoto={onLikePhoto}
       />
-    </>
+    </div>
   );
 }
 
 function formatVotingDate(value?: string): string {
   if (!value) {
-    return "Not scheduled";
+    return "미정";
   }
 
   const parsed = new Date(value);
@@ -160,8 +174,8 @@ function formatVotingDate(value?: string): string {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-CA", {
-    month: "short",
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
@@ -179,48 +193,48 @@ function getVotingPresentation(
 } {
   if (!activeEvent) {
     return {
-      badgeLabel: "No event selected",
-      headline: "Choose an event to manage voting",
-      supportingText: "Choose an event to view its voting window.",
-      ownerHint: "Owner actions appear once an event is selected.",
-      ownerActionState: "No owner actions are available until an event is selected.",
+      badgeLabel: "선택된 이벤트 없음",
+      headline: "투표를 보려면 이벤트를 선택하세요",
+      supportingText: "이벤트를 선택하면 투표 상태와 기간을 바로 확인할 수 있습니다.",
+      ownerHint: "오너 제어는 이벤트를 선택한 뒤 표시됩니다.",
+      ownerActionState: "이벤트를 선택하기 전에는 오너 제어를 사용할 수 없습니다.",
     };
   }
 
   if (activeEvent.canOwnerSelectPhotos) {
     return {
-      badgeLabel: "Voting closed",
-      headline: "Selection unlocked for the group owner",
-      supportingText: "Owner photo selection is now unlocked for this event.",
-      ownerHint: "You can reopen planning by extending the voting window if the group needs more time.",
-      ownerActionState: "Voting has ended. You can move into owner selection or reopen the deadline.",
+      badgeLabel: "투표 종료",
+      headline: "이제 오너가 사진을 고를 수 있습니다",
+      supportingText: "이 이벤트는 투표가 끝나고 오너 검토 단계로 넘어갔습니다.",
+      ownerHint: "필요하면 투표 기간을 다시 연장해서 검토를 뒤로 미룰 수 있습니다.",
+      ownerActionState: "투표가 종료되었습니다. 앨범 초안 정리와 SweetBook 작업으로 이어갈 수 있습니다.",
     };
   }
 
   if (activeEvent.canVote) {
     const timeLeft = getTimeLeftLabel(activeEvent.votingEndsAt);
     return {
-      badgeLabel: timeLeft === "Less than 1 hour left" ? "Voting closing soon" : "Voting in progress",
+      badgeLabel: timeLeft === "1시간 미만 남음" ? "마감 임박" : "투표 진행 중",
       headline:
-        timeLeft === "Less than 1 hour left"
-          ? "Voting closes soon for this event"
-          : "Voting is currently open for this event",
+        timeLeft === "1시간 미만 남음"
+          ? "이 이벤트의 투표가 곧 마감됩니다"
+          : "이 이벤트는 현재 투표를 받고 있습니다",
       supportingText: timeLeft
-        ? `Time left to vote: ${timeLeft}.`
-        : "Voting is currently active for group members.",
-      ownerHint: "You can extend the deadline or close voting once the group is ready for owner selection.",
-      ownerActionState: "Owner controls are active while voting is still running.",
+        ? `남은 시간: ${timeLeft}`
+        : "구성원들이 지금 좋아요를 남길 수 있는 상태입니다.",
+      ownerHint: "필요하면 투표 기간을 연장하거나 바로 종료할 수 있습니다.",
+      ownerActionState: "지금은 오너가 투표 기간을 조정할 수 있는 상태입니다.",
     };
   }
 
   return {
-    badgeLabel: "Voting not open",
-    headline: "Voting opens soon for this event",
+    badgeLabel: "투표 전",
+    headline: "이 이벤트의 투표가 아직 열리지 않았습니다",
     supportingText: activeEvent.votingStartsAt
-      ? `Voting opens on ${formatVotingDate(activeEvent.votingStartsAt)}.`
-      : "Set the voting window before members start reacting.",
-    ownerHint: "When voting opens, this area will expose the owner deadline controls.",
-    ownerActionState: "Owner controls are waiting for the voting window to open.",
+      ? `투표 시작 시각: ${formatVotingDate(activeEvent.votingStartsAt)}`
+      : "투표 기간을 먼저 정해야 합니다.",
+    ownerHint: "투표가 시작되면 이 화면에서 진행 상태를 계속 확인할 수 있습니다.",
+    ownerActionState: "지금은 투표 시작을 기다리는 단계입니다.",
   };
 }
 
@@ -236,16 +250,16 @@ function getTimeLeftLabel(value?: string): string | null {
 
   const diffMs = endsAt.valueOf() - Date.now();
   if (diffMs <= 0) {
-    return "Less than 1 hour left";
+    return "1시간 미만 남음";
   }
 
   const totalHours = Math.ceil(diffMs / (1000 * 60 * 60));
   if (totalHours < 24) {
-    return `${totalHours} hour${totalHours === 1 ? "" : "s"} left`;
+    return `${totalHours}시간 남음`;
   }
 
   const totalDays = Math.ceil(totalHours / 24);
-  return `${totalDays} day${totalDays === 1 ? "" : "s"} left`;
+  return `${totalDays}일 남음`;
 }
 
 function getLifecycleSummary(
@@ -256,28 +270,28 @@ function getLifecycleSummary(
 } {
   if (!activeEvent) {
     return {
-      phaseLabel: "No lifecycle available",
-      nextStep: "Choose an event to review its current stage.",
+      phaseLabel: "단계 없음",
+      nextStep: "이벤트를 선택하면 현재 상태를 볼 수 있습니다.",
     };
   }
 
   if (activeEvent.status === "draft") {
     return {
-      phaseLabel: "Setup",
-      nextStep: "Open the voting window so members can start uploading and reacting.",
+      phaseLabel: "준비 단계",
+      nextStep: "투표가 시작되면 구성원들이 사진을 올리고 좋아요를 남길 수 있습니다.",
     };
   }
 
   if (activeEvent.status === "collecting") {
     return {
-      phaseLabel: "Voting live",
-      nextStep: "Collect likes until the deadline, then move into owner selection.",
+      phaseLabel: "투표 진행 중",
+      nextStep: "좋아요를 충분히 모은 뒤 오너 검토 단계로 넘어갑니다.",
     };
   }
 
   return {
-    phaseLabel: "Owner review",
-    nextStep: "The owner can now finalize the photo set and continue to SweetBook handoff.",
+    phaseLabel: "오너 검토",
+    nextStep: "오너가 사진을 최종 정리하고 SweetBook 작업으로 이어갈 수 있습니다.",
   };
 }
 
@@ -286,14 +300,17 @@ function getSweetBookOperationHeadline(
   submittedOrder: EventSubmittedOrderSummary | undefined,
 ): string {
   if (submittedOrder) {
-    return "SweetBook operation completed for this event.";
+    return "이 이벤트의 SweetBook 작업은 이미 완료되었습니다.";
   }
 
   if (!activeEvent) {
-    return "Choose an event to inspect its SweetBook flow.";
+    return "이벤트를 선택하면 SweetBook 흐름을 볼 수 있습니다.";
   }
 
-  return activeEvent.operationSummary?.detail ?? "This event is still in setup before SweetBook planning can begin.";
+  return (
+    activeEvent.operationSummary?.detail ??
+    "이 이벤트는 아직 준비 단계라 SweetBook 작업으로 넘어갈 수 없습니다."
+  );
 }
 
 function getSweetBookOperationHint(
@@ -301,20 +318,20 @@ function getSweetBookOperationHint(
   submittedOrder: EventSubmittedOrderSummary | undefined,
 ): string {
   if (submittedOrder) {
-    return `Order ${submittedOrder.orderUid} is already archived for this event.`;
+    return `주문 ${submittedOrder.orderUid}로 완료된 이벤트입니다.`;
   }
 
   if (!activeEvent) {
-    return "Select an event to see its current flow into owner review and SweetBook handoff.";
+    return "이벤트를 선택하면 오너 검토와 SweetBook 전달 흐름을 볼 수 있습니다.";
   }
 
   if (activeEvent.operationSummary?.stage === "owner_review") {
-    return "Open the owner review flow to finalize the draft and continue into SweetBook handoff.";
+    return "투표가 끝난 뒤 오너가 사진을 고르고 SweetBook 작업으로 이어갈 수 있습니다.";
   }
 
   if (activeEvent.operationSummary?.stage === "voting") {
-    return "Keep collecting uploads and likes until the voting window closes.";
+    return "투표가 진행 중입니다. 사진과 좋아요를 충분히 모아 보세요.";
   }
 
-  return "Open voting first, then collect reactions before SweetBook handoff can move forward.";
+  return "먼저 투표를 열고, 반응을 모은 뒤 SweetBook 작업으로 진행할 수 있습니다.";
 }

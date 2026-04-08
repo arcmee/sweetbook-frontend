@@ -61,7 +61,7 @@ describe("prototype SweetBook estimate client", () => {
         },
         fetchImpl as typeof fetch,
       ),
-    ).rejects.toThrow("Failed to run prototype SweetBook estimate: 503");
+    ).rejects.toThrow("프로토타입 SweetBook 견적을 실행하지 못했습니다: 503");
   });
 
   it("posts to the backend submit endpoint and parses the order response", async () => {

@@ -1,111 +1,40 @@
+@import "tailwindcss";
+
 :root {
   color-scheme: light;
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family:
+    "Pretendard Variable",
+    "Pretendard",
+    "Noto Sans KR",
+    "Segoe UI",
+    sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 30%),
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(251, 191, 36, 0.16), transparent 24%),
     linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-  color: #1f2937;
+  color: #0f172a;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   background: inherit;
+  color: inherit;
 }
 
-#root {
-  min-height: 100vh;
-}
-
-main {
-  min-height: 100vh;
-  display: grid;
-  gap: 1.5rem;
-  padding: 2rem;
-  max-width: 1080px;
-  margin: 0 auto;
-}
-
-header,
-nav,
-section {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 20px;
-  padding: 1.25rem;
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.06);
-}
-
-h1,
-h2,
-h3,
-p,
-ul {
-  margin-top: 0;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(2.2rem, 5vw, 4rem);
-  letter-spacing: -0.04em;
-}
-
-nav ul,
-section ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-nav ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-a {
-  color: #0f766e;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-a[aria-current="page"] {
-  color: #0f172a;
-  text-decoration: underline;
-}
-
-button {
-  border: 0;
-  border-radius: 999px;
-  padding: 0.75rem 1rem;
-  background: #0f766e;
-  color: #ffffff;
+button,
+input,
+select,
+textarea {
   font: inherit;
-  font-weight: 600;
-}
-
-section ul li + li {
-  margin-top: 0.85rem;
-}
-
-section p,
-section span {
-  opacity: 0.88;
-}
-
-@media (max-width: 720px) {
-  main {
-    padding: 1rem;
-  }
-
-  header,
-  nav,
-  section {
-    padding: 1rem;
-    border-radius: 16px;
-  }
 }

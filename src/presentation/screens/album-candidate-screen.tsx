@@ -13,529 +13,231 @@ type AlbumCandidateScreenProps = {
   activeGroupName?: string;
   activeEventName?: string;
   coverPhotoId?: string;
-  isOwnerApproved?: boolean;
-  openedFromOwnerReview?: boolean;
-  onMovePhotoEarlier?: (photoId: string) => void;
-  onMovePhotoLater?: (photoId: string) => void;
-  onOpenOrder?: () => void;
-  onToggleOwnerApproval?: () => void;
-  onSetPageLayout?: (pageId: string, layout: string) => void;
-  onSetPageNote?: (pageId: string, note: string) => void;
-  onSetCoverPhoto?: (photoId: string) => void;
+  onOpenPlanner?: () => void;
   orderEntry?: PrototypeOrderEntryViewModel;
-  pageLayouts?: Record<string, string>;
-  pageNotes?: Record<string, string>;
   selectedPhotoIds?: string[];
   workflow?: PrototypePhotoWorkflowViewModel;
+  onSetCoverPhoto?: (photoId: string) => void;
   onTogglePhotoSelection?: (photoId: string) => void;
   workspace: PrototypeWorkspaceViewModel;
   review?: PrototypeCandidateReviewViewModel;
 };
 
+type WorkflowPhoto = PrototypePhotoWorkflowViewModel["photos"][number];
+
 export function AlbumCandidateScreen({
   activeGroupName,
   activeEventName,
   coverPhotoId,
-  isOwnerApproved = false,
-  openedFromOwnerReview = false,
-  onMovePhotoEarlier,
-  onMovePhotoLater,
-  onOpenOrder,
-  onToggleOwnerApproval,
-  onSetPageLayout,
-  onSetPageNote,
-  onSetCoverPhoto,
+  onOpenPlanner,
   orderEntry,
-  pageLayouts = {},
-  pageNotes = {},
   selectedPhotoIds = [],
   workflow,
+  onSetCoverPhoto,
   onTogglePhotoSelection,
   workspace,
   review,
 }: AlbumCandidateScreenProps): ReactElement {
-  const activeEvent = workspace.events[0];
+  const activeEvent =
+    workspace.events.find((event) => event.name === activeEventName) ?? workspace.events[0];
   const activeReview = review ?? {
     activeEventId: activeEvent?.id ?? "",
-    activeEventName: activeEvent?.name ?? "No active event",
+    activeEventName: activeEvent?.name ?? "선택된 이벤트가 없습니다",
     candidates: [],
     pagePreview: [],
   };
+
+  const availablePhotos = workflow?.photos ?? [];
   const activeOrderEntry = orderEntry;
   const minimumSelectedPhotoCount =
     activeOrderEntry?.readinessSummary?.minimumSelectedPhotoCount ?? 3;
-  const backendDraftPageCount = activeOrderEntry?.reviewSummary?.draftPageCount;
-  const backendFlaggedDraftPageCount =
-    activeOrderEntry?.reviewSummary?.flaggedDraftPageCount ?? 0;
-  const ownerApprovalMissing =
-    !isOwnerApproved &&
-    (activeOrderEntry?.reviewSummary?.ownerApprovalRequired ?? true);
-  const availablePhotos = workflow?.photos ?? [];
   const effectiveSelectedPhotoIds =
     selectedPhotoIds.length > 0
       ? selectedPhotoIds
-      : activeReview.candidates.map((candidate) => candidate.photoId);
+      : activeOrderEntry?.pagePlanner?.selectedPhotoIds ?? [];
+
   const selectedPhotos = availablePhotos.filter((photo) =>
     effectiveSelectedPhotoIds.includes(photo.id),
   );
   const coverPhoto =
-    selectedPhotos.find((photo) => photo.id === coverPhotoId) ?? selectedPhotos[0];
-  const layoutPhotos = selectedPhotos.filter((photo) => photo.id !== coverPhoto?.id);
-  const previewPages =
-    selectedPhotos.length > 0
-      ? buildPreviewPages(coverPhoto, layoutPhotos, pageLayouts, pageNotes)
-      : activeReview.pagePreview;
-  const backendPlannerPages = activeOrderEntry?.handoffSummary?.plannerPages ?? [];
-  const plannerPages =
-    backendPlannerPages.length > 0 ? backendPlannerPages : previewPages;
-  const readyPageCount = plannerPages.filter(
-    (page) => ("status" in page ? page.status === "Ready" : !page.warning),
-  ).length;
-  const reviewPageCount = plannerPages.filter(
-    (page) => ("status" in page ? page.status === "Needs review" : Boolean(page.warning)),
-  ).length;
-  const canOpenOrder =
-    selectedPhotos.length > 0 && reviewPageCount === 0 && isOwnerApproved;
-  const pendingChecks = plannerPages
-    .filter((page) => page.warning)
-    .map((page) => `${page.title}: ${page.warning}`);
-  const nextBlocker =
-    !coverPhoto
-      ? "Choose a cover photo before handoff."
-      : selectedPhotos.length < minimumSelectedPhotoCount
-        ? `Approve at least ${minimumSelectedPhotoCount} photos for the draft.`
-        : reviewPageCount > 0
-          ? pendingChecks[0] ?? "Resolve the flagged draft pages."
-          : ownerApprovalMissing
-            ? "Record owner approval for the draft."
-            : null;
-  const handoffChecklist = [
-    {
-      label: "Choose a cover photo",
-      done: Boolean(coverPhoto),
-    },
-    {
-      label: `Approve at least ${minimumSelectedPhotoCount} photos for the draft`,
-      done: selectedPhotos.length >= minimumSelectedPhotoCount,
-    },
-    {
-      label: "Resolve all draft page warnings",
-      done: reviewPageCount === 0,
-    },
-    {
-      label: "Record owner approval for the draft",
-      done: isOwnerApproved,
-    },
-  ];
-  const sweetBookOperationStatus = canOpenOrder
-    ? "Ready for SweetBook handoff"
-    : isOwnerApproved
-      ? "Waiting on draft checks"
-      : "Waiting for owner approval";
+    selectedPhotos.find((photo) => photo.id === coverPhotoId) ??
+    selectedPhotos.find((photo) => photo.id === activeOrderEntry?.pagePlanner?.coverPhotoId) ??
+    selectedPhotos[0];
+
+  const canOpenPlanner =
+    selectedPhotos.length >= minimumSelectedPhotoCount && Boolean(coverPhoto?.id);
 
   return (
-    <>
+    <div className="grid gap-6">
       <PageSection
-        eyebrow="Owner selection"
-        title="Build the album draft"
-        description="Simulate the SweetBook book-building flow by curating the cover, spreads, and final shortlist before checkout."
+        eyebrow="1단계"
+        title="책에 넣을 사진 선택"
+        description="먼저 책에 넣을 사진을 고르고, 선택된 사진 중 한 장을 커버로 지정합니다."
       >
-        <p>Current group: {activeGroupName ?? "No active group"}</p>
-        <p>Current event: {activeEventName ?? activeReview.activeEventName}</p>
-        {openedFromOwnerReview ? (
-          <div>
-            <h3>Owner review goals</h3>
-            <p>Opened from the owner review queue.</p>
-            <p>Voting is finished. Finalize the draft here before opening the SweetBook handoff.</p>
-            <ul>
-              <li>{coverPhoto ? "Done" : "Pending"}: Lock a cover image for this event.</li>
-              <li>
-                {reviewPageCount === 0 ? "Done" : "Pending"}: Clear every draft page warning before handoff.
-              </li>
-              <li>
-                {isOwnerApproved ? "Done" : "Pending"}: Record the final owner approval for SweetBook.
-              </li>
-            </ul>
-          </div>
-        ) : null}
-        <p>{selectedPhotos.length} owner-approved photos are queued for this book draft.</p>
-        <p>{activeOrderEntry?.readinessSummary?.nextSuggestedStep ?? "Review the draft before handoff."}</p>
-        <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
-        <p>
-          Next blocker:{" "}
-          {nextBlocker ?? "No blockers remain. The draft can move to SweetBook handoff."}
-        </p>
-        <div>
-          <h3>Owner handoff checklist</h3>
-          <ul>
-            {handoffChecklist.map((item) => (
-              <li key={item.label}>
-                {item.done ? "Done" : "Pending"}: {item.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3>Owner approval</h3>
-          <p>
-            {isOwnerApproved
-              ? "Owner approval recorded. This draft can move into SweetBook order setup."
-              : "The group owner still needs to approve this draft before handoff."}
-          </p>
-          <PrimaryAction
-            label={isOwnerApproved ? "Withdraw owner approval" : "Approve this draft"}
-            onClick={onToggleOwnerApproval}
-          />
-        </div>
-        <div>
-          <h3>SweetBook operation</h3>
-          <p>Status: {sweetBookOperationStatus}</p>
-          <p>
-            Cover payload:{" "}
-            {activeOrderEntry?.handoffSummary?.coverCaption ??
-              coverPhoto?.caption ??
-              "No cover selected yet."}
-          </p>
-          <p>
-            Spread payload count:{" "}
-            {activeOrderEntry?.handoffSummary?.spreadCount ?? Math.max(0, plannerPages.length - 1)}
-          </p>
-          <p>
-            Draft page payload count:{" "}
-            {activeOrderEntry?.handoffSummary?.draftPayloadPageCount ??
-              backendDraftPageCount ??
-              plannerPages.length}
-          </p>
-          <p>Backend draft review summary: {backendFlaggedDraftPageCount} flagged pages.</p>
-        </div>
-        {reviewPageCount > 0 ? (
-          <>
-            <p>Resolve the flagged pages before opening the SweetBook order handoff.</p>
-            <ul>
-              {pendingChecks.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p>
-            {!ownerApprovalMissing
-              ? "All pages are ready. You can continue to the SweetBook handoff."
-              : "All pages are ready. Record owner approval to continue to SweetBook handoff."}
-          </p>
-        )}
-        <PrimaryAction
-          label="Continue to order setup"
-          onClick={onOpenOrder}
-          disabled={!canOpenOrder}
-        />
-      </PageSection>
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-600">
+              현재 그룹: {activeGroupName ?? "선택된 그룹이 없습니다"}
+            </p>
+            <p className="text-sm text-slate-600">
+              현재 이벤트: {activeEventName ?? activeReview.activeEventName}
+            </p>
 
-      <PageSection
-        eyebrow="Book structure"
-        title="SweetBook-style planning surface"
-        description="Lock the cover candidate first, then confirm the rest of the spread order."
-      >
-        <div>
-          <h3>Cover candidate</h3>
-          {coverPhoto ? (
-            <div>
-              <strong>{coverPhoto.caption}</strong>
-              <p>
-                {coverPhoto.likeCount} likes, uploaded by {coverPhoto.uploadedBy}
-              </p>
-              <p>This photo will lead the album cover unless you remove it below.</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SummaryCard label="선택된 사진" value={`${selectedPhotos.length}장`} />
+              <SummaryCard label="최소 필요 수" value={`${minimumSelectedPhotoCount}장`} />
+              <SummaryCard
+                label="커버"
+                value={coverPhoto?.caption ?? "아직 선택되지 않음"}
+              />
             </div>
-          ) : (
-            <p>Select at least one photo to create a cover candidate.</p>
-          )}
-        </div>
-        <div>
-          <h3>Story spread queue</h3>
-          {layoutPhotos.length > 0 ? (
-            <ol>
-              {layoutPhotos.map((photo) => (
-                <li key={photo.id}>
-                  <strong>{photo.caption}</strong>
-                  <span> {photo.likeCount} likes</span>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p>Add more photos to build the inside spreads.</p>
-          )}
-        </div>
-        <div>
-          <h3>Prototype page preview</h3>
-          <ul>
-            {plannerPages.map((page) => (
-              <li key={"pageId" in page ? page.pageId : page.pageNumber}>
-                {"status" in page ? (
-                  <p>Status: {page.status}</p>
-                ) : (
-                  <p>Status: {page.warning ? "Needs review" : "Ready"}</p>
-                )}
-                <strong>{page.title}</strong>
-                {"pageNumber" in page ? <span> Page {page.pageNumber}</span> : null}
-                {"layout" in page ? <p>Layout: {page.layout}</p> : null}
-                {"editNote" in page ? <p>{page.editNote}</p> : null}
-                {"note" in page && !("editNote" in page) ? <p>{page.note}</p> : null}
-                {"warning" in page && page.warning ? <p>Warning: {page.warning}</p> : null}
-                {"pageId" in page ? (
-                  <div>
-                    <label>
-                      Page layout
-                      <select
-                        value={page.layout}
-                        onChange={(event) => onSetPageLayout?.(page.pageId, event.target.value)}
-                      >
-                        {getLayoutOptions(page.pageId === "cover").map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Edit note
-                      <input
-                        defaultValue={page.editNote}
-                        onBlur={(event) => onSetPageNote?.(page.pageId, event.target.value)}
-                      />
-                    </label>
-                    {"recommendedLayout" in page && page.recommendedLayout !== page.layout ? (
-                      <PrimaryAction
-                        label="Use recommended layout"
-                        onClick={() => onSetPageLayout?.(page.pageId, page.recommendedLayout)}
-                      />
-                    ) : null}
-                    {"recommendedNote" in page &&
-                    page.recommendedNote !== page.editNote ? (
-                      <PrimaryAction
-                        label="Restore suggested note"
-                        onClick={() => onSetPageNote?.(page.pageId, page.recommendedNote)}
-                      />
-                    ) : null}
-                  </div>
-                ) : null}
-                <p>{page.photoCaptions.length} photo slot{page.photoCaptions.length === 1 ? "" : "s"} planned</p>
-                {"photoIds" in page ? (
-                  <ul>
-                    {page.photoCaptions.map((caption, index) => {
-                      const photoId = page.photoIds[index];
-                      const spreadIndex = layoutPhotos.findIndex((photo) => photo.id === photoId);
-                      const canMoveEarlier = spreadIndex > 0;
-                      const canMoveLater =
-                        spreadIndex > -1 && spreadIndex < layoutPhotos.length - 1;
 
-                      return (
-                        <li key={photoId}>
-                          <span>{caption}</span>
-                          <PrimaryAction
-                            label="Move to previous page"
-                            onClick={() => onMovePhotoEarlier?.(photoId)}
-                            disabled={!canMoveEarlier}
-                          />
-                          <PrimaryAction
-                            label="Move to next page"
-                            onClick={() => onMovePhotoLater?.(photoId)}
-                            disabled={!canMoveLater}
-                          />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p>{page.photoCaptions.join(", ")}</p>
-                )}
-              </li>
-            ))}
-          </ul>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
+              {canOpenPlanner
+                ? "사진 선택이 끝났습니다. 다음 단계에서 스프레드 구성을 확인할 수 있습니다."
+                : "사진을 충분히 고르고 커버를 지정해야 다음 단계로 넘어갈 수 있습니다."}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <PrimaryAction
+                label="다음: 책 구성 확인"
+                onClick={onOpenPlanner}
+                disabled={!canOpenPlanner}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <h3 className="text-lg font-semibold text-slate-950">현재 커버</h3>
+            {coverPhoto ? (
+              <div className="mt-4 grid gap-4">
+                <PhotoPreviewCard photo={coverPhoto} />
+                <div className="grid gap-1 text-sm text-slate-700">
+                  <strong className="text-base text-slate-950">{coverPhoto.caption}</strong>
+                  <p>업로드: {coverPhoto.uploadedBy}</p>
+                  <p>좋아요 {coverPhoto.likeCount}개</p>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-slate-600">
+                아직 커버가 없습니다. 아래 사진 카드에서 선택된 사진을 커버로 지정해주세요.
+              </p>
+            )}
+          </div>
         </div>
       </PageSection>
 
       <PageSection
-        eyebrow="Selection tray"
-        title="Choose photos for the book"
-        description="Likes are recommendation signals. The owner makes the final decision here."
+        eyebrow="사진 선택"
+        title="책에 넣을 사진 고르기"
+        description="좋아요는 참고용입니다. 여기에서는 책에 넣을 사진을 고르고, 선택한 사진 중 하나를 커버로 지정합니다."
       >
-        <ul>
-          {availablePhotos.map((photo) => {
-            const isSelected = effectiveSelectedPhotoIds.includes(photo.id);
-            const candidate = activeReview.candidates.find(
-              (item) => item.photoId === photo.id,
-            );
+        {availablePhotos.length > 0 ? (
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {availablePhotos.map((photo) => {
+              const isSelected = effectiveSelectedPhotoIds.includes(photo.id);
+              const isCover = coverPhoto?.id === photo.id;
+              const candidate = activeReview.candidates.find((item) => item.photoId === photo.id);
 
-            return (
-              <li key={photo.id}>
-                <strong>{photo.caption}</strong>
-                <span> {photo.likeCount} likes</span>
-                <span> Uploaded by {photo.uploadedBy}</span>
-                {coverPhoto?.id === photo.id ? <p>Current cover selection.</p> : null}
-                {isSelected && coverPhoto?.id !== photo.id ? (
-                  <p>
-                    Spread position {layoutPhotos.findIndex((item) => item.id === photo.id) + 1}
-                  </p>
-                ) : null}
-                {candidate ? <p>{candidate.whySelected}</p> : <p>No current recommendation note.</p>}
-                {isSelected ? (
-                  <PrimaryAction
-                    label={coverPhoto?.id === photo.id ? "Cover locked" : "Use as cover"}
-                    onClick={() => onSetCoverPhoto?.(photo.id)}
-                    disabled={coverPhoto?.id === photo.id}
-                  />
-                ) : null}
-                {isSelected && coverPhoto?.id !== photo.id ? (
-                  <PrimaryAction
-                    label="Move earlier"
-                    onClick={() => onMovePhotoEarlier?.(photo.id)}
-                    disabled={layoutPhotos.findIndex((item) => item.id === photo.id) <= 0}
-                  />
-                ) : null}
-                {isSelected && coverPhoto?.id !== photo.id ? (
-                  <PrimaryAction
-                    label="Move later"
-                    onClick={() => onMovePhotoLater?.(photo.id)}
-                    disabled={
-                      layoutPhotos.findIndex((item) => item.id === photo.id) ===
-                      layoutPhotos.length - 1
-                    }
-                  />
-                ) : null}
-                <PrimaryAction
-                  label={isSelected ? "Remove from book" : "Select for book"}
-                  onClick={() => onTogglePhotoSelection?.(photo.id)}
-                />
-              </li>
-            );
-          })}
-        </ul>
+              return (
+                <li
+                  key={photo.id}
+                  className={`grid gap-4 rounded-3xl border p-5 shadow-sm transition ${
+                    isSelected
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
+                  }`}
+                >
+                  <PhotoPreviewCard photo={photo} />
+
+                  <div className="flex flex-wrap gap-2">
+                    <StatusBadge
+                      tone={isSelected ? "selected" : "default"}
+                      label={isSelected ? "선택됨" : "선택 전"}
+                    />
+                    {isCover ? <StatusBadge tone="cover" label="커버" /> : null}
+                  </div>
+
+                  <div className="grid gap-1">
+                    <strong className="text-base font-semibold">{photo.caption}</strong>
+                    <p className={isSelected ? "text-slate-200" : "text-slate-600"}>
+                      좋아요 {photo.likeCount}개 · 업로드 {photo.uploadedBy}
+                    </p>
+                    <p className={isSelected ? "text-slate-200" : "text-slate-600"}>
+                      {candidate?.whySelected ?? "이 사진에 대한 추천 메모가 아직 없습니다."}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    {isSelected ? (
+                      <PrimaryAction
+                        label={isCover ? "현재 커버" : "커버로 지정"}
+                        onClick={() => onSetCoverPhoto?.(photo.id)}
+                        disabled={isCover}
+                      />
+                    ) : null}
+
+                    <div className="flex flex-wrap gap-2">
+                      <PrimaryAction
+                        label={isSelected ? "책에서 제외" : "책에 포함"}
+                        onClick={() => onTogglePhotoSelection?.(photo.id)}
+                      />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-600">
+            아직 업로드된 사진이 없습니다. 이벤트 페이지에서 사진을 올린 뒤 다시 선택해주세요.
+          </div>
+        )}
       </PageSection>
-    </>
+    </div>
   );
 }
 
-function buildPreviewPages(
-  coverPhoto:
-    | PrototypePhotoWorkflowViewModel["photos"][number]
-    | undefined,
-  layoutPhotos: PrototypePhotoWorkflowViewModel["photos"],
-  pageLayouts: Record<string, string>,
-  pageNotes: Record<string, string>,
-): Array<{
-  editNote: string;
-  layout: string;
-  pageId: string;
-  pageNumber: number;
-  photoIds: string[];
-  recommendedLayout: string;
-  recommendedNote: string;
-  status: string;
-  title: string;
-  warning: string | null;
-  photoCaptions: string[];
-}> {
-  const pages: Array<{
-    editNote: string;
-    layout: string;
-    pageId: string;
-    pageNumber: number;
-    photoIds: string[];
-    recommendedLayout: string;
-    recommendedNote: string;
-    status: string;
-    title: string;
-    warning: string | null;
-    photoCaptions: string[];
-  }> = [];
-
-  if (coverPhoto) {
-    const pageId = "cover";
-    const recommendedLayout = "Full-bleed cover";
-    const recommendedNote =
-      "Lead with the strongest event-defining moment on the cover.";
-    const layout = pageLayouts[pageId] ?? recommendedLayout;
-    const editNote = pageNotes[pageId] ?? recommendedNote;
-    pages.push({
-      editNote,
-      layout,
-      pageId,
-      pageNumber: 1,
-      photoIds: [coverPhoto.id],
-      recommendedLayout,
-      recommendedNote,
-      status: "Ready",
-      title: "Cover preview",
-      warning: editNote.trim().length === 0 ? "Add a cover note before handoff." : null,
-      photoCaptions: [coverPhoto.caption],
-    });
-  }
-
-  for (let index = 0; index < layoutPhotos.length; index += 2) {
-    const spreadPhotos = layoutPhotos.slice(index, index + 2);
-    const spreadNumber = index / 2 + 1;
-    const pageId = `spread-${spreadNumber}`;
-    const recommendedLayout = getDefaultSpreadLayout(spreadPhotos.length);
-    const recommendedNote =
-      spreadPhotos.length > 1
-        ? "Use this spread to balance detail shots with group moments."
-        : "Single-photo spread can spotlight a key memory beat.";
-    const layout = pageLayouts[pageId] ?? recommendedLayout;
-    const editNote = pageNotes[pageId] ?? recommendedNote;
-    const warning = getPageWarning(layout, spreadPhotos.length, editNote);
-    pages.push({
-      editNote,
-      layout,
-      pageId,
-      pageNumber: pages.length + 1,
-      photoIds: spreadPhotos.map((photo) => photo.id),
-      recommendedLayout,
-      recommendedNote,
-      status: warning ? "Needs review" : "Ready",
-      title: `Spread ${pages.length}`,
-      warning,
-      photoCaptions: spreadPhotos.map((photo) => photo.caption),
-    });
-  }
-
-  return pages;
+function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-slate-950">{value}</p>
+    </div>
+  );
 }
 
-function getDefaultSpreadLayout(photoCount: number): string {
-  return photoCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight";
+function StatusBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "selected" | "cover" | "default";
+}): ReactElement {
+  const className =
+    tone === "cover"
+      ? "rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
+      : tone === "selected"
+        ? "rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white"
+        : "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700";
+
+  return <span className={className}>{label}</span>;
 }
 
-function getLayoutOptions(isCover: boolean): string[] {
-  return isCover
-    ? ["Full-bleed cover", "Centered portrait cover", "Title-first cover"]
-    : [
-        "Balanced two-photo spread",
-        "Single-photo spotlight",
-        "Collage spread",
-        "Caption-led story spread",
-      ];
-}
-
-function getPageWarning(
-  layout: string,
-  photoCount: number,
-  editNote: string,
-): string | null {
-  if (editNote.trim().length === 0) {
-    return "Add an edit note before sending this page to SweetBook.";
+function PhotoPreviewCard({ photo }: { photo: WorkflowPhoto }): ReactElement {
+  if (photo.assetUrl) {
+    return (
+      <img
+        src={photo.assetUrl}
+        alt={`${photo.caption} 미리보기`}
+        className="aspect-[4/3] w-full rounded-2xl object-cover"
+      />
+    );
   }
 
-  if (layout === "Single-photo spotlight" && photoCount > 1) {
-    return "Single-photo spotlight works best with one photo.";
-  }
-
-  if (layout === "Balanced two-photo spread" && photoCount < 2) {
-    return "Balanced two-photo spread needs two photos to feel complete.";
-  }
-
-  if (layout === "Collage spread" && photoCount < 2) {
-    return "Collage spread needs at least two photos.";
-  }
-
-  return null;
+  return (
+    <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-slate-100 px-4 text-center text-sm text-slate-500">
+      이미지 미리보기가 없습니다.
+    </div>
+  );
 }

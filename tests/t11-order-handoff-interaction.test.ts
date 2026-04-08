@@ -77,7 +77,7 @@ describe("order handoff interaction", () => {
     });
 
     const button = container.querySelector("button");
-    expect(button?.textContent).toBe("Start SweetBook order");
+    expect(button?.textContent).toBe("SweetBook 주문 시작");
 
     await act(async () => {
       button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -200,7 +200,7 @@ describe("order handoff interaction", () => {
 
     expect(container.textContent).toContain("SweetBook estimate is ready");
     expect(container.textContent).toContain("available for submission");
-    expect(container.textContent).toContain("SweetBook operation");
+    expect(container.textContent).toContain("SweetBook 작업");
     expect(container.textContent).toContain(
       "Owner approval is still required before SweetBook handoff can finish.",
     );
@@ -212,7 +212,7 @@ describe("order handoff interaction", () => {
     expect(container.textContent).toContain("Chosen cover: Cake table setup");
     expect(container.textContent).toContain("Cover candidate: Cake table setup");
     expect(container.textContent).toContain("Estimated draft pages: 2");
-    expect(container.textContent).toContain("Draft readiness: 2 ready, 1 need review.");
+    expect(container.textContent).toContain("초안 준비 상태: 준비 완료 2개, 검토 필요 1개");
     expect(container.textContent).toContain(
       "Next blocker: Spread 1: Single-photo spotlight works best with one photo.",
     );
@@ -415,7 +415,7 @@ describe("order handoff interaction", () => {
       estimateButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(container.textContent).toContain("Draft readiness: 3 ready, 0 need review.");
+    expect(container.textContent).toContain("초안 준비 상태: 준비 완료 3개, 검토 필요 0개");
     expect(container.textContent).toContain("All draft pages are ready for SweetBook handoff.");
     expect(container.textContent).toContain(
       "Owner approval is locked. Finish the remaining handoff checks.",
@@ -477,7 +477,7 @@ describe("order handoff interaction", () => {
       "Done: Confirm the payment summary",
     );
     expect(container.textContent).toContain(
-      "Next blocker: No blockers remain. This draft is ready for SweetBook submission.",
+      "다음 막힘 요인: 남은 막힘이 없습니다. 이 초안은 SweetBook 제출 준비가 끝났습니다.",
     );
     expect(container.textContent).toContain("Status: Ready for handoff prep");
     expect(container.textContent).toContain(

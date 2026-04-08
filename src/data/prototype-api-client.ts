@@ -14,7 +14,7 @@ export async function fetchPrototypeWorkspaceSnapshot(
   } : undefined);
 
   if (!response.ok) {
-    throw new Error(`Failed to load prototype workspace snapshot: ${response.status}`);
+    throw new Error(`워크스페이스를 불러오지 못했습니다: ${response.status}`);
   }
 
   return (await response.json()) as PrototypeWorkspaceSnapshot;
@@ -35,7 +35,7 @@ export async function requestPrototypeSweetBookEstimate(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to run prototype SweetBook estimate: ${response.status}`);
+    throw new Error(`프로토타입 SweetBook 견적을 실행하지 못했습니다: ${response.status}`);
   }
 
   return (await response.json()) as PrototypeSweetBookEstimate;
@@ -56,7 +56,7 @@ export async function requestPrototypeSweetBookSubmit(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to submit prototype SweetBook order: ${response.status}`);
+    throw new Error(`프로토타입 SweetBook 주문을 제출하지 못했습니다: ${response.status}`);
   }
 
   return (await response.json()) as PrototypeSweetBookSubmitResult;
@@ -78,7 +78,7 @@ export async function requestPrototypeAuthLogin(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to sign in to prototype auth: ${response.status}`);
+    throw new Error(`로그인에 실패했습니다: ${response.status}`);
   }
 
   return (await response.json()) as PrototypeAuthSession;
@@ -101,7 +101,7 @@ export async function requestPrototypeAuthSignup(
   });
 
   if (!response.ok && response.status !== 201) {
-    throw new Error(`Failed to sign up for prototype auth: ${response.status}`);
+    throw new Error(`회원가입에 실패했습니다: ${response.status}`);
   }
 
   return (await response.json()) as PrototypeAuthSession;
@@ -116,7 +116,7 @@ export async function fetchPrototypeAuthSession(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to load prototype auth session: ${response.status}`);
+    throw new Error(`로그인 세션을 불러오지 못했습니다: ${response.status}`);
   }
 
   return (await response.json()) as PrototypeAuthSession;
@@ -132,7 +132,7 @@ export async function requestPrototypeAuthLogout(
   });
 
   if (!response.ok && response.status !== 204) {
-    throw new Error(`Failed to sign out of prototype auth: ${response.status}`);
+    throw new Error(`로그아웃에 실패했습니다: ${response.status}`);
   }
 }
 
@@ -565,7 +565,8 @@ export async function requestPrototypePhotoUpload(
   });
 
   if (!response.ok && response.status !== 201) {
-    throw new Error(`Failed to upload prototype photo: ${response.status}`);
+    const errorMessage = await readPrototypeErrorMessage(response);
+    throw new Error(errorMessage ?? `Failed to upload prototype photo: ${response.status}`);
   }
 }
 
@@ -603,4 +604,20 @@ function buildPrototypeAuthHeaders(token: string): Record<string, string> {
   return {
     Authorization: `Bearer ${token}`,
   };
+}
+
+async function readPrototypeErrorMessage(response: Response): Promise<string | null> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  try {
+    if (contentType.includes("application/json")) {
+      const body = (await response.json()) as { message?: string };
+      return body.message ?? null;
+    }
+
+    const text = await response.text();
+    return text.trim().length > 0 ? text : null;
+  } catch {
+    return null;
+  }
 }

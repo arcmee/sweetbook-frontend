@@ -61,7 +61,7 @@ describe("prototype api client", () => {
 
     await expect(
       fetchPrototypeWorkspaceSnapshot(undefined, fetchImpl as typeof fetch),
-    ).rejects.toThrow("Failed to load prototype workspace snapshot: 503");
+    ).rejects.toThrow("워크스페이스를 불러오지 못했습니다: 503");
   });
 
   it("posts prototype login credentials and returns the auth session", async () => {

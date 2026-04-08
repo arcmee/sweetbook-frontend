@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+﻿import { useState, type ReactElement } from "react";
 
 import type {
   PrototypeSweetBookEstimate,
@@ -25,6 +25,7 @@ type OrderHandoffScreenProps = {
   estimatedPageCount?: number;
   initialSubmitResult?: PrototypeSweetBookSubmitResult | null;
   isOwnerApproved?: boolean;
+  onBack?: () => void;
   onSubmitSuccess?: (result: PrototypeSweetBookSubmitResult) => void;
   pageLayouts?: Record<string, string>;
   pageNotes?: Record<string, string>;
@@ -36,6 +37,15 @@ type OrderHandoffScreenProps = {
   requestSubmit?: (input: { eventId: string }) => Promise<PrototypeSweetBookSubmitResult>;
 };
 
+type OrderPagePreview = {
+  pageId: string;
+  title: string;
+  layout: string;
+  note: string;
+  warning: string | null;
+  photoCaptions: string[];
+};
+
 export function OrderHandoffScreen({
   activeEventId,
   coverPhotoCaption,
@@ -44,6 +54,7 @@ export function OrderHandoffScreen({
   estimatedPageCount,
   initialSubmitResult = null,
   isOwnerApproved = false,
+  onBack,
   onSubmitSuccess,
   pageLayouts = {},
   pageNotes = {},
@@ -54,20 +65,15 @@ export function OrderHandoffScreen({
   requestEstimate = requestPrototypeSweetBookEstimate,
   requestSubmit = requestPrototypeSweetBookSubmit,
 }: OrderHandoffScreenProps): ReactElement {
-  const activeEvent = workspace.events[0];
-  const activeOrderEntry =
-    orderEntry ?? getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
+  const activeEvent = workspace.events.find((event) => event.id === activeEventId) ?? workspace.events[0];
+  const activeOrderEntry = orderEntry ?? getPrototypeOrderEntryViewModel(activeEvent?.id ?? "");
   const operationSummary = activeOrderEntry.operationSummary ?? {
-    stage:
-      activeOrderEntry.selectedCandidateCount > 0 ? "ready_for_handoff" : "blocked",
-    label:
-      activeOrderEntry.selectedCandidateCount > 0
-        ? "Ready for handoff prep"
-        : "Blocked before handoff",
+    stage: activeOrderEntry.selectedCandidateCount > 0 ? "ready_for_handoff" : "blocked",
+    label: activeOrderEntry.selectedCandidateCount > 0 ? "전달 준비 가능" : "전달 준비 전 단계",
     detail:
       activeOrderEntry.selectedCandidateCount > 0
-        ? "Owner review can continue with a draft handoff summary."
-        : "Add more liked photos before the SweetBook operation can continue.",
+        ? "오너 검토가 끝났다면 SweetBook 주문 단계로 계속 진행할 수 있습니다."
+        : "SweetBook 작업으로 들어가기 전에 더 많은 사진 선택과 정리가 필요합니다.",
   };
   const readinessSummary = activeOrderEntry.readinessSummary ?? {
     minimumSelectedPhotoCount: 3,
@@ -75,15 +81,16 @@ export function OrderHandoffScreen({
     meetsMinimumPhotoCount: activeOrderEntry.selectedCandidateCount >= 3,
     nextSuggestedStep:
       activeOrderEntry.selectedCandidateCount >= 3
-        ? "Review page-level draft checks and record owner approval."
-        : "Add at least 3 liked photos before moving into SweetBook handoff.",
+        ? "페이지 경고와 오너 확인을 모두 마친 뒤 주문으로 넘어가세요."
+        : "사진을 3장 이상 선택해야 SweetBook 주문을 진행할 수 있습니다.",
   };
+
   const [isRunningEstimate, setIsRunningEstimate] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
-  const [estimateResult, setEstimateResult] =
-    useState<PrototypeSweetBookEstimate | null>(null);
-  const [submitResult, setSubmitResult] =
-    useState<PrototypeSweetBookSubmitResult | null>(initialSubmitResult);
+  const [estimateResult, setEstimateResult] = useState<PrototypeSweetBookEstimate | null>(null);
+  const [submitResult, setSubmitResult] = useState<PrototypeSweetBookSubmitResult | null>(
+    initialSubmitResult,
+  );
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [bookQuantity, setBookQuantity] = useState("1");
@@ -94,11 +101,14 @@ export function OrderHandoffScreen({
   const [confirmDraftPayload, setConfirmDraftPayload] = useState(false);
   const [confirmDeliveryDetails, setConfirmDeliveryDetails] = useState(false);
   const [confirmPaymentSummary, setConfirmPaymentSummary] = useState(false);
+  const [isSelectedPhotosModalOpen, setIsSelectedPhotosModalOpen] = useState(false);
+
   const quantity = Math.max(1, Number.parseInt(bookQuantity, 10) || 1);
   const unitPrice = estimateResult?.estimate.paidCreditAmount ?? 3410;
   const subtotal = unitPrice * quantity;
   const platformFee = quantity * 300;
   const totalDue = subtotal + platformFee;
+
   const backendReviewSummary = activeOrderEntry.reviewSummary;
   const ownerApprovalMissing =
     !isOwnerApproved && (backendReviewSummary?.ownerApprovalRequired ?? true);
@@ -107,13 +117,10 @@ export function OrderHandoffScreen({
       ? selectedPhotoCaptions.length
       : activeOrderEntry.selectedCandidateCount;
   const shortlistedCount =
-    selectedPhotoCount && selectedPhotoCount > 0
-      ? selectedPhotoCount
-      : fallbackSelectedPhotoCount;
+    selectedPhotoCount && selectedPhotoCount > 0 ? selectedPhotoCount : fallbackSelectedPhotoCount;
   const draftPageCount =
-    backendReviewSummary?.draftPageCount ??
-    estimatedPageCount ??
-    activeOrderEntry.selectedCandidateCount * 2;
+    backendReviewSummary?.draftPageCount ?? estimatedPageCount ?? activeOrderEntry.selectedCandidateCount * 2;
+
   const pagePlan = buildOrderPagePlan(
     coverPhotoCaption,
     selectedPhotoCaptions,
@@ -122,132 +129,66 @@ export function OrderHandoffScreen({
   );
   const plannerPages = activeOrderEntry.handoffSummary.plannerPages ?? [];
   const handoffPagePlan = plannerPages.length > 0 ? plannerPages : pagePlan;
-  const readyPageCount = pagePlan.filter((page) => page.status === "Ready").length;
-  const reviewPageCount = pagePlan.filter((page) => page.status === "Needs review").length;
-  const pendingChecks = pagePlan
+  const reviewPageCount = handoffPagePlan.filter((page) => page.warning).length;
+  const pendingChecks = handoffPagePlan
     .filter((page) => page.warning)
     .map((page) => `${page.title}: ${page.warning}`);
+
   const handoffChecklist = [
+    { label: "커버 사진 정하기", done: Boolean(coverPhotoCaption) },
     {
-      label: "Choose a cover photo",
-      done: Boolean(coverPhotoCaption),
-    },
-    {
-      label: `Keep at least ${readinessSummary.minimumSelectedPhotoCount} owner-approved photos`,
+      label: `사진 ${readinessSummary.minimumSelectedPhotoCount}장 이상 선택하기`,
       done: shortlistedCount >= readinessSummary.minimumSelectedPhotoCount,
     },
+    { label: "검토가 필요한 페이지 모두 해결하기", done: reviewPageCount === 0 },
+    { label: "SweetBook 견적 확인하기", done: estimateResult !== null },
+    { label: "수령인 정보 입력하기", done: recipientName.trim().length > 0 },
     {
-      label: "Resolve all draft page warnings",
-      done: reviewPageCount === 0,
+      label: "결제자 이름과 카드 끝 4자리 입력하기",
+      done: paymentName.trim().length > 0 && paymentCardLastFour.trim().length === 4,
     },
-    {
-      label: "Run the SweetBook estimate",
-      done: estimateResult !== null,
-    },
-    {
-      label: "Fill in recipient details",
-      done: recipientName.trim().length > 0,
-    },
-    {
-      label: "Enter payer name and card digits",
-      done:
-        paymentName.trim().length > 0 &&
-        paymentCardLastFour.trim().length === 4,
-    },
-    {
-      label: "Keep owner approval active for handoff",
-      done: isOwnerApproved,
-    },
-    {
-      label: "Confirm the SweetBook draft payload",
-      done: confirmDraftPayload,
-    },
-    {
-      label: "Confirm delivery details",
-      done: confirmDeliveryDetails,
-    },
-    {
-      label: "Confirm the payment summary",
-      done: confirmPaymentSummary,
-    },
+    { label: "오너 확인 완료하기", done: isOwnerApproved },
+    { label: "초안 구성 확인하기", done: confirmDraftPayload },
+    { label: "배송 정보 확인하기", done: confirmDeliveryDetails },
+    { label: "결제 요약 확인하기", done: confirmPaymentSummary },
   ];
+
   const nextBlocker =
     !coverPhotoCaption
-      ? "Choose a cover photo in the album draft."
+      ? "책 구성 단계에서 커버 사진을 먼저 정해주세요."
       : shortlistedCount < readinessSummary.minimumSelectedPhotoCount
-        ? `Keep at least ${readinessSummary.minimumSelectedPhotoCount} owner-approved photos in the draft.`
+        ? `사진을 최소 ${readinessSummary.minimumSelectedPhotoCount}장 이상 선택해야 합니다.`
         : reviewPageCount > 0
-          ? pendingChecks[0] ?? "Resolve the flagged draft pages."
+          ? pendingChecks[0] ?? "검토가 필요한 페이지를 먼저 해결해주세요."
           : ownerApprovalMissing
-            ? "Record owner approval in the album draft."
+            ? "책 구성 단계에서 오너 확인을 완료해야 합니다."
             : estimateResult === null
-            ? "Run the SweetBook estimate."
-            : recipientName.trim().length === 0
-              ? "Fill in the recipient name."
-              : paymentName.trim().length === 0 ||
-                  paymentCardLastFour.trim().length !== 4
-                ? "Enter the payer name and card digits."
-                : !confirmDraftPayload
-                  ? "Confirm the SweetBook draft payload."
-                  : !confirmDeliveryDetails
-                    ? "Confirm the delivery details."
-                    : !confirmPaymentSummary
-                      ? "Confirm the payment summary."
-                : null;
+              ? "SweetBook 견적을 먼저 확인해주세요."
+              : recipientName.trim().length === 0
+                ? "수령인 이름을 입력해주세요."
+                : paymentName.trim().length === 0 || paymentCardLastFour.trim().length !== 4
+                  ? "결제자 이름과 카드 끝 4자리를 입력해주세요."
+                  : !confirmDraftPayload
+                    ? "초안 구성 확인 체크가 필요합니다."
+                    : !confirmDeliveryDetails
+                      ? "배송 정보 확인 체크가 필요합니다."
+                      : !confirmPaymentSummary
+                        ? "결제 요약 확인 체크가 필요합니다."
+                        : null;
+
   const handoffStatus =
-    nextBlocker === null
-      ? operationSummary.label
-      : estimateResult === null
-        ? "Estimate required before handoff"
-        : "Blocked until remaining checks are resolved";
-  const handoffTimeline = [
-    {
-      label: "Draft prepared",
-      status: reviewPageCount === 0 ? "Done" : "Needs review",
-    },
-    {
-      label: "Owner approval",
-      status: isOwnerApproved ? "Done" : "Pending",
-    },
-    {
-      label: "Estimate check",
-      status:
-        estimateResult === null
-          ? "Pending"
-          : estimateResult.status === "ready_for_order"
-            ? "Done"
-            : "Blocked",
-    },
-    {
-      label: "Final confirmations",
-      status:
-        confirmDraftPayload && confirmDeliveryDetails && confirmPaymentSummary
-          ? "Done"
-          : "Pending",
-    },
-    {
-      label: "Order submitted",
-      status: submitResult ? "Done" : "Pending",
-    },
-  ];
-  const completionSummary = submitResult
-    ? [
-        `SweetBook order ${submitResult.order.orderUid} is complete.`,
-        `Book draft ${submitResult.bookUid} was submitted successfully.`,
-        `Order status: ${submitResult.order.orderStatusDisplay}`,
-        `Submitted cover payload: ${activeOrderEntry.handoffSummary.coverCaption ?? coverPhotoCaption ?? "No cover recorded"}.`,
-        `Submitted spread payloads: ${activeOrderEntry.handoffSummary.spreadCount || Math.max(0, handoffPagePlan.length - 1)}.`,
-        `Submitted draft pages: ${activeOrderEntry.handoffSummary.draftPayloadPageCount || handoffPagePlan.length}.`,
-      ]
-    : [
-        "No order has been submitted yet.",
-        "Finish the estimate, confirmations, and final submit step to complete the handoff.",
-      ];
+    submitResult
+      ? "SweetBook 작업 완료"
+      : nextBlocker === null
+        ? operationSummary.label
+        : estimateResult === null
+          ? "견적 확인 전"
+          : "추가 확인 필요";
 
   async function handleEstimateRequest(): Promise<void> {
     const targetEventId = activeEventId ?? activeOrderEntry.activeEventId;
     if (!targetEventId) {
-      setEstimateError("No active event is available for this SweetBook estimate.");
+      setEstimateError("현재 이벤트가 없어 견적을 실행할 수 없습니다.");
       return;
     }
 
@@ -257,9 +198,7 @@ export function OrderHandoffScreen({
     setSubmitResult(null);
 
     try {
-      const result = await requestEstimate({
-        eventId: targetEventId,
-      });
+      const result = await requestEstimate({ eventId: targetEventId });
       setEstimateResult(result);
     } catch (error: unknown) {
       setEstimateError(error instanceof Error ? error.message : String(error));
@@ -272,7 +211,7 @@ export function OrderHandoffScreen({
   async function handleSubmitRequest(): Promise<void> {
     const targetEventId = activeEventId ?? activeOrderEntry.activeEventId;
     if (!targetEventId) {
-      setSubmitError("No active event is available for this SweetBook handoff.");
+      setSubmitError("현재 이벤트가 없어 SweetBook 전달을 실행할 수 없습니다.");
       return;
     }
 
@@ -280,9 +219,7 @@ export function OrderHandoffScreen({
     setSubmitError(null);
 
     try {
-      const result = await requestSubmit({
-        eventId: targetEventId,
-      });
+      const result = await requestSubmit({ eventId: targetEventId });
       setSubmitResult(result);
       onSubmitSuccess?.(result);
     } catch (error: unknown) {
@@ -305,319 +242,335 @@ export function OrderHandoffScreen({
     confirmPaymentSummary;
 
   return (
-    <>
+    <div className="grid gap-6">
       <PageSection
-        eyebrow="Order entry"
-        title="Order handoff"
-        description="Prototype order entry keeps payment and checkout out of scope."
+        eyebrow="3단계"
+        title="주문 진행"
+        description="책 구성을 확인한 뒤 견적과 배송·결제 정보를 입력하고 SweetBook 주문을 진행합니다."
       >
-        <PrimaryAction
-          label={isRunningEstimate ? "Checking SweetBook estimate..." : "Start SweetBook order"}
-          disabled={isRunningEstimate}
-          onClick={handleEstimateRequest}
-        />
-        <div>
-          <h3>SweetBook operation</h3>
-          <p>
-            {submitResult
-              ? "SweetBook operation completed for this draft."
-              : isOwnerApproved
-                ? "Owner approval is locked. Finish the remaining handoff checks."
-                : "Owner approval is still required before SweetBook handoff can finish."}
-          </p>
-          <ul>
-            <li>{isOwnerApproved ? "Done" : "Pending"}: Draft approved by the group owner</li>
-            <li>
-              {nextBlocker === null
-                ? "Done"
-                : estimateResult === null
-                  ? "Pending"
-                  : "In progress"}: Handoff checks cleared
-            </li>
-            <li>{submitResult ? "Done" : "Pending"}: SweetBook order submitted</li>
-          </ul>
-        </div>
-        <p>Current group: {activeGroupName ?? "No active group"}</p>
-        <p>Current event: {activeEventName ?? activeOrderEntry.activeEventName}</p>
-        <p>{shortlistedCount} shortlisted photos ready</p>
-        {coverPhotoCaption ? <p>Chosen cover: {coverPhotoCaption}</p> : null}
-        {selectedPhotoCaptions.length > 0 ? (
-          <p>Story spreads: {selectedPhotoCaptions.join(", ")}</p>
-        ) : null}
-        <p>Draft readiness: {readyPageCount} ready, {reviewPageCount} need review.</p>
-        <p>
-          Next blocker:{" "}
-          {nextBlocker ?? "No blockers remain. This draft is ready for SweetBook submission."}
-        </p>
-        <div>
-          <h3>Owner handoff checklist</h3>
-          <ul>
-            {handoffChecklist.map((item) => (
-              <li key={item.label}>
-                {item.done ? "Done" : "Pending"}: {item.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3>SweetBook handoff summary</h3>
-          <p>Status: {handoffStatus}</p>
-          <p>Operation detail: {operationSummary.detail}</p>
-          <p>Suggested next step: {readinessSummary.nextSuggestedStep}</p>
-          <p>Draft payload pages: {activeOrderEntry.handoffSummary.draftPayloadPageCount || handoffPagePlan.length}</p>
-          <p>Selected payload photos: {activeOrderEntry.handoffSummary.selectedPhotoCount || shortlistedCount}</p>
-          <p>Spread payload count: {activeOrderEntry.handoffSummary.spreadCount || Math.max(0, handoffPagePlan.length - 1)}</p>
-          <p>
-            Backend draft review summary: {draftPageCount} pages,{" "}
-            {backendReviewSummary?.flaggedDraftPageCount ?? 0} flagged.
-          </p>
-          <p>Estimated checkout total: {totalDue} KRW</p>
-          <p>
-            Estimate state:{" "}
-            {estimateResult
-              ? estimateResult.status === "ready_for_order"
-                ? "Ready for submission"
-                : "Blocked by credit top-up"
-              : "Not started"}
-          </p>
-        </div>
-        <div>
-          <h3>SweetBook handoff timeline</h3>
-          <ul>
-            {handoffTimeline.map((step) => (
-              <li key={step.label}>
-                {step.status}: {step.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        {reviewPageCount > 0 ? (
-          <>
-            <p>Resolve the flagged draft pages before this SweetBook handoff can be submitted.</p>
-            <ul>
-              {pendingChecks.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p>
-            {isOwnerApproved
-              ? "All draft pages are ready for SweetBook handoff."
-              : "All draft pages are ready, but owner approval is still required before submission."}
-          </p>
-        )}
-        <div>
-          <h3>Checkout setup</h3>
-          <p>Prepare the final SweetBook handoff before the owner sends the order.</p>
-          <p>Cover candidate: {coverPhotoCaption ?? "Choose one in the album draft first."}</p>
-          <p>Estimated draft pages: {draftPageCount}</p>
-          <label>
-            Book quantity
-            <select
-              name="bookQuantity"
-              value={bookQuantity}
-              onChange={(event) => setBookQuantity(event.target.value)}
-            >
-              <option value="1">1 copy</option>
-              <option value="2">2 copies</option>
-              <option value="3">3 copies</option>
-              <option value="5">5 copies</option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <h3>Delivery details</h3>
-          <label>
-            Recipient name
-            <input
-              name="recipientName"
-              value={recipientName}
-              onChange={(event) => setRecipientName(event.target.value)}
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="grid gap-2">
+              <p className="text-sm text-slate-600">
+                현재 그룹: {activeGroupName ?? "선택된 그룹이 없습니다"}
+              </p>
+              <p className="text-sm text-slate-600">
+                현재 이벤트: {activeEventName ?? activeOrderEntry.activeEventName}
+              </p>
+              <p className="text-base leading-7 text-slate-700">{operationSummary.detail}</p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <SummaryCard label="작업 상태" value={handoffStatus} />
+              <button
+                type="button"
+                onClick={() => setIsSelectedPhotosModalOpen(true)}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition hover:border-slate-300 hover:bg-slate-100"
+              >
+                <p className="text-sm text-slate-500">선택된 사진</p>
+                <p className="mt-1 text-lg font-semibold text-slate-950">{shortlistedCount}장</p>
+                <p className="mt-2 text-xs text-slate-500">눌러서 사진 목록 보기</p>
+              </button>
+              <SummaryCard label="초안 페이지" value={`${draftPageCount}장`} />
+              <SummaryCard label="예상 결제 금액" value={`${totalDue} KRW`} />
+            </div>
+
+            <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <h3 className="text-sm font-semibold text-slate-900">다음 확인 사항</h3>
+              <p className="text-sm text-slate-700">
+                {nextBlocker ?? "모든 확인이 끝났습니다. 주문을 제출할 수 있습니다."}
+              </p>
+            </div>
+
+            {!submitResult ? (
+              <div className="flex flex-wrap gap-3">
+                <PrimaryAction label="이전: 책 구성 확인" onClick={onBack} />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="grid gap-2">
+              <h3 className="text-lg font-semibold text-slate-950">주문 체크리스트</h3>
+              <ul className="grid gap-2 text-sm text-slate-700">
+                {handoffChecklist.map((item) => (
+                  <li key={item.label} className="flex items-center gap-2">
+                    <span className={item.done ? "text-emerald-600" : "text-slate-400"}>
+                      {item.done ? "완료" : "대기"}
+                    </span>
+                    <span>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+              <h3 className="text-sm font-semibold text-slate-900">SweetBook 작업 요약</h3>
+              <div className="mt-3 grid gap-2 text-sm text-slate-700">
+                <p>커버: {activeOrderEntry.handoffSummary.coverCaption ?? coverPhotoCaption ?? "미정"}</p>
+                <p>
+                  스프레드 수: {activeOrderEntry.handoffSummary.spreadCount || Math.max(0, handoffPagePlan.length - 1)}
+                </p>
+                <p>
+                  payload 페이지 수: {activeOrderEntry.handoffSummary.draftPayloadPageCount || handoffPagePlan.length}
+                </p>
+                <p>검토 경고 페이지: {backendReviewSummary?.flaggedDraftPageCount ?? 0}장</p>
+              </div>
+            </div>
+
+            <PrimaryAction
+              label={isRunningEstimate ? "SweetBook 견적 확인 중..." : "SweetBook 견적 확인"}
+              disabled={isRunningEstimate}
+              onClick={handleEstimateRequest}
             />
-          </label>
-          <label>
-            Delivery note
-            <input
-              name="deliveryNote"
-              value={deliveryNote}
-              onChange={(event) => setDeliveryNote(event.target.value)}
-            />
-          </label>
+          </div>
         </div>
-        <div>
-          <h3>Simple payment card</h3>
-          <label>
-            Payer name
-            <input
-              name="paymentName"
-              value={paymentName}
-              onChange={(event) => setPaymentName(event.target.value)}
-            />
-          </label>
-          <label>
-            Card last 4 digits
-            <input
-              name="paymentCardLastFour"
-              inputMode="numeric"
-              maxLength={4}
-              value={paymentCardLastFour}
-              onChange={(event) => setPaymentCardLastFour(event.target.value.replace(/\D/g, ""))}
-            />
-          </label>
-        </div>
-        <div>
-          <h3>Checkout summary</h3>
-          <p>Ready to submit once the SweetBook estimate and payment card are both complete.</p>
-          <p>Owner-approved selection count: {shortlistedCount}</p>
-          <p>SweetBook draft pages queued: {draftPageCount}</p>
-          <p>SweetBook unit price: {unitPrice} KRW</p>
-          <p>Quantity subtotal: {subtotal} KRW</p>
-          <p>Prototype platform fee: {platformFee} KRW</p>
-          <p>Total due today: {totalDue} KRW</p>
-          {deliveryNote.trim().length > 0 ? <p>Delivery note: {deliveryNote}</p> : null}
-        </div>
-        <div>
-          <h3>Final confirmation</h3>
-          <label>
-            <input
-              type="checkbox"
-              name="confirmDraftPayload"
-              checked={confirmDraftPayload}
-              onChange={(event) => setConfirmDraftPayload(event.target.checked)}
-            />
-            I reviewed the SweetBook draft payload and page plan.
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="confirmDeliveryDetails"
-              checked={confirmDeliveryDetails}
-              onChange={(event) => setConfirmDeliveryDetails(event.target.checked)}
-            />
-            I confirmed the recipient and delivery details.
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="confirmPaymentSummary"
-              checked={confirmPaymentSummary}
-              onChange={(event) => setConfirmPaymentSummary(event.target.checked)}
-            />
-            I confirmed the quantity and payment summary.
-          </label>
-        </div>
-        {canSubmitOrder ? (
-          <PrimaryAction
-            label={isSubmittingOrder ? "Submitting SweetBook order..." : "Submit SweetBook order"}
-            disabled={isSubmittingOrder}
-            onClick={handleSubmitRequest}
-          />
-        ) : null}
-        {isRunningEstimate ? (
-          <StatePanel
-            tone="loading"
-            title="SweetBook estimate in progress"
-            description="The backend is creating a sandbox book and checking the current order estimate."
-          />
-        ) : null}
-        {estimateError ? (
-          <StatePanel
-            tone="error"
-            title="SweetBook estimate failed"
-            description={estimateError}
-          />
-        ) : null}
-        {estimateResult ? (
-          <StatePanel
-            tone={
-              estimateResult.status === "ready_for_order" ? "success" : "error"
-            }
-            title={
-              estimateResult.status === "ready_for_order"
-                ? "SweetBook estimate is ready"
-                : "SweetBook credits need a top-up"
-            }
-            description={buildEstimateSummary(estimateResult)}
-          />
-        ) : null}
-        {isSubmittingOrder ? (
-          <StatePanel
-            tone="loading"
-            title="SweetBook order submission in progress"
-            description="The backend is submitting the prepared sandbox order to SweetBook."
-          />
-        ) : null}
-        {submitError ? (
-          <StatePanel
-            tone="error"
-            title="SweetBook order submission failed"
-            description={submitError}
-          />
-        ) : null}
-        {submitResult ? (
-          <StatePanel
-            tone="success"
-            title="SweetBook order submitted"
-            description={`Sandbox order ${submitResult.order.orderUid} was submitted for ${submitResult.bookUid}.`}
-          />
-        ) : null}
       </PageSection>
+
       <PageSection
-        eyebrow="Completion"
-        title="SweetBook completion summary"
-        description="Use this summary to confirm what happened in the handoff and submission flow."
+        eyebrow="주문 정보"
+        title="배송과 결제 정보 입력"
+        description="수량, 수령인, 결제 정보를 입력하고 최종 확인을 마치면 주문을 제출할 수 있습니다."
       >
-        <ul>
-          {completionSummary.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-950">기본 설정</h3>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              책 수량
+              <select
+                name="bookQuantity"
+                value={bookQuantity}
+                onChange={(event) => setBookQuantity(event.target.value)}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+              >
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <option key={value} value={value}>
+                    {value}권
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              수령인 이름
+              <input
+                type="text"
+                value={recipientName}
+                onChange={(event) => setRecipientName(event.target.value)}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                placeholder="예: 김민지"
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              배송 메모
+              <textarea
+                value={deliveryNote}
+                onChange={(event) => setDeliveryNote(event.target.value)}
+                className="min-h-28 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                placeholder="배송 시 참고할 메모를 적어주세요."
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-950">결제 정보</h3>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              결제자 이름
+              <input
+                type="text"
+                value={paymentName}
+                onChange={(event) => setPaymentName(event.target.value)}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                placeholder="예: 김민지"
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              카드 끝 4자리
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={paymentCardLastFour}
+                onChange={(event) =>
+                  setPaymentCardLastFour(event.target.value.replace(/[^0-9]/g, "").slice(0, 4))
+                }
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                placeholder="1234"
+              />
+            </label>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
+              <p>권당 금액: {unitPrice} KRW</p>
+              <p>플랫폼 수수료: {platformFee} KRW</p>
+              <p className="mt-2 text-base font-semibold text-slate-950">총 결제 금액: {totalDue} KRW</p>
+            </div>
+          </div>
+        </div>
       </PageSection>
+
       <PageSection
-        eyebrow="SweetBook handoff preview"
-        title="SweetBook handoff preview"
-        description={activeOrderEntry.handoffSummary.note}
+        eyebrow="최종 확인"
+        title="제출 전 확인"
+        description="아래 항목을 모두 확인하면 SweetBook 주문 제출이 열립니다."
       >
-        <p>{activeOrderEntry.handoffSummary.bookFormat}</p>
-        {(activeOrderEntry.handoffSummary.coverCaption || coverPhotoCaption) ? (
-          <p>Backend cover payload: {activeOrderEntry.handoffSummary.coverCaption ?? coverPhotoCaption}</p>
-        ) : null}
-        <p>This draft now includes quantity selection, recipient details, and a simple payment card before submission.</p>
-        <ul>
-          {(activeOrderEntry.handoffSummary.selectedPhotoCount || shortlistedCount) > 0 ? (
-            <li>{activeOrderEntry.handoffSummary.selectedPhotoCount || shortlistedCount} owner-approved photos</li>
-          ) : null}
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <div className="grid gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <label className="flex items-start gap-3 text-sm text-slate-700">
+              <input type="checkbox" checked={confirmDraftPayload} onChange={() => setConfirmDraftPayload((value) => !value)} />
+              <span>초안 구성과 페이지 미리보기를 확인했습니다.</span>
+            </label>
+            <label className="flex items-start gap-3 text-sm text-slate-700">
+              <input type="checkbox" checked={confirmDeliveryDetails} onChange={() => setConfirmDeliveryDetails((value) => !value)} />
+              <span>배송 정보가 정확한지 확인했습니다.</span>
+            </label>
+            <label className="flex items-start gap-3 text-sm text-slate-700">
+              <input type="checkbox" checked={confirmPaymentSummary} onChange={() => setConfirmPaymentSummary((value) => !value)} />
+              <span>결제 요약과 금액을 확인했습니다.</span>
+            </label>
+          </div>
+
+          <div className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <PrimaryAction
+              label={isSubmittingOrder ? "SweetBook 주문 제출 중..." : "SweetBook 주문 제출"}
+              disabled={!canSubmitOrder || isSubmittingOrder}
+              onClick={handleSubmitRequest}
+            />
+            {estimateError ? (
+              <StatePanel tone="error" title="견적 확인 실패" description={estimateError} />
+            ) : null}
+            {submitError ? (
+              <StatePanel tone="error" title="주문 제출 실패" description={submitError} />
+            ) : null}
+            {estimateResult ? (
+              <StatePanel
+                tone={estimateResult.status === "ready_for_order" ? "success" : "empty"}
+                title={
+                  estimateResult.status === "ready_for_order"
+                    ? "SweetBook 주문 가능"
+                    : "크레딧이 부족합니다"
+                }
+                description={`결제 예정 금액 ${estimateResult.estimate.paidCreditAmount} KRW · 현재 잔액 ${estimateResult.estimate.currentCreditBalanceAmount} KRW`}
+              />
+            ) : null}
+            {submitResult ? (
+              <StatePanel
+                tone="success"
+                title="SweetBook 주문이 제출되었습니다"
+                description={`주문 ID ${submitResult.order.orderUid} · 책 ID ${submitResult.bookUid}`}
+              />
+            ) : null}
+          </div>
+        </div>
+      </PageSection>
+
+      <PageSection
+        eyebrow="전달 미리보기"
+        title="최종 전달 구성"
+        description="실제로 SweetBook으로 넘어갈 커버와 페이지 구성을 확인합니다."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
           {handoffPagePlan.map((page) => (
-            <li key={page.pageId}>
-              <strong>{page.title}</strong>: {page.layout}
-              <p>Status: {"status" in page ? page.status : page.warning ? "Needs review" : "Ready"}</p>
-              {page.note ? ` - ${page.note}` : ""}
-              {page.warning ? <p>Warning: {page.warning}</p> : null}
-              <p>{page.photoCount} photo slot{page.photoCount === 1 ? "" : "s"} planned</p>
-              <p>{page.photoCaptions.join(", ")}</p>
-            </li>
+            <div key={page.pageId} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-500">{page.layout}</p>
+                  <h3 className="text-lg font-semibold text-slate-950">{page.title}</h3>
+                </div>
+                {page.warning ? (
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                    {page.warning}
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-4 grid gap-2 text-sm text-slate-700">
+                <p>메모: {page.note || "메모 없음"}</p>
+                <p>사진 수: {page.photoCaptions.length}장</p>
+                {page.photoCaptions.length > 0 ? (
+                  <ul className="grid gap-2">
+                    {page.photoCaptions.map((caption) => (
+                      <li key={`${page.pageId}-${caption}`} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        {caption}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>연결된 사진이 없습니다.</p>
+                )}
+              </div>
+            </div>
           ))}
-          {activeOrderEntry.handoffSummary.payloadSections.map((section) => (
-            <li key={section}>{section}</li>
-          ))}
-        </ul>
+        </div>
       </PageSection>
-    </>
+
+      {isSelectedPhotosModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4"
+          onClick={() => setIsSelectedPhotosModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-4xl rounded-3xl bg-white p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-500">선택된 사진</p>
+                <h2 className="mt-1 text-xl font-semibold text-slate-950">책에 포함된 사진 목록</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSelectedPhotosModalOpen(false)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+              >
+                닫기
+              </button>
+            </div>
+
+            {selectedPhotoCaptions.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {selectedPhotoCaptions.map((caption) => {
+                  const photo = (workspace.photoWorkflows ?? [])
+                    .flatMap((item) => item.photos)
+                    .find((item) => item.caption === caption);
+
+                  return (
+                    <article
+                      key={caption}
+                      className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      {photo?.assetUrl ? (
+                        <img
+                          src={photo.assetUrl}
+                          alt={`${caption} 미리보기`}
+                          className="aspect-[4/3] w-full rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-white text-sm text-slate-500">
+                          이미지 미리보기가 없습니다.
+                        </div>
+                      )}
+                      <div className="grid gap-1 text-sm text-slate-700">
+                        <strong className="text-base text-slate-950">{caption}</strong>
+                        <p>업로드: {photo?.uploadedBy ?? "알 수 없음"}</p>
+                        <p>좋아요 {photo?.likeCount ?? 0}개</p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <StatePanel
+                tone="empty"
+                title="아직 선택된 사진이 없습니다"
+                description="책 구성 단계에서 사진을 먼저 선택해주세요."
+              />
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
-}
-
-function buildEstimateSummary(estimate: PrototypeSweetBookEstimate): string {
-  const currency = estimate.estimate.currency;
-  const totalAmount = estimate.estimate.totalAmount;
-  const paidCreditAmount = estimate.estimate.paidCreditAmount ?? totalAmount;
-  const creditBalance = estimate.estimate.creditBalance ?? 0;
-
-  if (estimate.status === "ready_for_order") {
-    return `Sandbox estimate completed for ${estimate.bookUid}. ${paidCreditAmount} ${currency} is available for submission.`;
-  }
-
-  return `Sandbox estimate completed for ${estimate.bookUid}. Need ${paidCreditAmount} ${currency}, current balance ${creditBalance} ${currency}.`;
 }
 
 function buildOrderPagePlan(
@@ -625,91 +578,50 @@ function buildOrderPagePlan(
   selectedPhotoCaptions: string[],
   pageLayouts: Record<string, string>,
   pageNotes: Record<string, string>,
-): Array<{
-  note: string;
-  pageId: string;
-  title: string;
-  layout: string;
-  photoCount: number;
-  photoCaptions: string[];
-  status: string;
-  warning: string | null;
-}> {
-  const pages: Array<{
-    note: string;
-    pageId: string;
-    title: string;
-    layout: string;
-    photoCount: number;
-    photoCaptions: string[];
-    status: string;
-    warning: string | null;
-  }> = [];
+): OrderPagePreview[] {
+  const pages: OrderPagePreview[] = [];
 
   if (coverPhotoCaption) {
-    const note =
-      pageNotes.cover ?? "Lead with the strongest event-defining moment on the cover.";
     pages.push({
       pageId: "cover",
-      title: "Cover handoff",
-      layout: pageLayouts.cover ?? "Full-bleed cover",
-      note,
-      photoCount: 1,
+      title: "커버 전달",
+      layout: pageLayouts.cover ?? "풀블리드 커버",
+      note: pageNotes.cover ?? "대표 사진 한 장을 커버로 전달합니다.",
+      warning: null,
       photoCaptions: [coverPhotoCaption],
-      status: "Ready",
-      warning: note.trim().length === 0 ? "Add a cover note before handoff." : null,
     });
   }
 
-  for (let index = 0; index < selectedPhotoCaptions.length; index += 2) {
-    const spreadNumber = index / 2 + 1;
+  const spreadPhotos = selectedPhotoCaptions.filter((caption) => caption !== coverPhotoCaption);
+  for (let index = 0; index < spreadPhotos.length; index += 2) {
+    const photos = spreadPhotos.slice(index, index + 2);
+    const spreadNumber = Math.floor(index / 2) + 1;
     const pageId = `spread-${spreadNumber}`;
-    const spreadCaptions = selectedPhotoCaptions.slice(index, index + 2);
-    const spreadCount = spreadCaptions.length;
-    const layout =
-      pageLayouts[pageId] ??
-      (spreadCount > 1 ? "Balanced two-photo spread" : "Single-photo spotlight");
+    const layout = pageLayouts[pageId] ?? (photos.length > 1 ? "균형 배치 2컷 구성" : "단일 사진 강조 레이아웃");
     const note =
       pageNotes[pageId] ??
-      (spreadCount > 1
-        ? "Use this spread to balance detail shots with group moments."
-        : "Single-photo spread can spotlight a key memory beat.");
-    const warning = getPageWarning(layout, spreadCount, note);
+      (photos.length > 1
+        ? "두 장의 사진이 자연스럽게 이어지도록 구성합니다."
+        : "한 장의 사진을 강조하는 페이지입니다.");
+
     pages.push({
       pageId,
-      title: `Spread ${spreadNumber}`,
+      title: `내지 ${spreadNumber}`,
       layout,
       note,
-      photoCount: spreadCount,
-      photoCaptions: spreadCaptions,
-      status: warning ? "Needs review" : "Ready",
-      warning,
+      warning: null,
+      photoCaptions: photos,
     });
   }
 
   return pages;
 }
 
-function getPageWarning(
-  layout: string,
-  photoCount: number,
-  note: string,
-): string | null {
-  if (note.trim().length === 0) {
-    return "Add an edit note before sending this page to SweetBook.";
-  }
-
-  if (layout === "Single-photo spotlight" && photoCount > 1) {
-    return "Single-photo spotlight works best with one photo.";
-  }
-
-  if (layout === "Balanced two-photo spread" && photoCount < 2) {
-    return "Balanced two-photo spread needs two photos to feel complete.";
-  }
-
-  if (layout === "Collage spread" && photoCount < 2) {
-    return "Collage spread needs at least two photos.";
-  }
-
-  return null;
+function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-slate-950">{value}</p>
+    </div>
+  );
 }

@@ -33,14 +33,14 @@ describe("frontend photo upload and like screens", () => {
       buildAppShell({ currentRouteKey: "events", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Upload photos");
-    expect(markup).toContain("New photo caption");
-    expect(markup).toContain("Photo file");
-    expect(markup).toContain("3 pending uploads");
-    expect(markup).toContain("124 already in the event");
+    expect(markup).toContain("사진 업로드");
+    expect(markup).toContain("새 사진 설명");
+    expect(markup).toContain("사진 파일");
+    expect(markup).toContain("대기 중 업로드 3건");
+    expect(markup).toContain("이미 이벤트에 있는 사진 124장");
     expect(markup).toContain("Upload queue is local-only until backend adapters land.");
-    expect(markup).toContain("Extend voting by 3 days");
-    expect(markup).toContain("Close voting now");
+    expect(markup).toContain("투표 3일 연장");
+    expect(markup).toContain("지금 투표 종료");
   });
 
   it("renders like feedback for event photos", () => {
@@ -48,11 +48,11 @@ describe("frontend photo upload and like screens", () => {
       buildAppShell({ currentRouteKey: "events", initialSession: demoSession }),
     );
 
-    expect(markup).toContain("Like feedback");
-    expect(markup).toContain("Like photo");
-    expect(markup).toContain("Liked by you");
-    expect(markup).toContain("9 likes");
-    expect(markup).toContain("No file selected");
-    expect(markup).toContain("Choose favorites before candidate review begins.");
+    expect(markup).toContain("좋아요 현황");
+    expect(markup).toContain("좋아요");
+    expect(markup).toContain("내가 좋아요함");
+    expect(markup).toContain("좋아요 9개");
+    expect(markup).toContain("선택된 파일 없음");
+    expect(markup).toContain("후보 검토가 시작되기 전에 마음에 드는 사진을 골라보세요.");
   });
 });
