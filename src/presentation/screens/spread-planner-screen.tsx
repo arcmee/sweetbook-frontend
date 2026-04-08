@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, type ReactElement } from "react";
+import { useMemo, useState, type ReactElement } from "react";
 
 import type {
   PrototypeCandidateReviewViewModel,
@@ -9,6 +9,8 @@ import type {
 import { PageSection } from "../ui/page-section";
 import { PrimaryAction } from "../ui/primary-action";
 
+type WorkflowPhoto = PrototypePhotoWorkflowViewModel["photos"][number];
+
 type SpreadPlannerScreenProps = {
   activeGroupName?: string;
   activeEventName?: string;
@@ -18,35 +20,30 @@ type SpreadPlannerScreenProps = {
   onBack?: () => void;
   onOpenOrder?: () => void;
   onAssignPhotoToSlot?: (pageId: string, slotIndex: number, photoId: string) => void;
+  onAddPage?: () => void;
+  onRemovePage?: (pageId: string) => void;
   onToggleOwnerApproval?: () => void;
+  onSetCoverPhoto?: (photoId: string) => void;
   onSetPageLayout?: (pageId: string, layout: string) => void;
   onSetPageNote?: (pageId: string, note: string) => void;
-  onSetCoverPhoto?: (photoId: string) => void;
   orderEntry?: PrototypeOrderEntryViewModel;
   pageAssignments?: Record<string, string[]>;
   pageLayouts?: Record<string, string>;
   pageNotes?: Record<string, string>;
+  review?: PrototypeCandidateReviewViewModel;
   selectedPhotoIds?: string[];
-  unassignedPhotos?: WorkflowPhoto[];
   workflow?: PrototypePhotoWorkflowViewModel;
   workspace: PrototypeWorkspaceViewModel;
-  review?: PrototypeCandidateReviewViewModel;
 };
-
-type WorkflowPhoto = PrototypePhotoWorkflowViewModel["photos"][number];
 
 type PlannerPageViewModel = {
   pageId: string;
   pageNumber: number;
   title: string;
   layout: string;
-  editNote: string;
-  recommendedLayout: string;
-  recommendedNote: string;
-  warning: string | null;
-  status: "준비 완료" | "검토 필요";
-  photoCaptions: string[];
-  photoIds: string[];
+  note: string;
+  slotCount: number;
+  slotPhotoIds: string[];
 };
 
 export function SpreadPlannerScreen({
@@ -58,178 +55,108 @@ export function SpreadPlannerScreen({
   onBack,
   onOpenOrder,
   onAssignPhotoToSlot,
+  onAddPage,
+  onRemovePage,
   onToggleOwnerApproval,
+  onSetCoverPhoto,
   onSetPageLayout,
   onSetPageNote,
-  onSetCoverPhoto,
-  orderEntry,
+  review,
   pageAssignments = {},
   pageLayouts = {},
   pageNotes = {},
   selectedPhotoIds = [],
-  unassignedPhotos = [],
   workflow,
-  workspace,
-  review,
 }: SpreadPlannerScreenProps): ReactElement {
-  const [selectionTarget, setSelectionTarget] = useState<{ pageId: string; slotIndex: number } | null>(null);
-  const [isUnassignedWarningOpen, setIsUnassignedWarningOpen] = useState(false);
+  const [selectionTarget, setSelectionTarget] = useState<{
+    pageId: string;
+    slotIndex: number;
+  } | null>(null);
 
-  const activeEvent =
-    workspace.events.find((event) => event.name === activeEventName) ?? workspace.events[0];
   const activeReview = review ?? {
-    activeEventId: activeEvent?.id ?? "",
-    activeEventName: activeEvent?.name ?? "선택된 이벤트가 없습니다",
+    activeEventId: "",
+    activeEventName: activeEventName ?? "선택된 이벤트가 없습니다",
     candidates: [],
     pagePreview: [],
   };
 
   const availablePhotos = workflow?.photos ?? [];
-  const activeOrderEntry = orderEntry;
-  const minimumSelectedPhotoCount =
-    activeOrderEntry?.readinessSummary?.minimumSelectedPhotoCount ?? 3;
-  const backendDraftPageCount = activeOrderEntry?.reviewSummary?.draftPageCount ?? 0;
-  const backendFlaggedDraftPageCount =
-    activeOrderEntry?.reviewSummary?.flaggedDraftPageCount ?? 0;
-  const ownerApprovalRequired =
-    activeOrderEntry?.reviewSummary?.ownerApprovalRequired ?? true;
-  const ownerApprovalMissing = ownerApprovalRequired && !isOwnerApproved;
-
-  const effectiveSelectedPhotoIds =
-    selectedPhotoIds.length > 0
-      ? selectedPhotoIds
-      : activeOrderEntry?.pagePlanner?.selectedPhotoIds?.length
-        ? activeOrderEntry.pagePlanner.selectedPhotoIds
-        : activeReview.candidates.map((candidate) => candidate.photoId);
-
-  const selectedPhotos = availablePhotos.filter((photo) =>
-    effectiveSelectedPhotoIds.includes(photo.id),
+  const selectedPhotos = availablePhotos.filter((photo) => selectedPhotoIds.includes(photo.id));
+  const coverPhoto = selectedPhotos.find((photo) => photo.id === coverPhotoId) ?? selectedPhotos[0];
+  const spreadPhotoPool = selectedPhotos.filter((photo) => photo.id !== coverPhoto?.id);
+  const minimumSpreadPageCount = Math.max(
+    1,
+    Math.ceil(Math.max(spreadPhotoPool.length, 1) / 2),
   );
-  const coverPhoto =
-    selectedPhotos.find((photo) => photo.id === coverPhotoId) ??
-    selectedPhotos.find((photo) => photo.id === activeOrderEntry?.pagePlanner?.coverPhotoId) ??
-    selectedPhotos[0];
-  const spreadPhotos = selectedPhotos.filter((photo) => photo.id !== coverPhoto?.id);
 
-  const plannerPages =
-    activeOrderEntry?.handoffSummary?.plannerPages?.length
-      ? activeOrderEntry.handoffSummary.plannerPages.map((page, index) => ({
-          pageId: page.pageId,
-          pageNumber: index + 1,
-          title: page.title,
-          layout: page.layout,
-          editNote: page.note,
-          recommendedLayout: page.layout,
-          recommendedNote: page.note,
-          warning: page.warning,
-          status: page.warning ? "검토 필요" : "준비 완료",
-          photoCaptions: page.photoCaptions,
-          photoIds: [],
-        }))
-      : buildPreviewPages(coverPhoto, spreadPhotos, pageLayouts, pageNotes);
+  const plannerPages = useMemo(
+    () => buildPlannerPages(coverPhoto, spreadPhotoPool, pageAssignments, pageLayouts, pageNotes),
+    [coverPhoto, spreadPhotoPool, pageAssignments, pageLayouts, pageNotes],
+  );
 
-  const readyPageCount = plannerPages.filter((page) => page.status === "준비 완료").length;
-  const reviewPageCount = plannerPages.filter((page) => page.status === "검토 필요").length;
-  const pendingChecks = plannerPages
-    .filter((page) => page.warning)
-    .map((page) => `${page.title}: ${page.warning}`);
-
+  const readyPageCount = plannerPages.filter((page) => !getPageWarning(page.layout, page.slotPhotoIds)).length;
+  const reviewPageCount = plannerPages.length - readyPageCount;
   const nextBlocker =
     !coverPhoto
       ? "커버 사진을 먼저 정해주세요."
-      : selectedPhotos.length < minimumSelectedPhotoCount
-        ? `최소 ${minimumSelectedPhotoCount}장의 사진을 선택해야 합니다.`
-        : reviewPageCount > 0
-          ? pendingChecks[0] ?? "검토가 필요한 페이지를 먼저 정리해주세요."
-          : ownerApprovalMissing
-            ? "오너 확인이 아직 남아 있습니다."
-            : null;
+      : !isOwnerApproved
+        ? "페이지 구성이 끝나면 오너 확인을 완료해주세요."
+        : null;
 
-  const canOpenOrder = selectedPhotos.length > 0 && reviewPageCount === 0 && isOwnerApproved;
+  const selectionTargetPage =
+    selectionTarget == null
+      ? null
+      : plannerPages.find((page) => page.pageId === selectionTarget.pageId) ?? null;
 
-  const handleProceedToOrder = () => {
-    if (unassignedPhotos.length > 0) {
-      setIsUnassignedWarningOpen(true);
+  function handleSelectPhotoForSlot(photoId: string): void {
+    if (!selectionTarget) {
       return;
     }
 
-    onOpenOrder?.();
-  };
-
-  const effectivePageAssignments = useMemo(() => {
-    const assignments: Record<string, string[]> = {};
-    plannerPages
-      .filter((page) => page.pageId !== "cover")
-      .forEach((page) => {
-        assignments[page.pageId] =
-          pageAssignments[page.pageId]?.filter(Boolean) ??
-          resolvePagePhotos(page, availablePhotos).map((photo) => photo.id);
-      });
-    return assignments;
-  }, [availablePhotos, pageAssignments, plannerPages]);
-
-  const spreadPhotoUsage = useMemo(() => {
-    const usage = new Map<string, { pageId: string; title: string }>();
-    plannerPages
-      .filter((page) => page.pageId !== "cover")
-      .forEach((page) => {
-        const assignedIds =
-          effectivePageAssignments[page.pageId] ??
-          resolvePagePhotos(page, availablePhotos).map((photo) => photo.id);
-        assignedIds
-          .map((photoId) => availablePhotos.find((photo) => photo.id === photoId))
-          .filter((photo): photo is WorkflowPhoto => Boolean(photo))
-          .forEach((photo) => {
-          usage.set(photo.id, { pageId: page.pageId, title: page.title });
-          });
-      });
-    return usage;
-  }, [availablePhotos, effectivePageAssignments, plannerPages]);
-
-  const selectionTargetPage =
-    selectionTarget != null
-      ? plannerPages.find((page) => page.pageId === selectionTarget.pageId) ?? null
-      : null;
-
-  const handleAssignPhotoToSlot = (photoId: string, page: PlannerPageViewModel, slotIndex: number) => {
-    if (page.pageId === "cover") {
+    if (selectionTarget.pageId === "cover") {
       onSetCoverPhoto?.(photoId);
       setSelectionTarget(null);
       return;
     }
-    onAssignPhotoToSlot?.(page.pageId, slotIndex, photoId);
+
+    onAssignPhotoToSlot?.(selectionTarget.pageId, selectionTarget.slotIndex, photoId);
     setSelectionTarget(null);
-  };
+  }
 
   return (
     <div className="grid gap-6">
       <PageSection
         eyebrow="2단계"
         title="스프레드 구성"
-        description="선택한 사진을 커버와 페이지에 배치해서 책 구성을 마무리합니다. 이 단계의 변경은 주문 단계로 넘어갈 때 저장됩니다."
+        description="각 페이지의 슬롯을 눌러 사진을 배치하세요. 같은 사진을 여러 페이지와 여러 슬롯에 중복해서 넣어도 됩니다."
       >
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-600">
-              현재 그룹: {activeGroupName ?? "선택된 그룹이 없습니다"}
-            </p>
-            <p className="text-sm text-slate-600">
-              현재 이벤트: {activeEventName ?? activeReview.activeEventName}
-            </p>
+            <div className="grid gap-2">
+              <p className="text-sm text-slate-600">
+                현재 그룹: {activeGroupName ?? "선택된 그룹이 없습니다"}
+              </p>
+              <p className="text-sm text-slate-600">
+                현재 이벤트: {activeEventName ?? activeReview.activeEventName}
+              </p>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-3">
               <SummaryCard label="선택된 사진" value={`${selectedPhotos.length}장`} />
               <SummaryCard label="준비 완료 페이지" value={`${readyPageCount}장`} />
               <SummaryCard label="검토 필요 페이지" value={`${reviewPageCount}장`} />
             </div>
+
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
-              {nextBlocker ?? "페이지 구성이 정리되었습니다. 주문 단계로 넘어갈 수 있습니다."}
+              {nextBlocker ?? "페이지 구성이 준비되었습니다. 주문 단계로 이동할 수 있습니다."}
             </div>
+
             <div className="flex flex-wrap gap-3">
               <PrimaryAction label="이전: 사진 선택" onClick={onBack} />
               <PrimaryAction
                 label="책 구성 확정 후 주문으로"
-                onClick={handleProceedToOrder}
-                disabled={!canOpenOrder}
+                onClick={onOpenOrder}
+                disabled={selectedPhotos.length === 0}
               />
             </div>
           </div>
@@ -237,27 +164,51 @@ export function SpreadPlannerScreen({
           <div className="grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
             {openedFromOwnerReview ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-                오너 검토 단계로 들어왔습니다. 스프레드 구성을 마무리하고 오너 확인을 남겨주세요.
+                오너 검토 단계로 들어왔습니다. 페이지 구성을 확인한 뒤 주문 단계로 넘어가세요.
               </div>
             ) : null}
+
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
               <h3 className="font-semibold text-slate-900">오너 확인</h3>
               <p className="mt-1">
                 {isOwnerApproved
                   ? "오너 확인이 완료되었습니다."
-                  : "구성이 끝나면 오너 확인 버튼을 눌러 주문 단계로 넘겨주세요."}
+                  : "페이지 구성이 끝나면 오너 확인 버튼을 눌러 주문 단계로 넘어가세요."}
               </p>
               <div className="mt-3">
                 <PrimaryAction
-                  label={isOwnerApproved ? "오너 확인 취소" : "이 구성 확인하기"}
+                  label={isOwnerApproved ? "오너 확인 취소" : "이 구성을 확인하기"}
                   onClick={onToggleOwnerApproval}
                 />
               </div>
             </div>
+
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
-              <h3 className="font-semibold text-slate-900">현재 작업 요약</h3>
-              <p>초안 페이지 수: {backendDraftPageCount || plannerPages.length}장</p>
-              <p>검토 경고 페이지: {backendFlaggedDraftPageCount}장</p>
+              <h3 className="font-semibold text-slate-900">선택된 사진 목록</h3>
+              <p className="mt-1 text-slate-600">
+                아래 사진들은 스프레드 슬롯에서 자유롭게 반복해서 사용할 수 있습니다.
+              </p>
+              {selectedPhotos.length > 0 ? (
+                <ul className="mt-3 grid gap-3">
+                  {selectedPhotos.map((photo) => (
+                    <li
+                      key={photo.id}
+                      className="grid grid-cols-[72px_1fr] gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
+                    >
+                      <PhotoThumb photo={photo} />
+                      <div className="grid gap-1 text-sm text-slate-700">
+                        <p className="font-semibold text-slate-950">{photo.caption}</p>
+                        <p>업로드: {photo.uploadedBy}</p>
+                        <p>좋아요 {photo.likeCount}개</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-slate-600">
+                  먼저 사진 선택 단계에서 책에 넣을 사진을 골라주세요.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -265,84 +216,24 @@ export function SpreadPlannerScreen({
 
       <PageSection
         eyebrow="배치"
-        title="커버와 페이지 미리보기"
-        description="번호 슬롯을 눌러 각 스프레드에 들어갈 사진을 고릅니다. 이미 다른 스프레드에서 사용 중인 사진은 위치를 함께 표시합니다."
+        title="커버와 스프레드 구성"
+        description="각 슬롯을 눌러 사진을 배치합니다. 레이아웃에 따라 슬롯 수가 달라집니다."
       >
-        <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
-          <div className="grid gap-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-950">커버 미리보기</h3>
-                <PrimaryAction
-                  label="커버 사진 고르기"
-                  onClick={() => setSelectionTarget({ pageId: "cover", slotIndex: 0 })}
-                />
-              </div>
-              {coverPhoto ? (
-                <div className="mt-4 grid gap-4">
-                  <PhotoPreviewCard photo={coverPhoto} aspectClassName="aspect-[3/4]" />
-                  <div className="grid gap-1 text-sm text-slate-700">
-                    <strong className="text-base text-slate-950">{coverPhoto.caption}</strong>
-                    <p>업로드: {coverPhoto.uploadedBy}</p>
-                    <p>좋아요 {coverPhoto.likeCount}개</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-slate-600">
-                  아직 커버가 없습니다. 버튼을 눌러 선택된 사진 중에서 커버를 지정해주세요.
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-950">선택된 사진</h3>
-              <p className="mt-1 text-sm text-slate-600">
-                각 사진은 한 번만 스프레드에 배치됩니다. 이미 사용 중인 사진도 현재 위치가 함께 표시됩니다.
-              </p>
-              {spreadPhotos.length > 0 ? (
-                <ul className="mt-4 grid gap-3">
-                  {spreadPhotos.map((photo, index) => {
-                    const usage = spreadPhotoUsage.get(photo.id);
-                    return (
-                      <li
-                        key={photo.id}
-                        className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
-                      >
-                        <div className="grid grid-cols-[72px_1fr] gap-3">
-                          <PhotoThumb photo={photo} />
-                          <div className="grid gap-1 text-sm text-slate-700">
-                            <p className="font-semibold text-slate-950">
-                              {index + 1}. {photo.caption}
-                            </p>
-                            <p>업로드: {photo.uploadedBy}</p>
-                            <p>좋아요 {photo.likeCount}개</p>
-                            <p className="text-xs text-slate-500">
-                              {usage ? `${usage.title}에서 사용 중` : "아직 스프레드에 배치되지 않음"}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-slate-600">
-                  커버를 제외한 사진을 선택하면 여기에서 사용할 사진 목록을 볼 수 있습니다.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            {plannerPages.length > 0 ? (
+        <div className="grid gap-4">
+          {plannerPages.length > 0 ? (
+            <>
               <ul className="grid gap-4">
                 {plannerPages.map((page) => {
-                  const assignedIds =
-                    effectivePageAssignments[page.pageId] ??
-                    page.photoIds;
-                  const pagePhotos = assignedIds
-                    .map((photoId) => availablePhotos.find((photo) => photo.id === photoId))
-                    .filter((photo): photo is WorkflowPhoto => Boolean(photo));
+                  const slotPhotos = page.slotPhotoIds.map((photoId) =>
+                    photoId ? availablePhotos.find((photo) => photo.id === photoId) : undefined,
+                  );
+                  const warning = getPageWarning(page.layout, page.slotPhotoIds);
+                  const pageIndex = Number(page.pageId.replace("spread-", ""));
+                  const canRemovePage =
+                    page.pageId !== "cover" &&
+                    !Number.isNaN(pageIndex) &&
+                    pageIndex > minimumSpreadPageCount;
+
                   return (
                     <li
                       key={page.pageId}
@@ -350,20 +241,33 @@ export function SpreadPlannerScreen({
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-slate-500">{page.status}</p>
+                          <p className="text-sm font-semibold text-slate-500">
+                            {warning ? "검토 필요" : "준비 완료"}
+                          </p>
                           <h3 className="text-lg font-semibold text-slate-950">{page.title}</h3>
                           <p className="text-sm text-slate-600">{page.pageNumber}페이지</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {page.warning ? (
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {warning ? (
                             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                              {page.warning}
+                              {warning}
                             </span>
                           ) : null}
-                          <PrimaryAction
-                            label={page.pageId === "cover" ? "커버 첫 슬롯 고르기" : `${page.title} 1번 슬롯 고르기`}
-                            onClick={() => setSelectionTarget({ pageId: page.pageId, slotIndex: 0 })}
-                          />
+                          {page.pageId !== "cover" ? (
+                            <button
+                              type="button"
+                              onClick={() => onRemovePage?.(page.pageId)}
+                              disabled={!canRemovePage}
+                              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                canRemovePage
+                                  ? "border border-rose-200 bg-white text-rose-600 hover:bg-rose-50"
+                                  : "border border-slate-200 bg-slate-100 text-slate-400"
+                              }`}
+                            >
+                              이 페이지 제거
+                            </button>
+                          ) : null}
                         </div>
                       </div>
 
@@ -374,7 +278,7 @@ export function SpreadPlannerScreen({
                               페이지 미리보기
                             </p>
                             <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
-                              {renderPlannerLayoutPreview(page, pagePhotos, (slotIndex) =>
+                              {renderPlannerLayoutPreview(page, slotPhotos, (slotIndex) =>
                                 setSelectionTarget({ pageId: page.pageId, slotIndex }),
                               )}
                             </div>
@@ -382,19 +286,23 @@ export function SpreadPlannerScreen({
 
                           <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                             <p className="text-sm font-semibold text-slate-900">배치된 사진</p>
-                            {pagePhotos.length > 0 ? (
+                            {slotPhotos.some(Boolean) ? (
                               <ul className="grid gap-2 text-sm text-slate-700">
-                                {pagePhotos.map((photo) => (
+                                {slotPhotos.map((photo, index) => (
                                   <li
-                                    key={`${page.pageId}-${photo.id}`}
+                                    key={`${page.pageId}-${index}`}
                                     className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
                                   >
-                                    {photo.caption}
+                                    {photo
+                                      ? `${index + 1}번 슬롯: ${photo.caption}`
+                                      : `${index + 1}번 슬롯: 비어 있음`}
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <p className="text-sm text-slate-600">아직 배치된 사진이 없습니다.</p>
+                              <p className="text-sm text-slate-600">
+                                아직 배치된 사진이 없습니다.
+                              </p>
                             )}
                           </div>
                         </div>
@@ -418,10 +326,10 @@ export function SpreadPlannerScreen({
                           <label className="grid gap-2 text-sm font-medium text-slate-700">
                             편집 메모
                             <textarea
-                              defaultValue={page.editNote}
-                              onBlur={(event) => onSetPageNote?.(page.pageId, event.target.value)}
+                              value={page.note}
+                              onChange={(event) => onSetPageNote?.(page.pageId, event.target.value)}
                               className="min-h-28 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
-                              placeholder="이 페이지에서 강조할 내용이나 설명을 적어주세요."
+                              placeholder="이 페이지에서 강조할 설명을 적어주세요."
                             />
                           </label>
                         </div>
@@ -430,12 +338,22 @@ export function SpreadPlannerScreen({
                   );
                 })}
               </ul>
-            ) : (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-600">
-                선택된 사진이 있어야 페이지 미리보기를 만들 수 있습니다.
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={onAddPage}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-50 hover:text-slate-950"
+                >
+                  마지막 스프레드 아래에 페이지 추가
+                </button>
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-600">
+              선택된 사진이 있어야 페이지 미리보기를 만들 수 있습니다.
+            </div>
+          )}
         </div>
       </PageSection>
 
@@ -450,12 +368,14 @@ export function SpreadPlannerScreen({
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-500">스프레드 사진 선택</p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-950">{selectionTargetPage.title}</h2>
+                <p className="text-sm font-semibold text-slate-500">사진 선택</p>
+                <h2 className="mt-1 text-xl font-semibold text-slate-950">
+                  {selectionTargetPage.title}
+                </h2>
                 <p className="mt-2 text-sm text-slate-600">
                   {selectionTargetPage.pageId === "cover"
-                    ? "커버에 사용할 사진을 고르세요."
-                    : `${selectionTargetPage.title}의 ${selectionTarget.slotIndex + 1}번 슬롯에 넣을 사진을 고르세요. 이미 다른 스프레드에서 사용 중인 사진은 현재 위치를 함께 표시합니다.`}
+                    ? "커버에 넣을 사진을 골라주세요."
+                    : `${selectionTargetPage.title}의 ${(selectionTarget?.slotIndex ?? 0) + 1}번 슬롯에 넣을 사진을 골라주세요.`}
                 </p>
               </div>
               <button
@@ -467,107 +387,35 @@ export function SpreadPlannerScreen({
               </button>
             </div>
 
-            {spreadPhotos.length > 0 ? (
+            {selectedPhotos.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {spreadPhotos.map((photo) => {
-                  const usage = spreadPhotoUsage.get(photo.id);
-                  const isCurrentPage = usage?.pageId === selectionTargetPage.pageId;
-                  const isUsedElsewhere = Boolean(usage && usage.pageId !== selectionTargetPage.pageId);
-                  return (
-                    <article
-                      key={photo.id}
-                      className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <PhotoPreviewCard photo={photo} aspectClassName="aspect-[4/3]" />
-                      <div className="grid gap-1 text-sm text-slate-700">
-                        <strong className="text-base text-slate-950">{photo.caption}</strong>
-                        <p>업로드: {photo.uploadedBy}</p>
-                        <p>좋아요 {photo.likeCount}개</p>
-                        {isCurrentPage ? (
-                          <p className="text-emerald-700">현재 이 스프레드에 배치됨</p>
-                        ) : isUsedElsewhere ? (
-                          <p className="text-amber-700">이미 사용 중: {usage?.title}</p>
-                        ) : (
-                          <p className="text-slate-500">아직 스프레드에 배치되지 않음</p>
-                        )}
-                      </div>
-                      <PrimaryAction
-                        label={
-                          selectionTargetPage.pageId === "cover"
-                            ? "커버로 지정"
-                            : `${selectionTargetPage.title} ${selectionTarget.slotIndex + 1}번에 배치`
-                        }
-                        onClick={() => handleAssignPhotoToSlot(photo.id, selectionTargetPage, selectionTarget.slotIndex)}
-                      />
-                    </article>
-                  );
-                })}
+                {(selectionTargetPage.pageId === "cover" ? selectedPhotos : spreadPhotoPool).map((photo) => (
+                  <article
+                    key={`${selectionTargetPage.pageId}-${photo.id}`}
+                    className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <PhotoPreviewCard photo={photo} aspectClassName="aspect-[4/3]" />
+                    <div className="grid gap-1 text-sm text-slate-700">
+                      <strong className="text-base text-slate-950">{photo.caption}</strong>
+                      <p>업로드: {photo.uploadedBy}</p>
+                      <p>좋아요 {photo.likeCount}개</p>
+                    </div>
+                    <PrimaryAction
+                      label={
+                        selectionTargetPage.pageId === "cover"
+                          ? "커버로 지정"
+                          : `${selectionTargetPage.title} ${(selectionTarget?.slotIndex ?? 0) + 1}번에 배치`
+                      }
+                      onClick={() => handleSelectPhotoForSlot(photo.id)}
+                    />
+                  </article>
+                ))}
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-sm text-slate-600">
                 먼저 사진 선택 단계에서 책에 넣을 사진을 골라주세요.
               </div>
             )}
-          </div>
-        </div>
-      ) : null}
-
-      {isUnassignedWarningOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4"
-          onClick={() => setIsUnassignedWarningOpen(false)}
-        >
-          <div
-            className="w-full max-w-2xl rounded-3xl bg-white p-5 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-amber-600">배치 확인 필요</p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-950">
-                  아직 페이지에 배치하지 않은 사진이 있습니다
-                </h2>
-                <p className="mt-2 text-sm text-slate-600">
-                  선택은 했지만 스프레드에 넣지 않은 사진이 {unassignedPhotos.length}장 있습니다.
-                  이 상태로 주문 단계로 넘어가면 배치되지 않은 사진은 초안에 포함되지 않을 수 있습니다.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsUnassignedWarningOpen(false)}
-                className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
-              >
-                닫기
-              </button>
-            </div>
-
-            <div className="grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-sm font-semibold text-slate-900">미배치 사진</p>
-              <ul className="grid gap-2 text-sm text-slate-700">
-                {unassignedPhotos.map((photo) => (
-                  <li
-                    key={photo.id}
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                  >
-                    {photo.caption}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-4 flex flex-wrap justify-end gap-3">
-              <PrimaryAction
-                label="스프레드에 더 배치하기"
-                onClick={() => setIsUnassignedWarningOpen(false)}
-              />
-              <PrimaryAction
-                label="확인 후 주문 단계로"
-                onClick={() => {
-                  setIsUnassignedWarningOpen(false);
-                  onOpenOrder?.();
-                }}
-              />
-            </div>
           </div>
         </div>
       ) : null}
@@ -630,7 +478,7 @@ function PhotoThumb({ photo }: { photo: WorkflowPhoto }): ReactElement {
 
 function renderPlannerLayoutPreview(
   page: PlannerPageViewModel,
-  photos: WorkflowPhoto[],
+  slotPhotos: Array<WorkflowPhoto | undefined>,
   onSelectSlot: (slotIndex: number) => void,
 ): ReactElement {
   if (page.pageId === "cover" || page.layout.includes("커버")) {
@@ -641,7 +489,7 @@ function renderPlannerLayoutPreview(
             <LayoutSlot
               label="커버"
               className="min-h-0 bg-white text-slate-900"
-              sublabel={photos[0] ? photos[0].caption : "대표 사진"}
+              sublabel={slotPhotos[0]?.caption ?? "커버 사진"}
               onClick={() => onSelectSlot(0)}
             />
             <div className="rounded-2xl bg-slate-900 px-4 py-3 text-center text-xs font-semibold text-white">
@@ -657,12 +505,12 @@ function renderPlannerLayoutPreview(
         <div className="grid h-[320px] grid-rows-[auto_1fr] gap-3">
           <div className="rounded-2xl bg-slate-900 px-4 py-4 text-white">
             <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Title</p>
-            <p className="mt-2 text-sm font-semibold">제목과 부제를 크게 보여주는 커버</p>
+            <p className="mt-2 text-sm font-semibold">제목과 부제가 크게 보이는 커버</p>
           </div>
           <LayoutSlot
             label="커버"
             className="min-h-0 bg-slate-100 text-slate-900"
-            sublabel={photos[0] ? photos[0].caption : "대표 사진"}
+            sublabel={slotPhotos[0]?.caption ?? "커버 사진"}
             onClick={() => onSelectSlot(0)}
           />
         </div>
@@ -674,7 +522,7 @@ function renderPlannerLayoutPreview(
         <LayoutSlot
           label="커버"
           className="min-h-0 flex-1 bg-slate-900 text-white"
-          sublabel={photos[0] ? photos[0].caption : "대표 사진"}
+          sublabel={slotPhotos[0]?.caption ?? "커버 사진"}
           onClick={() => onSelectSlot(0)}
         />
         <div className="rounded-2xl bg-slate-200 px-4 py-3 text-sm text-slate-700">타이틀 영역</div>
@@ -688,11 +536,11 @@ function renderPlannerLayoutPreview(
         <LayoutSlot
           label="1"
           className="min-h-0 flex-1 bg-slate-100 text-slate-900"
-          sublabel={photos[0] ? photos[0].caption : "대표 사진"}
+          sublabel={slotPhotos[0]?.caption ?? "대표 사진"}
           onClick={() => onSelectSlot(0)}
         />
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500">
-          큰 사진 한 장과 짧은 설명이 들어가는 구성
+          한 장의 사진을 강조하는 레이아웃입니다.
         </div>
       </div>
     );
@@ -704,13 +552,13 @@ function renderPlannerLayoutPreview(
         <LayoutSlot
           label="1"
           className="min-h-0 bg-slate-100 text-slate-900"
-          sublabel={photos[0] ? photos[0].caption : "첫 번째 사진"}
+          sublabel={slotPhotos[0]?.caption ?? "첫 번째 사진"}
           onClick={() => onSelectSlot(0)}
         />
         <LayoutSlot
           label="2"
           className="min-h-0 bg-slate-100 text-slate-900"
-          sublabel={photos[1] ? photos[1].caption : "두 번째 사진"}
+          sublabel={slotPhotos[1]?.caption ?? "두 번째 사진"}
           onClick={() => onSelectSlot(1)}
         />
       </div>
@@ -723,65 +571,49 @@ function renderPlannerLayoutPreview(
         <LayoutSlot
           label="1"
           className="min-h-0 bg-slate-100 text-slate-900"
-          sublabel={photos[0] ? photos[0].caption : "메인 사진"}
+          sublabel={slotPhotos[0]?.caption ?? "메인 사진"}
           onClick={() => onSelectSlot(0)}
         />
         <div className="grid min-h-0 gap-3">
           <LayoutSlot
             label="2"
             className="min-h-0 flex-1 bg-slate-100 text-slate-900"
-            sublabel={photos[1] ? photos[1].caption : "보조 사진"}
+            sublabel={slotPhotos[1]?.caption ?? "보조 사진"}
             onClick={() => onSelectSlot(1)}
           />
           <LayoutSlot
             label="3"
             className="min-h-0 flex-1 border-dashed bg-white text-slate-500"
-            sublabel="선택 사항"
-            onClick={() => onSelectSlot(1)}
+            sublabel={slotPhotos[2]?.caption ?? "선택 사항"}
+            onClick={() => onSelectSlot(2)}
           />
         </div>
-      </div>
-    );
-  }
-
-  if (page.layout === "캡션 강조 스프레드") {
-    return (
-      <div className="grid h-[320px] gap-3">
-        <div className="grid min-h-0 gap-3 md:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-2xl bg-slate-900 px-4 py-5 text-sm text-white">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Caption</p>
-            <p className="mt-2 leading-6">
-              이 페이지는 사진 설명과 짧은 이야기를 함께 보여주는 구성을 사용합니다.
-            </p>
-          </div>
-          <LayoutSlot
-            label="1"
-            className="min-h-0 bg-slate-100 text-slate-900"
-            sublabel={photos[0] ? photos[0].caption : "대표 사진"}
-            onClick={() => onSelectSlot(0)}
-          />
-        </div>
-        <LayoutSlot
-          label="2"
-          className="min-h-0 bg-slate-100 text-slate-900"
-          sublabel={photos[1] ? photos[1].caption : "보조 사진"}
-          onClick={() => onSelectSlot(1)}
-        />
       </div>
     );
   }
 
   return (
-    <div className={`grid h-[320px] gap-3 ${photos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-      {(photos.length > 0 ? photos : [undefined]).map((photo, index) => (
+    <div className="grid h-[320px] gap-3">
+      <div className="grid min-h-0 gap-3 md:grid-cols-[0.9fr_1.1fr]">
+        <div className="rounded-2xl bg-slate-900 px-4 py-5 text-sm text-white">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Caption</p>
+          <p className="mt-2 leading-6">
+            설명 박스와 사진을 함께 보여주는 스프레드입니다.
+          </p>
+        </div>
         <LayoutSlot
-          key={`${page.pageId}-${photo?.id ?? index}`}
-          label={`${index + 1}`}
+          label="1"
           className="min-h-0 bg-slate-100 text-slate-900"
-          sublabel={photo ? photo.caption : "사진 자리"}
-          onClick={() => onSelectSlot(index)}
+          sublabel={slotPhotos[0]?.caption ?? "대표 사진"}
+          onClick={() => onSelectSlot(0)}
         />
-      ))}
+      </div>
+      <LayoutSlot
+        label="2"
+        className="min-h-0 bg-slate-100 text-slate-900"
+        sublabel={slotPhotos[1]?.caption ?? "보조 사진"}
+        onClick={() => onSelectSlot(1)}
+      />
     </div>
   );
 }
@@ -809,24 +641,10 @@ function LayoutSlot({
   );
 }
 
-function resolvePagePhotos(
-  page: PlannerPageViewModel,
-  availablePhotos: WorkflowPhoto[],
-): WorkflowPhoto[] {
-  if (page.photoIds.length > 0) {
-    return page.photoIds
-      .map((photoId) => availablePhotos.find((photo) => photo.id === photoId))
-      .filter((photo): photo is WorkflowPhoto => Boolean(photo));
-  }
-
-  return page.photoCaptions
-    .map((caption) => availablePhotos.find((photo) => photo.caption === caption))
-    .filter((photo): photo is WorkflowPhoto => Boolean(photo));
-}
-
-function buildPreviewPages(
+function buildPlannerPages(
   coverPhoto: WorkflowPhoto | undefined,
-  spreadPhotos: WorkflowPhoto[],
+  spreadPhotoPool: WorkflowPhoto[],
+  pageAssignments: Record<string, string[]>,
   pageLayouts: Record<string, string>,
   pageNotes: Record<string, string>,
 ): PlannerPageViewModel[] {
@@ -834,60 +652,57 @@ function buildPreviewPages(
 
   if (coverPhoto) {
     const pageId = "cover";
-    const recommendedLayout = "풀블리드 커버";
-    const recommendedNote = "대표 사진 한 장을 커버로 사용합니다.";
-    const layout = pageLayouts[pageId] ?? recommendedLayout;
-    const editNote = pageNotes[pageId] ?? recommendedNote;
-    const warning = editNote.trim().length === 0 ? "커버 메모를 입력해주세요." : null;
+    const layout = pageLayouts[pageId] ?? "풀블리드 커버";
+    const slotCount = getSlotCountForLayout(layout, true);
+    const slotPhotoIds = normalizeSlotPhotoIds([coverPhoto.id], slotCount);
 
     pages.push({
       pageId,
       pageNumber: 1,
       title: "커버 미리보기",
       layout,
-      editNote,
-      recommendedLayout,
-      recommendedNote,
-      warning,
-      status: warning ? "검토 필요" : "준비 완료",
-      photoCaptions: [coverPhoto.caption],
-      photoIds: [coverPhoto.id],
+      note: pageNotes[pageId] ?? "대표 사진 한 장을 커버로 사용합니다.",
+      slotCount,
+      slotPhotoIds,
     });
   }
 
-  for (let index = 0; index < spreadPhotos.length; index += 2) {
-    const photos = spreadPhotos.slice(index, index + 2);
-    const spreadNumber = Math.floor(index / 2) + 1;
-    const pageId = `spread-${spreadNumber}`;
-    const recommendedLayout = getDefaultSpreadLayout(photos.length);
-    const recommendedNote =
-      photos.length > 1
-        ? "두 장의 사진이 자연스럽게 이어지도록 스프레드를 구성합니다."
-        : "한 장의 사진을 중심으로 메시지를 전달합니다.";
-    const layout = pageLayouts[pageId] ?? recommendedLayout;
-    const editNote = pageNotes[pageId] ?? recommendedNote;
-    const warning = getPageWarning(layout, photos.length, editNote);
+  const assignmentKeys = Object.keys(pageAssignments)
+    .filter((pageId) => pageId.startsWith("spread-"))
+    .sort((left, right) => Number(left.replace("spread-", "")) - Number(right.replace("spread-", "")));
+  const generatedSpreadCount = Math.max(1, Math.ceil(Math.max(spreadPhotoPool.length, 1) / 2));
+  const generatedKeys = Array.from({ length: generatedSpreadCount }, (_, index) => `spread-${index + 1}`);
+  const spreadKeys = [...new Set([...generatedKeys, ...assignmentKeys])];
+
+  spreadKeys.forEach((pageId, index) => {
+    const layout = pageLayouts[pageId] ?? "균형 배치 2컷 구성";
+    const slotCount = getSlotCountForLayout(layout, false);
+    const slotPhotoIds = normalizeSlotPhotoIds(pageAssignments[pageId] ?? [], slotCount);
 
     pages.push({
       pageId,
       pageNumber: pages.length + 1,
-      title: `Spread ${spreadNumber}`,
+      title: `Spread ${index + 1}`,
       layout,
-      editNote,
-      recommendedLayout,
-      recommendedNote,
-      warning,
-      status: warning ? "검토 필요" : "준비 완료",
-      photoCaptions: photos.map((photo) => photo.caption),
-      photoIds: photos.map((photo) => photo.id),
+      note:
+        pageNotes[pageId] ??
+        (slotCount > 1
+          ? "사진 슬롯을 눌러 각 위치에 들어갈 사진을 골라주세요."
+          : "한 장의 사진을 강조하는 페이지입니다."),
+      slotCount,
+      slotPhotoIds,
     });
-  }
+  });
 
   return pages;
 }
 
-function getDefaultSpreadLayout(photoCount: number): string {
-  return photoCount > 1 ? "균형 배치 2컷 구성" : "단일 사진 강조 레이아웃";
+function normalizeSlotPhotoIds(photoIds: string[], slotCount: number): string[] {
+  const next = [...photoIds];
+  while (next.length < slotCount) {
+    next.push("");
+  }
+  return next.slice(0, slotCount);
 }
 
 function getLayoutOptions(isCover: boolean): string[] {
@@ -896,21 +711,29 @@ function getLayoutOptions(isCover: boolean): string[] {
     : ["균형 배치 2컷 구성", "단일 사진 강조 레이아웃", "콜라주 스타일", "캡션 강조 스프레드"];
 }
 
-function getPageWarning(layout: string, photoCount: number, editNote: string): string | null {
-  if (editNote.trim().length === 0) {
-    return "페이지 메모를 입력해주세요.";
+function getSlotCountForLayout(layout: string, isCover: boolean): number {
+  if (isCover || layout.includes("커버")) {
+    return 1;
+  }
+  if (layout === "콜라주 스타일") {
+    return 3;
+  }
+  if (layout === "단일 사진 강조 레이아웃") {
+    return 1;
+  }
+  return 2;
+}
+
+function getPageWarning(layout: string, slotPhotoIds: string[]): string | null {
+  const requiredSlots = getSlotCountForLayout(layout, layout.includes("커버"));
+  const assignedCount = slotPhotoIds.filter(Boolean).length;
+
+  if (assignedCount === 0) {
+    return "사진이 아직 배치되지 않았습니다.";
   }
 
-  if (layout === "단일 사진 강조 레이아웃" && photoCount > 1) {
-    return "단일 사진 강조 레이아웃은 사진 1장일 때 가장 자연스럽습니다.";
-  }
-
-  if (layout === "균형 배치 2컷 구성" && photoCount < 2) {
-    return "2컷 구성 레이아웃은 사진 2장이 필요합니다.";
-  }
-
-  if (layout === "콜라주 스타일" && photoCount < 2) {
-    return "콜라주 스타일은 최소 2장의 사진이 필요합니다.";
+  if (assignedCount < requiredSlots) {
+    return `이 레이아웃은 ${requiredSlots}개 슬롯 중 ${assignedCount}개만 채워져 있습니다.`;
   }
 
   return null;

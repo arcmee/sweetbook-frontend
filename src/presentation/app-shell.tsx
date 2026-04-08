@@ -887,15 +887,15 @@ export function AppShell({
 
   function handleDraftAssignPhotoToSlot(pageId: string, slotIndex: number, photoId: string): void {
     updateSpreadDraft((current) => {
-      const nextAssignments = Object.fromEntries(
-        Object.entries(current.pageAssignments).map(([assignmentPageId, ids]) => [
-          assignmentPageId,
-          ids.filter((id) => id !== photoId),
-        ]),
-      ) as Record<string, string[]>;
+      const nextAssignments = {
+        ...current.pageAssignments,
+      };
       const targetAssignments = [...(nextAssignments[pageId] ?? [])];
+      while (targetAssignments.length <= slotIndex) {
+        targetAssignments.push("");
+      }
       targetAssignments[slotIndex] = photoId;
-      nextAssignments[pageId] = targetAssignments.filter(Boolean);
+      nextAssignments[pageId] = targetAssignments;
 
       const nextSelectedPhotoIds = current.selectedPhotoIds.includes(photoId)
         ? current.selectedPhotoIds
@@ -927,6 +927,66 @@ export function AppShell({
         [pageId]: note,
       },
     }));
+  }
+
+  function handleDraftAddPage(): void {
+    updateSpreadDraft((current) => {
+      const spreadNumbers = Object.keys(current.pageAssignments)
+        .filter((pageId) => pageId.startsWith("spread-"))
+        .map((pageId) => Number(pageId.replace("spread-", "")))
+        .filter((value) => !Number.isNaN(value));
+      const nextSpreadNumber =
+        spreadNumbers.length > 0 ? Math.max(...spreadNumbers) + 1 : 1;
+      const nextPageId = `spread-${nextSpreadNumber}`;
+
+      if (current.pageAssignments[nextPageId]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        pageAssignments: {
+          ...current.pageAssignments,
+          [nextPageId]: [],
+        },
+      };
+    });
+  }
+
+  function handleDraftRemovePage(pageId: string): void {
+    if (!pageId.startsWith("spread-")) {
+      return;
+    }
+
+    updateSpreadDraft((current) => {
+      const spreadPhotoIds = current.selectedPhotoIds.filter(
+        (photoId) => photoId !== current.coverPhotoId,
+      );
+      const minimumSpreadPageCount = Math.max(
+        1,
+        Math.ceil(Math.max(spreadPhotoIds.length, 1) / 2),
+      );
+      const pageNumber = Number(pageId.replace("spread-", ""));
+
+      if (!Number.isNaN(pageNumber) && pageNumber <= minimumSpreadPageCount) {
+        return current;
+      }
+
+      const nextAssignments = { ...current.pageAssignments };
+      const nextLayouts = { ...current.pageLayouts };
+      const nextNotes = { ...current.pageNotes };
+
+      delete nextAssignments[pageId];
+      delete nextLayouts[pageId];
+      delete nextNotes[pageId];
+
+      return {
+        ...current,
+        pageAssignments: nextAssignments,
+        pageLayouts: nextLayouts,
+        pageNotes: nextNotes,
+      };
+    });
   }
 
   function handleDraftToggleOwnerApproval(): void {
@@ -1719,6 +1779,8 @@ export function AppShell({
             onSetPageLayout={handleDraftSetPageLayout}
             onSetPageNote={handleDraftSetPageNote}
             onSetCoverPhoto={handleDraftSetCoverPhoto}
+            onAddPage={handleDraftAddPage}
+            onRemovePage={handleDraftRemovePage}
             onBack={() => navigateTo("albums")}
             onOpenOrder={() => void handleConfirmSpreadDraftAndOpenOrder()}
           />
